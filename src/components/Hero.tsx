@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, LogIn, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kai-ai-logo.png";
 import SuggestionCards from "./SuggestionCards";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SubscriptionBadge } from "./SubscriptionBadge";
 
 interface HeroProps {
   onStartChat: () => void;
@@ -13,6 +15,7 @@ interface HeroProps {
 const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isPremium } = useSubscription();
   
   const handleSuggestion = (suggestion: string) => {
     if (onSuggestionSelect) {
@@ -23,9 +26,10 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Login button in top right */}
-      {!user && (
-        <div className="absolute top-4 right-4 z-20">
+      {/* Top Bar */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
+        {user && <SubscriptionBadge />}
+        {!user ? (
           <Button
             variant="outline"
             onClick={() => navigate("/auth")}
@@ -34,8 +38,16 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             <LogIn className="w-4 h-4 mr-2" />
             Login
           </Button>
-        </div>
-      )}
+        ) : !isPremium && (
+          <Button
+            onClick={() => navigate("/premium")}
+            className="bg-gradient-primary hover:opacity-90 text-white"
+          >
+            <Crown className="w-4 h-4 mr-2" />
+            Upgrade to Premium
+          </Button>
+        )}
+      </div>
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -81,6 +93,16 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           >
             Learn More
           </Button>
+          {user && !isPremium && (
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/premium")}
+              className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg border-2 border-white/20"
+            >
+              <Crown className="mr-2" />
+              Go Premium
+            </Button>
+          )}
         </div>
 
         {/* Suggestion Cards */}

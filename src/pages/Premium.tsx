@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, ArrowLeft, Sparkles, Zap, Crown } from "lucide-react";
+import { Check, ArrowLeft, Sparkles, Zap, Crown, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
+import { STRIPE_CONFIG } from "@/constants/stripe";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Plan {
   id: string;
@@ -17,13 +20,32 @@ interface Plan {
 
 const Premium = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { isPremium, loading: subLoading, refetch } = useSubscription();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [managingPortal, setManagingPortal] = useState(false);
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+    
+    // Handle success/cancel from Stripe
+    const success = searchParams.get("success");
+    const canceled = searchParams.get("canceled");
+    
+    if (success) {
+      toast.success("Subscription activated! Welcome to Premium!");
+      refetch();
+      // Clear URL params
+      window.history.replaceState({}, "", "/premium");
+    } else if (canceled) {
+      toast.info("Checkout canceled. You can upgrade anytime!");
+      // Clear URL params
+      window.history.replaceState({}, "", "/premium");
+    }
+  }, [searchParams, refetch]);
 
   const fetchPlans = async () => {
     try {
@@ -54,15 +76,65 @@ const Premium = () => {
     }
   };
 
-  const handleUpgrade = async (planId: string) => {
-    setSelectedPlan(planId);
-    // This would integrate with a payment provider like Stripe
-    toast.success("Redirecting to checkout...");
-    // For now, just show a message
-    setTimeout(() => {
-      toast.info("Payment integration coming soon!");
+  const handleUpgrade = async (priceId: string) => {
+    setSelectedPlan(priceId);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to upgrade");
+        navigate("/auth");
+        return;
+      }
+
+      toast.loading("Creating checkout session...");
+      
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast.error(error.message || "Failed to create checkout session");
       setSelectedPlan(null);
-    }, 1500);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setManagingPortal(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to manage subscription");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      console.error("Portal error:", error);
+      toast.error(error.message || "Failed to open customer portal");
+    } finally {
+      setManagingPortal(false);
+    }
   };
 
   const getPlanIcon = (name: string) => {
@@ -75,7 +147,7 @@ const Premium = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Button
             onClick={() => navigate("/")}
             variant="ghost"
@@ -84,6 +156,18 @@ const Premium = () => {
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Button>
+          
+          {isPremium && (
+            <Button
+              onClick={handleManageSubscription}
+              variant="outline"
+              className="gap-2"
+              disabled={managingPortal}
+            >
+              <Settings className="w-4 h-4" />
+              {managingPortal ? "Opening..." : "Manage Subscription"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -171,17 +255,19 @@ const Premium = () => {
                   </ul>
 
                   <Button
-                    onClick={() => handleUpgrade(plan.id)}
-                    disabled={selectedPlan === plan.id || plan.price === 0}
+                    onClick={() => handleUpgrade(STRIPE_CONFIG.premium.price_id)}
+                    disabled={selectedPlan === STRIPE_CONFIG.premium.price_id || plan.price === 0 || isPremium}
                     className={`w-full ${
-                      isPremium
+                      plan.name.toLowerCase().includes("premium")
                         ? "bg-gradient-primary hover:opacity-90 text-white"
                         : ""
                     }`}
-                    variant={isPremium ? "default" : "outline"}
+                    variant={plan.name.toLowerCase().includes("premium") ? "default" : "outline"}
                   >
-                    {selectedPlan === plan.id
+                    {selectedPlan === STRIPE_CONFIG.premium.price_id
                       ? "Processing..."
+                      : isPremium && plan.name.toLowerCase().includes("premium")
+                      ? "Current Plan"
                       : plan.price === 0
                       ? "Current Plan"
                       : "Upgrade Now"}

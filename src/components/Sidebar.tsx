@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SubscriptionBadge } from "./SubscriptionBadge";
 
 interface Conversation {
   id: string;
@@ -23,6 +25,7 @@ interface SidebarProps {
 const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationId }: SidebarProps) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { isPremium } = useSubscription();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -206,20 +209,22 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium truncate">{user.email}</div>
-              <div className="text-xs text-muted-foreground">Free Plan</div>
+              <SubscriptionBadge />
             </div>
           </div>
         )}
 
         {/* Upgrade Button */}
-        <Button
-          onClick={() => navigate("/premium")}
-          variant="outline"
-          className="w-full"
-          size="sm"
-        >
-          Upgrade to Premium
-        </Button>
+        {!isPremium && (
+          <Button
+            onClick={() => navigate("/premium")}
+            className="w-full bg-gradient-primary hover:opacity-90 text-white"
+            size="sm"
+          >
+            <Crown className="w-4 h-4 mr-2" />
+            Upgrade to Premium
+          </Button>
+        )}
 
         {/* Logout Button */}
         <Button
