@@ -38,6 +38,41 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_images: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          image_data: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          image_data: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          image_data?: string
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_images_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -125,6 +160,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_count: number
           message_count: number
           updated_at: string
           usage_date: string
@@ -133,6 +169,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_count?: number
           message_count?: number
           updated_at?: string
           usage_date?: string
@@ -141,6 +178,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_count?: number
           message_count?: number
           updated_at?: string
           usage_date?: string

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, LogIn, Crown } from "lucide-react";
+import { ArrowRight, LogIn, Crown, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kai-ai-logo.png";
 import SuggestionCards from "./SuggestionCards";
@@ -84,6 +84,15 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           >
             Start Chatting
             <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            onClick={() => navigate("/image-gen")}
+            className="border-border hover:bg-secondary px-8 py-6 text-lg"
+          >
+            <Image className="mr-2" />
+            Generate Images
           </Button>
           <Button 
             size="lg" 

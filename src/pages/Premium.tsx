@@ -298,8 +298,8 @@ const Premium = () => {
             },
             {
               icon: Zap,
-              title: "Image Generation",
-              description: "Create stunning images with AI"
+              title: "Unlimited Image Generation",
+              description: "Create stunning AI images without daily limits (Free: 3/day)"
             },
             {
               icon: Check,

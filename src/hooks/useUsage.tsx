@@ -5,8 +5,11 @@ import { useSubscription } from "./useSubscription";
 
 interface UsageData {
   messageCount: number;
+  imageCount: number;
   limit: number;
+  imageLimit: number;
   remaining: number;
+  imageRemaining: number;
   resetDate: Date;
 }
 
@@ -23,12 +26,15 @@ export const useUsage = () => {
       return;
     }
 
-    // Premium users have unlimited messages
+    // Premium users have unlimited messages and images
     if (isPremium) {
       setUsage({
         messageCount: 0,
+        imageCount: 0,
         limit: -1, // -1 indicates unlimited
+        imageLimit: -1,
         remaining: -1,
+        imageRemaining: -1,
         resetDate: new Date(),
       });
       setLoading(false);
@@ -51,8 +57,11 @@ export const useUsage = () => {
       }
 
       const messageCount = data?.message_count || 0;
-      const limit = 10; // Free tier limit
+      const imageCount = data?.image_count || 0;
+      const limit = 10; // Free tier message limit
+      const imageLimit = 3; // Free tier image limit
       const remaining = Math.max(0, limit - messageCount);
+      const imageRemaining = Math.max(0, imageLimit - imageCount);
 
       // Calculate reset date (tomorrow at midnight)
       const resetDate = new Date();
@@ -61,16 +70,22 @@ export const useUsage = () => {
 
       setUsage({
         messageCount,
+        imageCount,
         limit,
+        imageLimit,
         remaining,
+        imageRemaining,
         resetDate,
       });
     } catch (error) {
       console.error("Error in useUsage:", error);
       setUsage({
         messageCount: 0,
+        imageCount: 0,
         limit: 10,
+        imageLimit: 3,
         remaining: 10,
+        imageRemaining: 3,
         resetDate: new Date(),
       });
     } finally {

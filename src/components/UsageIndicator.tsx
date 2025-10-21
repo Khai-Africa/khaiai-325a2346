@@ -31,9 +31,12 @@ export const UsageIndicator = () => {
   // Free users
   const percentage = (usage.messageCount / usage.limit) * 100;
   const isNearLimit = usage.remaining <= 2;
+  const imagePercentage = (usage.imageCount / usage.imageLimit) * 100;
+  const isNearImageLimit = usage.imageRemaining <= 1;
 
   return (
     <div className="space-y-2">
+      {/* Messages Usage */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
@@ -66,10 +69,40 @@ export const UsageIndicator = () => {
         value={percentage} 
         className="h-1"
       />
-      {usage.remaining === 0 && (
+
+      {/* Images Usage */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {usage.imageRemaining} images left today
+          </span>
+        </div>
+        {isNearImageLimit && (
+          <Button
+            onClick={() => navigate("/premium")}
+            size="sm"
+            variant="ghost"
+            className="h-6 text-xs gap-1 text-primary hover:text-primary"
+          >
+            <Sparkles className="w-3 h-3" />
+            Upgrade
+          </Button>
+        )}
+      </div>
+      <Progress 
+        value={imagePercentage} 
+        className="h-1"
+      />
+
+      {(usage.remaining === 0 || usage.imageRemaining === 0) && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
           <p className="text-sm text-destructive font-medium mb-2">
-            Daily limit reached
+            {usage.remaining === 0 && usage.imageRemaining === 0 
+              ? "Daily limits reached"
+              : usage.remaining === 0
+              ? "Message limit reached"
+              : "Image limit reached"
+            }
           </p>
           <Button
             onClick={() => navigate("/premium")}

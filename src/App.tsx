@@ -8,6 +8,7 @@ import LearnMore from "./pages/LearnMore";
 import Premium from "./pages/Premium";
 import Install from "./pages/Install";
 import Auth from "./pages/Auth";
+import ImageGen from "./pages/ImageGen";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./hooks/useAuth";
 
@@ -47,6 +48,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/image-gen"
+            element={
+              <ProtectedRoute>
+                <ImageGen />
               </ProtectedRoute>
             }
           />

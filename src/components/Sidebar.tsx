@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -153,6 +153,15 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         >
           <Plus className="w-4 h-4 mr-2" />
           New Chat
+        </Button>
+        <Button
+          onClick={() => navigate("/image-gen")}
+          variant="outline"
+          className="w-full justify-start"
+          size="sm"
+        >
+          <Image className="w-4 h-4 mr-2" />
+          Generate Images
         </Button>
       </div>
       <ScrollArea className="flex-1 p-4">
