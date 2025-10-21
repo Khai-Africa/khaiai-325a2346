@@ -32,7 +32,6 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             src={logo} 
             alt="Khai AI Logo" 
             className="w-24 h-24 object-contain animate-glow"
-            style={{ mixBlendMode: 'multiply' }}
           />
         </div>
 
@@ -53,7 +52,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           <Button 
             size="lg" 
             onClick={onStartChat}
-            className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg rounded-full transition-all hover:shadow-glow group"
+            className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg transition-all hover:shadow-glow group"
           >
             Start Chatting
             <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -61,7 +60,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           <Button 
             size="lg" 
             variant="outline"
-            className="border-border hover:bg-secondary px-8 py-6 text-lg rounded-full"
+            className="border-border hover:bg-secondary px-8 py-6 text-lg"
           >
             Learn More
           </Button>
