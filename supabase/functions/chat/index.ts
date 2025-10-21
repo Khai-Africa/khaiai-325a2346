@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.0';
+import Stripe from 'https://esm.sh/stripe@18.5.0';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!;
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 const corsHeaders = {
@@ -65,6 +68,87 @@ serve(async (req) => {
     }
 
     console.log('User authenticated:', user.id);
+
+    // Check subscription status and enforce limits
+    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
+    
+    // Get Stripe customer
+    const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
+    let isPremium = false;
+    
+    if (customers.data.length > 0) {
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customers.data[0].id,
+        status: "active",
+        limit: 1,
+      });
+      isPremium = subscriptions.data.length > 0;
+    }
+    
+    console.log(`User premium status: ${isPremium}`);
+
+    // If not premium, check message limits
+    if (!isPremium) {
+      // Use service role for database operations
+      const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get or create usage record for today
+      const { data: usageData, error: usageError } = await supabaseAdmin
+        .from('user_usage')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('usage_date', today)
+        .single();
+      
+      let currentCount = 0;
+      
+      if (usageError && usageError.code !== 'PGRST116') {
+        console.error('Error fetching usage:', usageError);
+      } else if (usageData) {
+        currentCount = usageData.message_count;
+      }
+      
+      console.log(`Current message count for today: ${currentCount}`);
+      
+      // Free tier limit: 10 messages per day
+      const FREE_TIER_LIMIT = 10;
+      
+      if (currentCount >= FREE_TIER_LIMIT) {
+        console.log('Message limit exceeded for free user');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Daily message limit reached. Upgrade to Premium for unlimited messages.',
+            errorCode: 'PAYMENT_REQUIRED',
+            currentUsage: currentCount,
+            limit: FREE_TIER_LIMIT
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 402 
+          }
+        );
+      }
+      
+      // Increment usage count
+      if (usageData) {
+        await supabaseAdmin
+          .from('user_usage')
+          .update({ message_count: currentCount + 1 })
+          .eq('id', usageData.id);
+      } else {
+        await supabaseAdmin
+          .from('user_usage')
+          .insert({ 
+            user_id: user.id, 
+            usage_date: today, 
+            message_count: 1 
+          });
+      }
+      
+      console.log(`Usage count updated to: ${currentCount + 1}`);
+    }
 
     // Parse request body
     const { messages, conversationId, mode = 'chat' } = await req.json() as ChatRequest;

@@ -7,8 +7,10 @@ import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
 import ChatInputMenu from "./ChatInputMenu";
 import MessageActions from "./MessageActions";
+import { UsageIndicator } from "./UsageIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUsage } from "@/hooks/useUsage";
 
 interface Message {
   id: string;
@@ -32,6 +34,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [selectedMode, setSelectedMode] = useState<string>("chat");
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { refetch: refetchUsage } = useUsage();
 
   useEffect(() => {
     if (conversationId) {
@@ -198,6 +201,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           content: data.message,
         });
       }
+
+      // Refresh usage data after successful message
+      refetchUsage();
     } catch (error) {
       console.error('Error sending message:', error);
       
@@ -334,9 +340,12 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                 <ChatInputMenu onModeSelect={handleModeSelect} />
               </div>
             </div>
-            <p className="text-xs text-center text-muted-foreground mt-3">
-              Khai AI can make mistakes. Check important info.
-            </p>
+            <div className="mt-3 space-y-2">
+              <UsageIndicator />
+              <p className="text-xs text-center text-muted-foreground">
+                Khai AI can make mistakes. Check important info.
+              </p>
+            </div>
           </div>
         </div>
       </div>
