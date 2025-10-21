@@ -1,5 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Code, BookOpen, Lightbulb, Globe2 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const suggestions = [
   {
@@ -34,22 +41,33 @@ interface SuggestionCardsProps {
 
 const SuggestionCards = ({ onSelect }: SuggestionCardsProps) => {
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto px-4 mb-8">
-      {suggestions.map((suggestion, index) => {
-        const Icon = suggestion.icon;
-        return (
-          <Card
-            key={index}
-            onClick={() => onSelect(suggestion.description)}
-            className="p-4 bg-card/50 backdrop-blur border border-border hover:bg-card hover:shadow-card cursor-pointer transition-all hover:scale-105 group"
-          >
-            <Icon className={`w-6 h-6 mb-3 ${suggestion.color} group-hover:scale-110 transition-transform`} />
-            <h4 className="font-semibold mb-1">{suggestion.title}</h4>
-            <p className="text-sm text-muted-foreground">{suggestion.description}</p>
-          </Card>
-        );
-      })}
-    </div>
+    <Carousel
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+      className="w-full max-w-3xl mx-auto"
+    >
+      <CarouselContent>
+        {suggestions.map((suggestion, index) => {
+          const Icon = suggestion.icon;
+          return (
+            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+              <Card
+                onClick={() => onSelect(suggestion.description)}
+                className="p-3 bg-card/50 backdrop-blur border border-border hover:bg-card hover:shadow-card cursor-pointer transition-all hover:scale-105 group"
+              >
+                <Icon className={`w-5 h-5 mb-2 ${suggestion.color} group-hover:scale-110 transition-transform`} />
+                <h4 className="font-semibold text-sm mb-1">{suggestion.title}</h4>
+                <p className="text-xs text-muted-foreground">{suggestion.description}</p>
+              </Card>
+            </CarouselItem>
+          );
+        })}
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
   );
 };
 
