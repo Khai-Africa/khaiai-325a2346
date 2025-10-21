@@ -23,6 +23,13 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (initialMessage && messages.length === 0 && input) {
+      handleSend();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleNewChat = () => {
     setMessages([]);
   };
@@ -41,17 +48,48 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response (will be replaced with Lovable AI integration)
-    setTimeout(() => {
+    try {
+      // Call the chat edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I'm AfriChat AI, your intelligent assistant. I'm being set up to help you with anything you need. Stay tuned for more features!",
+        content: data.message,
         timestamp: new Date(),
       };
+      
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm sorry, I encountered an error processing your request. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -64,8 +102,8 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
         {/* Header */}
         <div className="h-16 border-b border-border flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="AfriChat AI" className="w-8 h-8" />
-            <span className="font-semibold">AfriChat AI</span>
+            <img src={logo} alt="Khai AI" className="w-8 h-8" />
+            <span className="font-semibold">Khai</span>
           </div>
         </div>
 
@@ -73,7 +111,7 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
         <ScrollArea className="flex-1 p-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <img src={logo} alt="AfriChat AI" className="w-20 h-20 opacity-50" />
+              <img src={logo} alt="Khai AI" className="w-20 h-20 opacity-50" />
               <h2 className="text-2xl font-semibold">Start a conversation</h2>
               <p className="text-muted-foreground max-w-md">
                 Ask me anything! I can help with writing, coding, analysis, and much more.
@@ -134,7 +172,7 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Message AfriChat AI..."
+              placeholder="Message Khai..."
               className="flex-1 bg-secondary border-border rounded-full px-6 py-6 text-base focus:ring-2 focus:ring-primary"
             />
             <Button
