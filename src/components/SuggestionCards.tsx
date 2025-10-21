@@ -1,37 +1,41 @@
-import { Card } from "@/components/ui/card";
-import { Code, BookOpen, Lightbulb, Globe2 } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
+import { Code, BookOpen, Lightbulb, Globe2, Search, MessageSquare, Sparkles } from "lucide-react";
 
 const suggestions = [
   {
-    icon: Code,
-    title: "Write code",
-    description: "Help me build a web application",
+    icon: BookOpen,
+    title: "Learn about African culture",
     color: "text-blue-400",
   },
   {
-    icon: BookOpen,
-    title: "Learn something new",
-    description: "Teach me about African history",
+    icon: Search,
+    title: "Search with Khai AI",
     color: "text-green-400",
   },
   {
+    icon: MessageSquare,
+    title: "Talk with Khai AI",
+    color: "text-purple-400",
+  },
+  {
     icon: Lightbulb,
-    title: "Get creative",
-    description: "Help me brainstorm business ideas",
+    title: "Get creative ideas",
     color: "text-yellow-400",
   },
   {
+    icon: Code,
+    title: "Write code",
+    color: "text-orange-400",
+  },
+  {
     icon: Globe2,
-    title: "Translate",
-    description: "Translate English to French",
-    color: "text-purple-400",
+    title: "Translate languages",
+    color: "text-pink-400",
+  },
+  {
+    icon: Sparkles,
+    title: "More",
+    color: "text-cyan-400",
   },
 ];
 
@@ -41,33 +45,22 @@ interface SuggestionCardsProps {
 
 const SuggestionCards = ({ onSelect }: SuggestionCardsProps) => {
   return (
-    <Carousel
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-      className="w-full max-w-3xl mx-auto"
-    >
-      <CarouselContent>
-        {suggestions.map((suggestion, index) => {
-          const Icon = suggestion.icon;
-          return (
-            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-              <Card
-                onClick={() => onSelect(suggestion.description)}
-                className="p-6 bg-card/50 backdrop-blur border border-border hover:bg-card hover:shadow-card cursor-pointer transition-all hover:scale-105 group h-full"
-              >
-                <Icon className={`w-6 h-6 mb-3 ${suggestion.color} group-hover:scale-110 transition-transform`} />
-                <h4 className="font-semibold text-base mb-2">{suggestion.title}</h4>
-                <p className="text-sm text-muted-foreground">{suggestion.description}</p>
-              </Card>
-            </CarouselItem>
-          );
-        })}
-      </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
-    </Carousel>
+    <div className="flex flex-wrap gap-3 justify-center items-center">
+      {suggestions.map((suggestion, index) => {
+        const Icon = suggestion.icon;
+        return (
+          <Button
+            key={index}
+            variant="outline"
+            onClick={() => onSelect(suggestion.title)}
+            className="group rounded-full px-6 py-5 h-auto border-border hover:bg-card/50 transition-all"
+          >
+            <Icon className={`w-4 h-4 mr-2 ${suggestion.color} group-hover:scale-110 transition-transform`} />
+            <span className="text-sm">{suggestion.title}</span>
+          </Button>
+        );
+      })}
+    </div>
   );
 };
 

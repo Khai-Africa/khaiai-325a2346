@@ -41,10 +41,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-          AI assistant, designed for Africa
-        </p>
-        <p className="text-lg md:text-xl text-muted-foreground/80">
-          Chat, learn, and create
+          What can I help with?
         </p>
 
         {/* CTA Buttons */}
