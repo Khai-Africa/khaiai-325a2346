@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, Mic, ArrowUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Mic, ArrowUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
 import ChatInputMenu from "./ChatInputMenu";
-import AutocompleteSuggestions from "./AutocompleteSuggestions";
+import MessageActions from "./MessageActions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -30,9 +30,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
   const [selectedMode, setSelectedMode] = useState<string>("default");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -44,16 +43,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   }, [conversationId]);
 
   useEffect(() => {
-    // Generate autocomplete suggestions based on input
-    if (input.length > 3) {
-      const commonSuggestions = [
-        `${input} and what are its key features?`,
-        `${input} and its importance in modern technology?`,
-        `${input} and why is it useful?`,
-      ];
-      setSuggestions(commonSuggestions);
-    } else {
-      setSuggestions([]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [input]);
 
@@ -113,7 +105,6 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setMessages((prev) => [...prev, userMessage]);
     const currentInput = input;
     setInput("");
-    setSuggestions([]);
     setIsLoading(true);
 
     try {
@@ -221,56 +212,53 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="flex-1 p-4 md:p-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <img src={logo} alt="Khai AI" className="w-20 h-20 opacity-50" />
-              <h2 className="text-2xl font-semibold">Start a conversation</h2>
-              <p className="text-muted-foreground max-w-md">
-                Ask me anything! I can help with writing, coding, analysis, and much more.
-              </p>
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-8 md:mb-12">
+                What can I help with?
+              </h1>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-4 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  } animate-fade-in`}
-                >
-                  {message.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                      <img src={logo} alt="AI" className="w-5 h-5" />
+            <div className="max-w-3xl mx-auto space-y-8 pb-4">
+              {messages.map((message, index) => (
+                <div key={message.id} className="animate-fade-in">
+                  {message.role === "user" ? (
+                    <div className="flex justify-end mb-8">
+                      <div className="bg-card border border-border rounded-3xl px-5 py-3 max-w-[85%]">
+                        <p className="text-sm md:text-base leading-relaxed">{message.content}</p>
+                      </div>
                     </div>
-                  )}
-                  <div
-                    className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-                      message.role === "user"
-                        ? "bg-gradient-primary text-white"
-                        : "bg-card border border-border"
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                  </div>
-                  {message.role === "user" && (
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-semibold">You</span>
+                  ) : (
+                    <div className="flex gap-3 md:gap-4">
+                      <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0 mt-1">
+                        <img src={logo} alt="AI" className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </p>
+                        <MessageActions 
+                          content={message.content}
+                          onRegenerate={index === messages.length - 1 && !isLoading ? () => {
+                            // Handle regenerate
+                            toast.info("Regenerating response...");
+                          } : undefined}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-4 animate-fade-in">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <div className="flex gap-3 md:gap-4 animate-fade-in">
+                  <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
                     <img src={logo} alt="AI" className="w-5 h-5" />
                   </div>
-                  <div className="bg-card border border-border rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200"></div>
-                    </div>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200"></div>
                   </div>
                 </div>
               )}
@@ -280,51 +268,47 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
 
         {/* Input */}
         <div className="border-t border-border p-4">
-          <div className="max-w-3xl mx-auto relative">
-            <AutocompleteSuggestions
-              suggestions={suggestions}
-              onSelect={(suggestion) => {
-                setInput(suggestion);
-                setSuggestions([]);
-                inputRef.current?.focus();
-              }}
-            />
-            <div className="flex gap-2 items-center bg-secondary border border-border rounded-full px-2 py-2">
-              <ChatInputMenu onModeSelect={handleModeSelect} />
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder={
-                  selectedMode === "default"
-                    ? "Ask anything..."
-                    : `Ask in ${selectedMode} mode...`
-                }
-                className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-2"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`rounded-full h-10 w-10 ${isRecording ? "text-red-500" : ""}`}
-                onClick={handleVoiceInput}
-              >
-                <Mic className="w-5 h-5" />
-              </Button>
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="bg-gradient-primary hover:opacity-90 text-white rounded-full h-10 w-10"
-              >
-                <ArrowUp className="w-5 h-5" />
-              </Button>
-            </div>
-            {selectedMode !== "default" && (
-              <div className="text-xs text-muted-foreground mt-2 text-center">
-                Mode: <span className="font-medium text-primary">{selectedMode}</span>
+          <div className="max-w-3xl mx-auto">
+            <div className="relative bg-card border border-border rounded-[28px] shadow-lg">
+              <div className="flex items-end gap-3 p-2 pl-4">
+                <ChatInputMenu onModeSelect={handleModeSelect} />
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask anything"
+                  className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[24px] max-h-[200px] py-3"
+                  rows={1}
+                />
+                <div className="flex items-center gap-2 pb-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`rounded-full h-10 w-10 ${isRecording ? "text-primary" : "text-muted-foreground"}`}
+                    onClick={handleVoiceInput}
+                  >
+                    <Mic className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    onClick={handleSend}
+                    disabled={!input.trim() || isLoading}
+                    size="icon"
+                    className="rounded-full h-10 w-10 bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ArrowUp className="w-5 h-5" />
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
+            <p className="text-xs text-center text-muted-foreground mt-3">
+              Khai AI can make mistakes. Check important info.
+            </p>
           </div>
         </div>
       </div>
