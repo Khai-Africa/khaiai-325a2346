@@ -8,17 +8,17 @@ interface ChatInputMenuProps {
 
 const ChatInputMenu = ({ onModeSelect }: ChatInputMenuProps) => {
   const handleAttach = () => {
-    onModeSelect("upload");
+    onModeSelect("chat");
     toast.info("File upload feature coming soon");
   };
 
   const handleSearch = () => {
-    onModeSelect("research");
+    onModeSelect("search");
     toast.info("Switched to search mode");
   };
 
   const handleStudy = () => {
-    onModeSelect("learn");
+    onModeSelect("study");
     toast.info("Switched to study mode");
   };
 

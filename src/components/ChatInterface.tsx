@@ -29,7 +29,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
-  const [selectedMode, setSelectedMode] = useState<string>("default");
+  const [selectedMode, setSelectedMode] = useState<string>("chat");
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -77,7 +77,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setMessages([]);
     setConversationId(null);
     setInput("");
-    setSelectedMode("default");
+    setSelectedMode("chat");
   };
 
   const handleModeSelect = (mode: string) => {
@@ -139,26 +139,47 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }
 
       // Call the chat edge function with mode info
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token;
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${authToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           messages: messages.concat(userMessage).map(msg => ({
             role: msg.role,
             content: msg.content
           })),
+          conversationId: currentConvId,
           mode: selectedMode,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
       const data = await response.json();
+
+      // Handle specific error codes
+      if (!response.ok) {
+        if (data.errorCode === 'RATE_LIMIT') {
+          toast.error('Rate limit exceeded. Please wait a moment and try again.');
+          throw new Error('Rate limit exceeded');
+        } else if (data.errorCode === 'PAYMENT_REQUIRED') {
+          toast.error('Message limit reached. Please upgrade to Premium to continue.', {
+            action: {
+              label: 'Upgrade',
+              onClick: () => window.location.href = '/premium'
+            }
+          });
+          throw new Error('Payment required');
+        } else if (response.status === 401) {
+          toast.error('Authentication error. Please log in again.');
+          throw new Error('Authentication required');
+        } else {
+          throw new Error(data.error || 'Failed to get AI response');
+        }
+      }
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -179,13 +200,18 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "I'm sorry, I encountered an error processing your request. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      
+      // Don't show generic error if we already showed a specific one
+      const errorString = error instanceof Error ? error.message : String(error);
+      if (!errorString.includes('Rate limit') && 
+          !errorString.includes('Payment required') && 
+          !errorString.includes('Authentication')) {
+        toast.error('Failed to send message. Please try again.');
+      }
+      
+      // Remove the user message if there was an error
+      setMessages((prev) => prev.filter(msg => msg.id !== userMessage.id));
+      setInput(currentInput); // Restore the input
     } finally {
       setIsLoading(false);
     }
