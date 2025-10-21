@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kai-ai-logo.png";
 import SuggestionCards from "./SuggestionCards";
 
@@ -9,6 +10,8 @@ interface HeroProps {
 }
 
 const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
+  const navigate = useNavigate();
+  
   const handleSuggestion = (suggestion: string) => {
     if (onSuggestionSelect) {
       onSuggestionSelect(suggestion);
@@ -57,6 +60,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           <Button 
             size="lg" 
             variant="outline"
+            onClick={() => navigate("/learn-more")}
             className="border-border hover:bg-secondary px-8 py-6 text-lg"
           >
             Learn More
@@ -65,7 +69,6 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
 
         {/* Suggestion Cards */}
         <div className="pt-12 w-full max-w-4xl mx-auto">
-          <p className="text-sm text-muted-foreground mb-6 text-center">Try asking about:</p>
           <SuggestionCards onSelect={handleSuggestion} />
         </div>
       </div>
