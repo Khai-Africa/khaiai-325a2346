@@ -11,6 +11,9 @@ import { UsageIndicator } from "./UsageIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUsage } from "@/hooks/useUsage";
+import { useAnonymousUsage } from "@/hooks/useAnonymousUsage";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -27,6 +30,8 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversationId, onSelectConversation }: ChatInterfaceProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +40,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { refetch: refetchUsage } = useUsage();
+  const anonymousUsage = useAnonymousUsage();
+  const isAnonymous = !user;
 
   useEffect(() => {
     if (conversationId) {
@@ -98,6 +105,20 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    // Check anonymous user quota
+    if (isAnonymous) {
+      if (!anonymousUsage.hasMessageQuota()) {
+        toast.error('Free trial limit reached. Create an account to continue chatting!', {
+          duration: 6000,
+          action: {
+            label: 'Sign Up',
+            onClick: () => navigate('/auth')
+          }
+        });
+        return;
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -111,14 +132,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setIsLoading(true);
 
     try {
-      // Create or update conversation
+      // Create or update conversation (only for authenticated users)
       let currentConvId = conversationId;
       
-      if (!currentConvId) {
+      if (!isAnonymous && !currentConvId) {
         const { data: session } = await supabase.auth.getSession();
         
         if (session.session) {
-          // Create new conversation
           const title = currentInput.slice(0, 50) + (currentInput.length > 50 ? "..." : "");
           const { data: newConv, error: convError } = await supabase
             .from("conversations")
@@ -132,8 +152,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         }
       }
 
-      // Save user message to database if we have a conversation
-      if (currentConvId) {
+      // Save user message to database (only for authenticated users with conversation)
+      if (!isAnonymous && currentConvId) {
         await supabase.from("messages").insert({
           conversation_id: currentConvId,
           role: "user",
@@ -141,16 +161,22 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         });
       }
 
-      // Call the chat edge function with mode info
+      // Call the chat edge function
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token;
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Only add auth header if user is authenticated
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
+        headers,
         body: JSON.stringify({
           messages: messages.concat(userMessage).map(msg => ({
             role: msg.role,
@@ -169,12 +195,22 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           toast.error('Rate limit exceeded. Please wait a moment and try again.');
           throw new Error('Rate limit exceeded');
         } else if (data.errorCode === 'PAYMENT_REQUIRED') {
-          toast.error('Message limit reached. Please upgrade to Premium to continue.', {
-            action: {
-              label: 'Upgrade',
-              onClick: () => window.location.href = '/premium'
-            }
-          });
+          if (isAnonymous) {
+            toast.error('Free trial limit reached. Create an account to continue!', {
+              duration: 6000,
+              action: {
+                label: 'Sign Up',
+                onClick: () => navigate('/auth')
+              }
+            });
+          } else {
+            toast.error('Message limit reached. Upgrade to Premium for unlimited messages.', {
+              action: {
+                label: 'Upgrade',
+                onClick: () => navigate('/premium')
+              }
+            });
+          }
           throw new Error('Payment required');
         } else if (response.status === 401) {
           toast.error('Authentication error. Please log in again.');
@@ -193,8 +229,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       
       setMessages((prev) => [...prev, aiMessage]);
 
-      // Save AI message to database
-      if (currentConvId) {
+      // Save AI message to database (only for authenticated users)
+      if (!isAnonymous && currentConvId) {
         await supabase.from("messages").insert({
           conversation_id: currentConvId,
           role: "assistant",
@@ -202,8 +238,24 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         });
       }
 
-      // Refresh usage data after successful message
-      refetchUsage();
+      // Update usage tracking
+      if (isAnonymous) {
+        anonymousUsage.incrementMessageCount();
+        
+        // Show signup prompt after a few messages
+        const newCount = anonymousUsage.usage.messageCount + 1;
+        if (newCount === 3) {
+          toast.info('You have 2 messages left. Sign up for a free account to get more!', {
+            duration: 5000,
+            action: {
+              label: 'Sign Up',
+              onClick: () => navigate('/auth')
+            }
+          });
+        }
+      } else {
+        refetchUsage();
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       

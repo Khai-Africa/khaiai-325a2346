@@ -72,7 +72,15 @@ export const ImageGenerator = ({ conversationId }: ImageGeneratorProps) => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errorCode === 'PAYMENT_REQUIRED') {
+        if (data.errorCode === 'AUTH_REQUIRED') {
+          toast.error('Sign up required', {
+            description: 'Image generation requires a free account',
+            action: {
+              label: 'Sign Up',
+              onClick: () => navigate('/auth')
+            }
+          });
+        } else if (data.errorCode === 'PAYMENT_REQUIRED') {
           toast.error(data.error, {
             action: {
               label: 'Upgrade',

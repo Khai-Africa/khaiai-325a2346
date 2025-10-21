@@ -2,6 +2,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Info } from "lucide-react";
 import { useUsage } from "@/hooks/useUsage";
+import { useAnonymousUsage } from "@/hooks/useAnonymousUsage";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
   Tooltip,
@@ -11,9 +13,80 @@ import {
 } from "@/components/ui/tooltip";
 
 export const UsageIndicator = () => {
-  const { usage, loading } = useUsage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { usage, loading } = useUsage();
+  const anonymousUsage = useAnonymousUsage();
+  
+  const isAnonymous = !user;
 
+  // Anonymous users
+  if (isAnonymous) {
+    const messagePercentage = (anonymousUsage.usage.messageCount / anonymousUsage.messageLimit) * 100;
+    const imagePercentage = (anonymousUsage.usage.imageCount / anonymousUsage.imageLimit) * 100;
+    const isLimitApproaching = anonymousUsage.remaining <= 2 || anonymousUsage.imageRemaining <= 1;
+
+    return (
+      <div className="space-y-2">
+        {/* Messages Usage */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {anonymousUsage.remaining} messages left (Free Trial)
+            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="w-3 h-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Create a free account to get 10 messages/day</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          {isLimitApproaching && (
+            <Button
+              onClick={() => navigate("/auth")}
+              size="sm"
+              variant="ghost"
+              className="h-6 text-xs gap-1 text-primary hover:text-primary"
+            >
+              Sign Up
+            </Button>
+          )}
+        </div>
+        <Progress value={messagePercentage} className="h-1" />
+
+        {/* Images Usage */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {anonymousUsage.imageRemaining} images left (Free Trial)
+            </span>
+          </div>
+        </div>
+        <Progress value={imagePercentage} className="h-1" />
+
+        {(anonymousUsage.remaining === 0 || anonymousUsage.imageRemaining === 0) && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+            <p className="text-sm text-destructive font-medium mb-2">
+              Free trial limit reached
+            </p>
+            <Button
+              onClick={() => navigate("/auth")}
+              size="sm"
+              className="w-full bg-gradient-primary hover:opacity-90 text-white"
+            >
+              Create Free Account
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Authenticated users
   if (loading || !usage) {
     return null;
   }
@@ -28,7 +101,7 @@ export const UsageIndicator = () => {
     );
   }
 
-  // Free users
+  // Free users (authenticated)
   const percentage = (usage.messageCount / usage.limit) * 100;
   const isNearLimit = usage.remaining <= 2;
   const imagePercentage = (usage.imageCount / usage.imageLimit) * 100;

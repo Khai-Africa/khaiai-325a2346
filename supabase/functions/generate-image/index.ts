@@ -27,11 +27,40 @@ serve(async (req) => {
   logStep('Function invoked');
 
   try {
+    // Get authorization header - now optional for anonymous users
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      logStep('ERROR: No authorization header');
+    let user = null;
+    let isAnonymous = false;
+
+    if (authHeader) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      });
+
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      if (!authError && userData.user) {
+        user = userData.user;
+        logStep('User authenticated', { userId: user.id });
+      } else {
+        logStep('Invalid auth token, treating as anonymous');
+        isAnonymous = true;
+      }
+    } else {
+      logStep('No auth header, treating as anonymous');
+      isAnonymous = true;
+    }
+
+    // Anonymous users must sign up to generate images
+    if (isAnonymous || !user) {
+      logStep('Anonymous user attempted image generation');
       return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
+        JSON.stringify({ 
+          error: 'Image generation requires a free account. Please sign up to continue.',
+          errorCode: 'AUTH_REQUIRED',
+          requiresAuth: true
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 401 
@@ -39,29 +68,12 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-    });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      logStep('ERROR: Authentication failed', authError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      );
-    }
-
-    logStep('User authenticated', { userId: user.id });
+    // At this point, user is guaranteed to be non-null
+    const authenticatedUser = user;
 
     // Check subscription status
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
+    const customers = await stripe.customers.list({ email: authenticatedUser.email!, limit: 1 });
     let isPremium = false;
     
     if (customers.data.length > 0) {
@@ -83,7 +95,7 @@ serve(async (req) => {
       const { data: usageData, error: usageError } = await supabaseAdmin
         .from('user_usage')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', authenticatedUser.id)
         .eq('usage_date', today)
         .single();
       
@@ -125,7 +137,7 @@ serve(async (req) => {
         await supabaseAdmin
           .from('user_usage')
           .insert({ 
-            user_id: user.id, 
+            user_id: authenticatedUser.id, 
             usage_date: today, 
             image_count: 1,
             message_count: 0
@@ -202,7 +214,7 @@ serve(async (req) => {
     const { data: insertData, error: insertError } = await supabaseAdmin
       .from('generated_images')
       .insert({
-        user_id: user.id,
+        user_id: authenticatedUser.id,
         conversation_id: conversationId || null,
         prompt: prompt,
         image_data: imageUrl

@@ -43,14 +43,8 @@ const App = () => (
           <Route path="/learn-more" element={<LearnMore />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/install" element={<Install />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            }
-          />
+          {/* Allow immediate access to chat like ChatGPT */}
+          <Route path="/" element={<Index />} />
           <Route
             path="/image-gen"
             element={
