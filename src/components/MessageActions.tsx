@@ -8,22 +8,30 @@ interface MessageActionsProps {
 }
 
 const MessageActions = ({ content, onRegenerate }: MessageActionsProps) => {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    toast.success("Copied to clipboard");
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Copied to clipboard");
+    } catch (error) {
+      toast.error("Failed to copy");
+    }
   };
 
   const handleLike = () => {
-    toast.info("Feedback recorded");
+    toast.success("Thanks for your feedback!");
   };
 
   const handleDislike = () => {
-    toast.info("Feedback recorded");
+    toast.success("Thanks for your feedback!");
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
-      navigator.share({ text: content });
+      try {
+        await navigator.share({ text: content });
+      } catch (error) {
+        // User cancelled share
+      }
     } else {
       handleCopy();
     }

@@ -214,8 +214,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         {/* Messages */}
         <ScrollArea className="flex-1 p-4 md:p-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-8 md:mb-12">
+            <div className="flex items-center justify-center h-full">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium">
                 What can I help with?
               </h1>
             </div>
@@ -270,40 +270,42 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         <div className="border-t border-border p-4">
           <div className="max-w-3xl mx-auto">
             <div className="relative bg-card border border-border rounded-[28px] shadow-lg">
-              <div className="flex items-end gap-3 p-2 pl-4">
-                <ChatInputMenu onModeSelect={handleModeSelect} />
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder="Ask anything"
-                  className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[24px] max-h-[200px] py-3"
-                  rows={1}
-                />
-                <div className="flex items-center gap-2 pb-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`rounded-full h-10 w-10 ${isRecording ? "text-primary" : "text-muted-foreground"}`}
-                    onClick={handleVoiceInput}
-                  >
-                    <Mic className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    size="icon"
-                    className="rounded-full h-10 w-10 bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowUp className="w-5 h-5" />
-                  </Button>
+              <div className="flex flex-col gap-2 p-4">
+                <div className="flex items-start gap-3">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder="Ask anything"
+                    className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[24px] max-h-[200px] text-base"
+                    rows={1}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`rounded-full h-10 w-10 ${isRecording ? "text-primary" : "text-muted-foreground"}`}
+                      onClick={handleVoiceInput}
+                    >
+                      <Mic className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      onClick={handleSend}
+                      disabled={!input.trim() || isLoading}
+                      size="icon"
+                      className="rounded-full h-10 w-10 bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ArrowUp className="w-5 h-5" />
+                    </Button>
+                  </div>
                 </div>
+                <ChatInputMenu onModeSelect={handleModeSelect} />
               </div>
             </div>
             <p className="text-xs text-center text-muted-foreground mt-3">
