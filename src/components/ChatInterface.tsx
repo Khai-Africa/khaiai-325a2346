@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, Mic, ArrowUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
+import ChatInputMenu from "./ChatInputMenu";
+import AutocompleteSuggestions from "./AutocompleteSuggestions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -16,22 +20,84 @@ interface Message {
 interface ChatInterfaceProps {
   onBack: () => void;
   initialMessage?: string;
+  conversationId?: string;
+  onSelectConversation: (conversationId: string) => void;
 }
 
-const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
+const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversationId, onSelectConversation }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
+  const [selectedMode, setSelectedMode] = useState<string>("default");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (initialMessage && messages.length === 0 && input) {
+    if (conversationId) {
+      loadConversation(conversationId);
+    } else if (initialMessage && messages.length === 0 && input) {
       handleSend();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [conversationId]);
+
+  useEffect(() => {
+    // Generate autocomplete suggestions based on input
+    if (input.length > 3) {
+      const commonSuggestions = [
+        `${input} and what are its key features?`,
+        `${input} and its importance in modern technology?`,
+        `${input} and why is it useful?`,
+      ];
+      setSuggestions(commonSuggestions);
+    } else {
+      setSuggestions([]);
+    }
+  }, [input]);
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const loadedMessages: Message[] = data.map((msg) => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+      }));
+
+      setMessages(loadedMessages);
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+      toast.error("Failed to load conversation");
+    }
+  };
 
   const handleNewChat = () => {
     setMessages([]);
+    setConversationId(null);
+    setInput("");
+    setSelectedMode("default");
+  };
+
+  const handleModeSelect = (mode: string) => {
+    setSelectedMode(mode);
+    toast.info(`Switched to ${mode} mode`);
+  };
+
+  const handleVoiceInput = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      toast.info("Voice input feature coming soon!");
+    }
   };
 
   const handleSend = async () => {
@@ -45,11 +111,43 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
+    setSuggestions([]);
     setIsLoading(true);
 
     try {
-      // Call the chat edge function
+      // Create or update conversation
+      let currentConvId = conversationId;
+      
+      if (!currentConvId) {
+        const { data: session } = await supabase.auth.getSession();
+        
+        if (session.session) {
+          // Create new conversation
+          const title = currentInput.slice(0, 50) + (currentInput.length > 50 ? "..." : "");
+          const { data: newConv, error: convError } = await supabase
+            .from("conversations")
+            .insert({ user_id: session.session.user.id, title })
+            .select()
+            .single();
+
+          if (convError) throw convError;
+          currentConvId = newConv.id;
+          setConversationId(currentConvId);
+        }
+      }
+
+      // Save user message to database if we have a conversation
+      if (currentConvId) {
+        await supabase.from("messages").insert({
+          conversation_id: currentConvId,
+          role: "user",
+          content: currentInput,
+        });
+      }
+
+      // Call the chat edge function with mode info
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -60,7 +158,8 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
           messages: messages.concat(userMessage).map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          mode: selectedMode,
         }),
       });
 
@@ -78,6 +177,15 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
       };
       
       setMessages((prev) => [...prev, aiMessage]);
+
+      // Save AI message to database
+      if (currentConvId) {
+        await supabase.from("messages").insert({
+          conversation_id: currentConvId,
+          role: "assistant",
+          content: data.message,
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -95,7 +203,12 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar onNewChat={handleNewChat} onBack={onBack} />
+      <Sidebar 
+        onNewChat={handleNewChat} 
+        onBack={onBack} 
+        onSelectConversation={onSelectConversation}
+        currentConversationId={conversationId}
+      />
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
@@ -167,22 +280,51 @@ const ChatInterface = ({ onBack, initialMessage }: ChatInterfaceProps) => {
 
         {/* Input */}
         <div className="border-t border-border p-4">
-          <div className="max-w-3xl mx-auto flex gap-4">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Message Khai..."
-              className="flex-1 bg-secondary border-border rounded-full px-6 py-6 text-base focus:ring-2 focus:ring-primary"
+          <div className="max-w-3xl mx-auto relative">
+            <AutocompleteSuggestions
+              suggestions={suggestions}
+              onSelect={(suggestion) => {
+                setInput(suggestion);
+                setSuggestions([]);
+                inputRef.current?.focus();
+              }}
             />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              size="lg"
-              className="bg-gradient-primary hover:opacity-90 text-white rounded-full px-6"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
+            <div className="flex gap-2 items-center bg-secondary border border-border rounded-full px-2 py-2">
+              <ChatInputMenu onModeSelect={handleModeSelect} />
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                placeholder={
+                  selectedMode === "default"
+                    ? "Ask anything..."
+                    : `Ask in ${selectedMode} mode...`
+                }
+                className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-2"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`rounded-full h-10 w-10 ${isRecording ? "text-red-500" : ""}`}
+                onClick={handleVoiceInput}
+              >
+                <Mic className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                size="icon"
+                className="bg-gradient-primary hover:opacity-90 text-white rounded-full h-10 w-10"
+              >
+                <ArrowUp className="w-5 h-5" />
+              </Button>
+            </div>
+            {selectedMode !== "default" && (
+              <div className="text-xs text-muted-foreground mt-2 text-center">
+                Mode: <span className="font-medium text-primary">{selectedMode}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

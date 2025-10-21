@@ -5,9 +5,16 @@ import ChatInterface from "@/components/ChatInterface";
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const [initialMessage, setInitialMessage] = useState("");
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleSuggestionSelect = (suggestion: string) => {
     setInitialMessage(suggestion);
+  };
+
+  const handleSelectConversation = (convId: string) => {
+    setConversationId(convId);
+    setShowChat(true);
+    setInitialMessage("");
   };
 
   if (showChat) {
@@ -16,8 +23,11 @@ const Index = () => {
         onBack={() => {
           setShowChat(false);
           setInitialMessage("");
+          setConversationId(null);
         }}
         initialMessage={initialMessage}
+        conversationId={conversationId}
+        onSelectConversation={handleSelectConversation}
       />
     );
   }
