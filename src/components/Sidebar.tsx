@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Conversation {
   id: string;
@@ -21,8 +22,15 @@ interface SidebarProps {
 
 const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationId }: SidebarProps) => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
+  };
 
   useEffect(() => {
     loadConversations();
@@ -189,17 +197,39 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         )}
       </ScrollArea>
       
-      <div className="p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground text-center">
-          Free Plan • 10 messages/day
-        </div>
+      <div className="p-4 border-t border-border space-y-3">
+        {/* User Info */}
+        {user && (
+          <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <User className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium truncate">{user.email}</div>
+              <div className="text-xs text-muted-foreground">Free Plan</div>
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade Button */}
         <Button
           onClick={() => navigate("/premium")}
           variant="outline"
-          className="w-full mt-2"
+          className="w-full"
           size="sm"
         >
           Upgrade to Premium
+        </Button>
+
+        {/* Logout Button */}
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          size="sm"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
         </Button>
       </div>
     </div>

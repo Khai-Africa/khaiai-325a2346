@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kai-ai-logo.png";
 import SuggestionCards from "./SuggestionCards";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeroProps {
   onStartChat: () => void;
@@ -11,6 +12,7 @@ interface HeroProps {
 
 const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const handleSuggestion = (suggestion: string) => {
     if (onSuggestionSelect) {
@@ -21,6 +23,20 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* Login button in top right */}
+      {!user && (
+        <div className="absolute top-4 right-4 z-20">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/auth")}
+            className="border-border hover:bg-secondary"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Login
+          </Button>
+        </div>
+      )}
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
