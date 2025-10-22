@@ -58,6 +58,14 @@ const Premium = () => {
     const ref = searchParams.get("ref");
     const canceled = searchParams.get("canceled");
     
+    // Check for cancellation first to avoid verification attempts
+    if (canceled) {
+      toast.info("Checkout canceled.");
+      setSelectedPlan(null);
+      window.history.replaceState({}, "", "/premium");
+      return;
+    }
+    
     if (success || payment === "success") {
       if (ref) {
         // Verify Flutterwave payment
@@ -66,10 +74,6 @@ const Premium = () => {
         toast.success("Subscription activated! Welcome to Premium!");
         refetch();
       }
-      window.history.replaceState({}, "", "/premium");
-    } else if (canceled) {
-      toast.info("Checkout canceled.");
-      setSelectedPlan(null);
       window.history.replaceState({}, "", "/premium");
     }
   }, [searchParams, refetch]);
