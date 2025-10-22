@@ -279,9 +279,9 @@ export default function Codex() {
     <div className="min-h-screen bg-background flex flex-col">
       <CodexHeader />
       
-      <div className="container mx-auto px-4 py-6 space-y-6 flex-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="container mx-auto px-3 md:px-4 py-3 md:py-6 space-y-3 md:space-y-6 flex-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4 w-full sm:w-auto">
             <DownloadCounter 
               isPremium={isPremium} 
               freeDownloadsRemaining={freeDownloadsRemaining} 
@@ -294,7 +294,7 @@ export default function Codex() {
                   const project = projects.find(p => p.id === e.target.value);
                   if (project) setActiveProject(project);
                 }}
-                className="px-3 py-2 border border-border rounded-md bg-background text-sm"
+                className="w-full sm:w-auto px-3 py-2 border border-border rounded-md bg-background text-xs md:text-sm"
               >
                 {projects.map(project => (
                   <option key={project.id} value={project.id}>
@@ -305,14 +305,16 @@ export default function Codex() {
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <Button
               variant={isGitHubConnected ? "default" : "outline"}
               size="sm"
               onClick={() => setShowGitHubDialog(true)}
+              className="flex-1 sm:flex-none text-xs"
             >
-              <Github className="w-4 h-4 mr-2" />
-              {isGitHubConnected ? "GitHub Connected" : "Connect GitHub"}
+              <Github className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              <span className="hidden md:inline">{isGitHubConnected ? "GitHub Connected" : "Connect GitHub"}</span>
+              <span className="md:hidden">{isGitHubConnected ? "Connected" : "GitHub"}</span>
             </Button>
             
             {projects.length > 0 && (
@@ -320,8 +322,9 @@ export default function Codex() {
                 variant="outline"
                 size="sm"
                 onClick={() => createProject("New Project", "New project")}
+                className="flex-1 sm:flex-none text-xs"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 New Project
               </Button>
             )}
@@ -329,7 +332,7 @@ export default function Codex() {
         </div>
 
         {projects.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center p-4">
             <CodexPromptInput
               onSubmit={handlePromptSubmit}
               onFileUpload={handleFileUpload}
@@ -338,15 +341,15 @@ export default function Codex() {
           </div>
         ) : (
           <Tabs defaultValue="editor" className="flex-1">
-            <TabsList>
-              <TabsTrigger value="editor">Editor</TabsTrigger>
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsList className="w-full grid grid-cols-3 h-auto">
+              <TabsTrigger value="editor" className="text-xs md:text-sm">Editor</TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs md:text-sm">Chat</TabsTrigger>
+              <TabsTrigger value="tasks" className="text-xs md:text-sm">Tasks</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="editor" className="flex-1">
-              <div className="grid grid-cols-12 gap-4 h-[calc(100vh-250px)]">
-                <div className="col-span-3">
+            <TabsContent value="editor" className="flex-1 mt-3 md:mt-4">
+              <div className="flex flex-col lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-auto lg:h-[calc(100vh-250px)]">
+                <div className="lg:col-span-3 h-48 lg:h-full">
                   <FileTree
                     files={files}
                     selectedFile={selectedFile}
@@ -354,7 +357,7 @@ export default function Codex() {
                     onFileDelete={deleteFile}
                   />
                 </div>
-                <div className="col-span-9 border border-border rounded-lg">
+                <div className="lg:col-span-9 min-h-[400px] lg:h-full">
                   <CodeEditor
                     file={selectedFile}
                     onSave={updateFile}
@@ -364,13 +367,13 @@ export default function Codex() {
               </div>
             </TabsContent>
 
-            <TabsContent value="chat" className="h-[calc(100vh-250px)]">
+            <TabsContent value="chat" className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)] mt-3 md:mt-4">
               <div className="border border-border rounded-lg h-full">
                 <CodexChat projectId={activeProject?.id || null} onFilesCreated={refetchFiles} />
               </div>
             </TabsContent>
 
-            <TabsContent value="tasks">
+            <TabsContent value="tasks" className="mt-3 md:mt-4">
               <TaskList tasks={tasks} />
             </TabsContent>
           </Tabs>

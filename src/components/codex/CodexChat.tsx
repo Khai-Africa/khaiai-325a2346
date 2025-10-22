@@ -48,10 +48,10 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-3 md:p-4 border-b">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" />
-          <h3 className="font-semibold">AI Assistant</h3>
+          <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+          <h3 className="font-semibold text-sm md:text-base">AI Assistant</h3>
         </div>
         {messages.length > 0 && (
           <Button
@@ -60,17 +60,17 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
             onClick={clearChat}
             disabled={loading}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
           </Button>
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 p-3 md:p-4" ref={scrollRef}>
+        <div className="space-y-3 md:space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">Ask me anything about your code!</p>
+            <div className="text-center text-muted-foreground py-6 md:py-8">
+              <MessageSquare className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 opacity-50" />
+              <p className="text-xs md:text-sm">Ask me anything about your code!</p>
               <p className="text-xs mt-2">I have context of your project files</p>
             </div>
           ) : (
@@ -84,7 +84,7 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
               >
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-lg p-3",
+                    "max-w-[85%] md:max-w-[80%] rounded-lg p-2 md:p-3",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
@@ -93,7 +93,7 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
                   <div className="text-xs font-medium mb-1 opacity-70">
                     {message.role === "user" ? "You" : "AI Assistant"}
                   </div>
-                  <div className="text-sm whitespace-pre-wrap break-words">
+                  <div className="text-xs md:text-sm whitespace-pre-wrap break-words">
                     {message.content}
                   </div>
                 </div>
@@ -102,34 +102,34 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
           )}
           {streaming && (
             <div className="flex justify-start">
-              <div className="bg-muted rounded-lg p-3">
-                <Loader2 className="w-4 h-4 animate-spin" />
+              <div className="bg-muted rounded-lg p-2 md:p-3">
+                <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
               </div>
             </div>
           )}
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
+      <form onSubmit={handleSubmit} className="p-3 md:p-4 border-t">
         <div className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your code... (Shift+Enter for new line)"
-            className="min-h-[60px] max-h-[120px] resize-none"
+            placeholder="Ask about your code..."
+            className="min-h-[50px] md:min-h-[60px] max-h-[100px] md:max-h-[120px] resize-none text-sm"
             disabled={loading}
           />
           <Button
             type="submit"
             disabled={!input.trim() || loading || !projectId}
             size="icon"
-            className="self-end"
+            className="self-end h-9 w-9 md:h-10 md:w-10"
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3 h-3 md:w-4 md:h-4" />
             )}
           </Button>
         </div>

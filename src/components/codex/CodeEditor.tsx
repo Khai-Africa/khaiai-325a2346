@@ -42,45 +42,47 @@ export const CodeEditor = ({ file, onSave, onDownload }: CodeEditorProps) => {
 
   if (!file) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Select a file to view and edit</p>
+      <div className="flex items-center justify-center h-full min-h-[300px] md:min-h-[400px]">
+        <p className="text-sm md:text-base text-muted-foreground">Select a file to view and edit</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <div>
-          <h3 className="font-semibold">{file.file_name}</h3>
+    <div className="flex flex-col h-full border border-border rounded-lg overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 border-b border-border gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm md:text-base truncate">{file.file_name}</h3>
           <p className="text-xs text-muted-foreground">{file.file_type}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={handleSave}
             disabled={!hasChanges}
+            className="flex-1 sm:flex-none text-xs"
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
             Save
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onDownload(file.id)}
+            className="flex-1 sm:flex-none text-xs"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
             Download
           </Button>
         </div>
       </div>
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-3 md:p-4">
         <Textarea
           value={content}
           onChange={(e) => handleContentChange(e.target.value)}
-          className="h-full font-mono text-sm resize-none"
+          className="h-full min-h-[300px] md:min-h-[400px] font-mono text-xs md:text-sm resize-none border-0 focus-visible:ring-0"
           placeholder="// Your code here..."
         />
       </div>
