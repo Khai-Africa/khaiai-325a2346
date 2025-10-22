@@ -73,6 +73,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   }, [isMobile]);
 
+  // Sync conversationId with prop changes
+  useEffect(() => {
+    if (initialConversationId !== conversationId) {
+      setConversationId(initialConversationId || null);
+    }
+  }, [initialConversationId]);
+
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
