@@ -42,6 +42,34 @@ export default function Codex() {
     }
   }, [user, authLoading, navigate]);
 
+  // Handle payment success
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const paymentStatus = searchParams.get('payment');
+    const fileIdsParam = searchParams.get('fileIds');
+    const projectIdParam = searchParams.get('projectId');
+
+    if (paymentStatus === 'success' && fileIdsParam && projectIdParam) {
+      toast.success('Payment successful! Starting download...');
+      
+      // Process downloads
+      const fileIds = fileIdsParam.split(',');
+      fileIds.forEach(async (fileId) => {
+        await performDownload(fileId);
+      });
+
+      // Update usage
+      refetchUsage();
+
+      // Clean URL
+      window.history.replaceState({}, '', '/codex');
+    } else if (paymentStatus === 'canceled') {
+      toast.info('Payment canceled');
+      window.history.replaceState({}, '', '/codex');
+    }
+  }, []);
+
+
   // Load tasks for active project
   useEffect(() => {
     const loadTasks = async () => {
@@ -270,9 +298,35 @@ export default function Codex() {
     }
   };
 
-  const handlePaymentProceed = (provider: 'stripe' | 'flutterwave') => {
-    toast.info('Payment integration coming soon');
-    setShowPaymentDialog(false);
+  const handlePaymentProceed = async (provider: 'stripe' | 'flutterwave') => {
+    if (!pendingDownloadFileId || !activeProject) return;
+
+    try {
+      toast.loading("Creating payment session...");
+      
+      const { data, error } = await supabase.functions.invoke('codex-create-payment', {
+        body: {
+          fileIds: [pendingDownloadFileId],
+          projectId: activeProject.id,
+          provider,
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to payment
+        window.open(data.url, '_blank');
+        setShowPaymentDialog(false);
+        toast.success("Redirecting to payment...");
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Failed to create payment session');
+    }
   };
 
   return (
@@ -313,8 +367,8 @@ export default function Codex() {
               className="flex-1 sm:flex-none text-xs"
             >
               <Github className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">{isGitHubConnected ? "GitHub Connected" : "Connect GitHub"}</span>
-              <span className="md:hidden">{isGitHubConnected ? "Connected" : "GitHub"}</span>
+              <span className="hidden md:inline">{isGitHubConnected ? "GitHub: Sync" : "Connect GitHub"}</span>
+              <span className="md:hidden">{isGitHubConnected ? "Sync" : "GitHub"}</span>
             </Button>
             
             {projects.length > 0 && (
@@ -393,6 +447,8 @@ export default function Codex() {
         onConnect={handleGitHubConnect}
         isConnected={isGitHubConnected}
         currentRepo={gitHubRepoUrl}
+        projectId={activeProject?.id}
+        files={files}
       />
     </div>
   );

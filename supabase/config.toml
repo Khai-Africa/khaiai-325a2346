@@ -89,3 +89,9 @@ verify_jwt = true
 
 [functions.codex-chat]
 verify_jwt = true
+
+[functions.codex-create-payment]
+verify_jwt = true
+
+[functions.github-sync]
+verify_jwt = true

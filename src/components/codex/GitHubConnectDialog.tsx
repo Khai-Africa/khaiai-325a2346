@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Github, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { Github, ExternalLink, CheckCircle2, AlertCircle, Upload, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 
 interface GitHubConnectDialogProps {
   open: boolean;
@@ -19,6 +20,8 @@ interface GitHubConnectDialogProps {
   onConnect: (repoUrl: string) => void;
   isConnected: boolean;
   currentRepo?: string;
+  projectId?: string;
+  files?: any[];
 }
 
 export const GitHubConnectDialog = ({
@@ -27,9 +30,13 @@ export const GitHubConnectDialog = ({
   onConnect,
   isConnected,
   currentRepo,
+  projectId,
+  files = [],
 }: GitHubConnectDialogProps) => {
   const [repoUrl, setRepoUrl] = useState(currentRepo || "");
   const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [commitMessage, setCommitMessage] = useState("");
 
   const handleConnect = async () => {
     if (!repoUrl.trim()) {
@@ -71,6 +78,90 @@ export const GitHubConnectDialog = ({
       toast.error(error.message || "Failed to connect GitHub repository");
     } finally {
       setConnecting(false);
+    }
+  };
+
+  const handlePush = async () => {
+    if (!projectId || !isConnected || files.length === 0) {
+      toast.error("No files to push");
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const filesToPush = files.map(f => ({
+        path: f.file_path || f.file_name,
+        content: f.file_content,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('github-sync', {
+        body: {
+          action: 'push',
+          projectId,
+          files: filesToPush,
+          commitMessage: commitMessage || "Update from Codex",
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || "Files pushed to GitHub successfully!");
+        setCommitMessage("");
+      } else {
+        toast.error("Failed to push files to GitHub");
+      }
+    } catch (error: any) {
+      console.error("Error pushing to GitHub:", error);
+      toast.error(error.message || "Failed to push to GitHub. Make sure you have authenticated with GitHub.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handlePull = async () => {
+    if (!projectId || !isConnected) {
+      toast.error("Cannot pull: No GitHub connection");
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const filePaths = files.map(f => f.file_path || f.file_name);
+
+      const { data, error } = await supabase.functions.invoke('github-sync', {
+        body: {
+          action: 'pull',
+          projectId,
+          files: filePaths,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.files) {
+        toast.success(`Pulled ${data.files.length} files from GitHub`);
+        // Note: You'd need to handle updating local files here
+      } else {
+        toast.error("No files pulled from GitHub");
+      }
+    } catch (error: any) {
+      console.error("Error pulling from GitHub:", error);
+      toast.error(error.message || "Failed to pull from GitHub");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -166,12 +257,57 @@ export const GitHubConnectDialog = ({
           <div className="bg-muted/30 rounded-lg p-3 space-y-2 text-sm">
             <p className="font-medium">How it works:</p>
             <ul className="space-y-1 text-muted-foreground ml-4 list-disc">
-              <li>Your Coda House projects will sync with this repository</li>
-              <li>Changes in Coda House can be pushed to GitHub</li>
-              <li>You can pull updates from GitHub into Coda House</li>
-              <li>Requires repository access permissions</li>
+              <li>Connect your GitHub repository to enable sync</li>
+              <li>Push: Upload your Codex files to GitHub</li>
+              <li>Pull: Download files from GitHub to Codex</li>
+              <li>Requires GitHub authentication in Settings</li>
             </ul>
           </div>
+
+          {isConnected && projectId && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="commit-message">Commit Message (for push)</Label>
+                <Textarea
+                  id="commit-message"
+                  placeholder="Update files via Codex"
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                  disabled={syncing}
+                  className="h-20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handlePush}
+                  disabled={syncing || files.length === 0}
+                  className="w-full"
+                >
+                  {syncing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  Push to GitHub
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handlePull}
+                  disabled={syncing}
+                  className="w-full"
+                >
+                  {syncing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4 mr-2" />
+                  )}
+                  Pull from GitHub
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex gap-2">

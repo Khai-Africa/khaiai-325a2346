@@ -10,6 +10,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { GoogleIntegrations } from "@/components/GoogleIntegrations";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -293,6 +294,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         )}
+
+        <GoogleIntegrations />
 
         <Card>
           <CardHeader>
