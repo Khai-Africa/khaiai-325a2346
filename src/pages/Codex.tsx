@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CodexHeader } from "@/components/codex/CodexHeader";
 import { CodexPromptInput } from "@/components/codex/CodexPromptInput";
 import { FileTree } from "@/components/codex/FileTree";
@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Codex() {
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const { isPremium, canDownload, freeDownloadsRemaining, refetch: refetchUsage } = useCodexUsage();
   const { projects, activeProject, createProject, setActiveProject } = useCodexProjects();
   const { files, uploadFile, updateFile, deleteFile } = useCodexFiles(activeProject?.id || null);
@@ -30,9 +30,24 @@ export default function Codex() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [pendingDownloadFileId, setPendingDownloadFileId] = useState<string | null>(null);
 
-  // Redirect if not logged in
+  // Redirect if not logged in (wrapped in useEffect)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
   if (!user) {
-    navigate('/auth');
     return null;
   }
 
