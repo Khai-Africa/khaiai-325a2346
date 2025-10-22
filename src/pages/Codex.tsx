@@ -7,6 +7,7 @@ import { TaskList } from "@/components/codex/TaskList";
 import { DownloadCounter } from "@/components/codex/DownloadCounter";
 import { DownloadPaymentDialog } from "@/components/codex/DownloadPaymentDialog";
 import { GitHubConnectDialog } from "@/components/codex/GitHubConnectDialog";
+import { CodexChat } from "@/components/codex/CodexChat";
 import { useCodexUsage } from "@/hooks/useCodexUsage";
 import { useCodexProjects } from "@/hooks/useCodexProjects";
 import { useCodexFiles } from "@/hooks/useCodexFiles";
@@ -339,6 +340,7 @@ export default function Codex() {
           <Tabs defaultValue="editor" className="flex-1">
             <TabsList>
               <TabsTrigger value="editor">Editor</TabsTrigger>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
             </TabsList>
 
@@ -359,6 +361,12 @@ export default function Codex() {
                     onDownload={handleDownload}
                   />
                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="chat" className="h-[calc(100vh-250px)]">
+              <div className="border border-border rounded-lg h-full">
+                <CodexChat projectId={activeProject?.id || null} />
               </div>
             </TabsContent>
 

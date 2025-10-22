@@ -86,3 +86,6 @@ verify_jwt = true
 
 [functions.codex-prepare-download]
 verify_jwt = true
+
+[functions.codex-chat]
+verify_jwt = true
