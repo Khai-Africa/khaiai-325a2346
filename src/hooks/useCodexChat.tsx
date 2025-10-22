@@ -47,7 +47,7 @@ export const useCodexChat = (projectId: string | null) => {
     setStreaming(true);
 
     try {
-      // Add user message immediately
+      // Save and add user message immediately
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
         project_id: projectId,
@@ -56,6 +56,17 @@ export const useCodexChat = (projectId: string | null) => {
         content,
         created_at: new Date().toISOString(),
       };
+      
+      // Save user message to database first
+      await supabase
+        .from('codex_chat_messages')
+        .insert({
+          project_id: projectId,
+          user_id: user.id,
+          role: 'user',
+          content,
+        });
+      
       setMessages(prev => [...prev, userMessage]);
 
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/codex-chat`;
