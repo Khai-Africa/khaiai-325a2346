@@ -41,6 +41,186 @@ export type Database = {
         }
         Relationships: []
       }
+      codex_downloads: {
+        Row: {
+          amount_charged: number | null
+          created_at: string
+          currency: string
+          download_type: string
+          file_ids: Json
+          id: string
+          payment_provider: string
+          payment_reference: string | null
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_charged?: number | null
+          created_at?: string
+          currency: string
+          download_type: string
+          file_ids?: Json
+          id?: string
+          payment_provider: string
+          payment_reference?: string | null
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          amount_charged?: number | null
+          created_at?: string
+          currency?: string
+          download_type?: string
+          file_ids?: Json
+          id?: string
+          payment_provider?: string
+          payment_reference?: string | null
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codex_downloads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "codex_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      codex_files: {
+        Row: {
+          created_at: string
+          file_content: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          is_modified: boolean | null
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_content: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          is_modified?: boolean | null
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_content?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          is_modified?: boolean | null
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codex_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "codex_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      codex_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          github_branch: string | null
+          github_repo_url: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          github_branch?: string | null
+          github_repo_url?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          github_branch?: string | null
+          github_repo_url?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      codex_tasks: {
+        Row: {
+          affected_files: Json | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          lines_added: number | null
+          lines_removed: number | null
+          project_id: string
+          prompt: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          affected_files?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lines_added?: number | null
+          lines_removed?: number | null
+          project_id: string
+          prompt: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          affected_files?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lines_added?: number | null
+          lines_removed?: number | null
+          project_id?: string
+          prompt?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codex_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "codex_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -607,6 +787,33 @@ export type Database = {
           file_url?: string | null
           id?: string
           metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_codex_usage: {
+        Row: {
+          created_at: string
+          free_downloads_used: number | null
+          id: string
+          total_downloads: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          free_downloads_used?: number | null
+          id?: string
+          total_downloads?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          free_downloads_used?: number | null
+          id?: string
+          total_downloads?: number | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

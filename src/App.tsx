@@ -19,6 +19,7 @@ import Admin from "./pages/Admin";
 import Notifications from "./pages/Notifications";
 import Canvas from "./pages/Canvas";
 import GoogleAuth from "./pages/GoogleAuth";
+import Codex from "./pages/Codex";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { InstallPrompt } from "./components/InstallPrompt";
@@ -114,6 +115,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <GoogleAuth />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/codex"
+              element={
+                <ProtectedRoute>
+                  <Codex />
                 </ProtectedRoute>
               }
             />
