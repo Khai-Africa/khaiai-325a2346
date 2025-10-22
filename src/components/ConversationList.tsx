@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ShareDialog } from "@/components/ShareDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,8 @@ export const ConversationList = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [loading, setLoading] = useState(true);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareData, setShareData] = useState({ text: "", title: "" });
 
   useEffect(() => {
     if (user) {
@@ -133,6 +136,32 @@ export const ConversationList = () => {
     }
   };
 
+  const handleShare = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", id)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const conversation = conversations.find(c => c.id === id);
+      const conversationText = data
+        ?.map((msg) => `${msg.role === "user" ? "You" : "Khai AI"}: ${msg.content}`)
+        .join("\n\n");
+
+      setShareData({
+        text: conversationText || "",
+        title: conversation?.title || "Conversation",
+      });
+      setShareDialogOpen(true);
+    } catch (error) {
+      console.error("Share error:", error);
+      toast.error("Failed to load conversation");
+    }
+  };
+
   const filteredConversations = conversations.filter(c =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -213,6 +242,13 @@ export const ConversationList = () => {
                     <Button
                       size="sm"
                       variant="ghost"
+                      onClick={() => handleShare(conversation.id)}
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => handleExport(conversation.id)}
                     >
                       <Download className="w-4 h-4" />
@@ -231,6 +267,13 @@ export const ConversationList = () => {
           ))}
         </div>
       )}
+
+      <ShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        conversationText={shareData.text}
+        conversationTitle={shareData.title}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

@@ -9,6 +9,7 @@ import ChatInputMenu from "./ChatInputMenu";
 import PlusMenu from "./PlusMenu";
 import MessageActions from "./MessageActions";
 import { UsageIndicator } from "./UsageIndicator";
+import { TypewriterPlaceholder } from "./TypewriterPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUsage } from "@/hooks/useUsage";
@@ -535,10 +536,15 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         handleSend();
                       }
                     }}
-                    placeholder="Ask anything"
+                    placeholder=""
                     className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[24px] max-h-[200px] text-base"
                     rows={1}
                   />
+                  {!input && (
+                    <div className="absolute left-16 top-[18px] pointer-events-none">
+                      <TypewriterPlaceholder />
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"

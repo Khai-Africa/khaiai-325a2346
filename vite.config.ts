@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "kai-ai-logo.png"],
+      includeAssets: ["favicon.ico", "pwa-icon.png"],
       manifest: {
         name: "Khai AI",
         short_name: "Khai AI",
@@ -25,12 +25,12 @@ export default defineConfig(({ mode }) => ({
         display: "standalone",
         icons: [
           {
-            src: "/kai-ai-logo.png",
+            src: "/pwa-icon.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/kai-ai-logo.png",
+            src: "/pwa-icon.png",
             sizes: "512x512",
             type: "image/png",
           },

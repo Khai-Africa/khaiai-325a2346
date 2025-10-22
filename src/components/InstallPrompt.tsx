@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, Download } from "lucide-react";
+import { X, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,25 +12,33 @@ interface BeforeInstallPromptEvent extends Event {
 export const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show prompt after a delay if user hasn't dismissed it
+      // Auto-show prompt on mobile devices if user hasn't dismissed it
       const dismissed = localStorage.getItem("installPromptDismissed");
-      if (!dismissed) {
+      if (!dismissed && isMobile) {
+        setTimeout(() => setShowPrompt(true), 3000);
+      } else if (!dismissed && !isMobile) {
         setTimeout(() => setShowPrompt(true), 5000);
       }
     };
+
+    // Check if already installed
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      return;
+    }
 
     window.addEventListener("beforeinstallprompt", handler);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -52,7 +61,7 @@ export const InstallPrompt = () => {
   if (!showPrompt || !deferredPrompt) return null;
 
   return (
-    <Card className="fixed bottom-4 right-4 p-4 max-w-sm shadow-lg z-50 animate-in slide-in-from-bottom-5">
+    <Card className="fixed bottom-4 right-4 p-4 max-w-sm shadow-lg z-50 animate-in slide-in-from-bottom-5 border-primary/20">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
@@ -61,16 +70,23 @@ export const InstallPrompt = () => {
       </button>
       
       <div className="flex items-start gap-3">
-        <div className="bg-primary rounded-lg p-2">
-          <Download className="w-6 h-6 text-primary-foreground" />
+        <div className="bg-gradient-primary rounded-lg p-2 flex-shrink-0">
+          {isMobile ? (
+            <Smartphone className="w-6 h-6 text-white" />
+          ) : (
+            <Download className="w-6 h-6 text-white" />
+          )}
         </div>
         <div className="flex-1">
           <h3 className="font-semibold mb-1">Install Khai AI</h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Get the app experience with offline access and faster loading
+            {isMobile 
+              ? "Add to your home screen for quick access and offline use"
+              : "Get the app experience with offline access and faster loading"
+            }
           </p>
           <div className="flex gap-2">
-            <Button onClick={handleInstall} size="sm">
+            <Button onClick={handleInstall} size="sm" className="bg-gradient-primary">
               Install
             </Button>
             <Button onClick={handleDismiss} variant="outline" size="sm">
