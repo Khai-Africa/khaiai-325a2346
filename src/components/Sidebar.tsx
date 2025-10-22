@@ -136,7 +136,16 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const conversationGroups = groupConversations();
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col fixed md:relative h-full z-50 md:z-auto">
+    <>
+      {/* Mobile overlay */}
+      {onClose && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      <div className="w-64 bg-card border-r border-border flex flex-col fixed md:relative h-full z-50 md:z-auto">
       <div className="p-4 border-b border-border space-y-2">
         <Button
           onClick={onBack}
@@ -193,7 +202,10 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
                       className={`w-full justify-start text-sm hover:bg-secondary group ${
                         currentConversationId === conv.id ? "bg-secondary" : ""
                       }`}
-                      onClick={() => onSelectConversation(conv.id)}
+                      onClick={() => {
+                        onSelectConversation(conv.id);
+                        onClose?.();
+                      }}
                     >
                       <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="flex-1 truncate text-left">{conv.title}</span>
@@ -248,6 +260,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         </Button>
       </div>
     </div>
+    </>
   );
 };
 

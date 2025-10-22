@@ -1,13 +1,13 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.0';
 import Stripe from 'https://esm.sh/stripe@18.5.0';
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!;
-const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -171,16 +171,16 @@ serve(async (req) => {
       systemPrompt += ' Provide informative and factual responses based on your knowledge. When relevant, suggest topics for further exploration.';
     }
 
-    // Call Lovable AI Gateway
-    console.log('Calling AI Gateway...');
-    const aiResponse = await fetch(AI_GATEWAY_URL, {
+    // Call OpenAI API
+    console.log('Calling OpenAI API...');
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -195,7 +195,7 @@ serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI Gateway error:', aiResponse.status, errorText);
+      console.error('OpenAI API error:', aiResponse.status, errorText);
       
       // Handle specific error codes
       if (aiResponse.status === 429) {
@@ -224,7 +224,7 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(`AI Gateway returned ${aiResponse.status}: ${errorText}`);
+      throw new Error(`OpenAI API returned ${aiResponse.status}: ${errorText}`);
     }
 
     const data = await aiResponse.json();
