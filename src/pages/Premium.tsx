@@ -234,7 +234,6 @@ const Premium = () => {
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Go Back
           </Button>
           
           <div className="flex items-center gap-2">

@@ -1,11 +1,90 @@
-import { ArrowLeft, HelpCircle, MessageSquare, Crown, Image, FileText } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, HelpCircle, MessageSquare, Crown, Image, FileText, Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Help = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isPremium } = useSubscription();
+  
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
+  const [ticketPriority, setTicketPriority] = useState("medium");
+  const [submitting, setSubmitting] = useState(false);
+  
+  const handleSubmitTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error("Please sign in to submit a ticket");
+      navigate("/auth?redirect=help");
+      return;
+    }
+    
+    if (!ticketSubject.trim() || !ticketMessage.trim()) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    setSubmitting(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to submit a ticket");
+        navigate("/auth?redirect=help");
+        return;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('submit-ticket', {
+        body: {
+          subject: ticketSubject,
+          message: ticketMessage,
+          priority: ticketPriority,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Ticket submitted! We'll respond within 48 hours.");
+      setTicketSubject("");
+      setTicketMessage("");
+      setTicketPriority("medium");
+    } catch (error) {
+      console.error("Error submitting ticket:", error);
+      toast.error("Failed to submit ticket. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+  const handleWhatsAppSupport = () => {
+    if (!isPremium) {
+      toast.error("WhatsApp support is only available for Premium members");
+      navigate("/premium");
+      return;
+    }
+    
+    const phoneNumber = "447306827526";
+    const message = encodeURIComponent("Welcome to Khai AI. How can I help you today?");
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    
+    window.open(whatsappUrl, '_blank');
+  };
 
   const faqs = [
     {
@@ -61,7 +140,6 @@ const Help = () => {
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Go Back
           </Button>
         </div>
       </header>
@@ -126,9 +204,93 @@ const Help = () => {
           </Accordion>
         </div>
 
+        {/* WhatsApp Support for Premium Members */}
+        {user && isPremium && (
+          <Card className="bg-gradient-primary text-white mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="w-6 h-6" />
+                Khai Help Centre - WhatsApp Support
+              </CardTitle>
+              <CardDescription className="text-white/90">
+                Premium members get direct WhatsApp support
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleWhatsAppSupport}
+                variant="secondary"
+                className="w-full"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Chat on WhatsApp
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Support Ticket System */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="w-6 h-6" />
+              Submit a Support Ticket
+            </CardTitle>
+            <CardDescription>
+              Get help from our support team. We respond within 48 hours.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitTicket} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  placeholder="Brief description of your issue"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select value={ticketPriority} onValueChange={setTicketPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Describe your issue in detail..."
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  rows={6}
+                  required
+                />
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={submitting}>
+                <Send className="w-4 h-4 mr-2" />
+                {submitting ? "Submitting..." : "Submit Ticket"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Still need help?</h3>
+            <h3 className="text-lg font-semibold mb-2">Other Resources</h3>
             <p className="text-muted-foreground mb-4">
               Contact our support team at support@khai.africa or check our documentation for more detailed guides.
             </p>
