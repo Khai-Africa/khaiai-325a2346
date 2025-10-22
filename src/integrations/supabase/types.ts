@@ -86,6 +86,132 @@ export type Database = {
         }
         Relationships: []
       }
+      email_campaigns: {
+        Row: {
+          admin_id: string
+          campaign_name: string
+          created_at: string | null
+          failed_sends: number | null
+          html_content: string
+          id: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          successful_sends: number | null
+          target_audience: string
+          target_user_ids: string[] | null
+          text_content: string | null
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          campaign_name: string
+          created_at?: string | null
+          failed_sends?: number | null
+          html_content: string
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          successful_sends?: number | null
+          target_audience: string
+          target_user_ids?: string[] | null
+          text_content?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          campaign_name?: string
+          created_at?: string | null
+          failed_sends?: number | null
+          html_content?: string
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          successful_sends?: number | null
+          target_audience?: string
+          target_user_ids?: string[] | null
+          text_content?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          provider_response: Json | null
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_key: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          provider_response?: Json | null
+          recipient_email: string
+          sent_at?: string | null
+          status: string
+          subject: string
+          template_key: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          provider_response?: Json | null
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_key?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          subject: string
+          template_key: string
+          text_content: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          subject: string
+          template_key: string
+          text_content?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          subject?: string
+          template_key?: string
+          text_content?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           conversation_id: string | null
@@ -120,6 +246,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      in_app_notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       message_feedback: {
         Row: {

@@ -3,6 +3,21 @@ project_id = "olofegxhytctncyhsmpy"
 [functions.auth-login]
 verify_jwt = false
 
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-in-app-notification]
+verify_jwt = false
+
+[functions.get-user-notifications]
+verify_jwt = true
+
+[functions.mark-notification-read]
+verify_jwt = true
+
+[functions.create-email-campaign]
+verify_jwt = true
+
 [functions.chat]
 verify_jwt = false
 
