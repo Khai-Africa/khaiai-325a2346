@@ -305,12 +305,12 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <div className="absolute top-4 right-4 z-20">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 sm:p-6">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
         <LanguageSwitch />
       </div>
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+      <div className="w-full max-w-md px-4 sm:px-0">
+        <div className="text-center mb-6 sm:mb-8">
           <button 
             onClick={() => navigate("/")}
             className="inline-block cursor-pointer hover:opacity-80 transition-opacity"
@@ -318,16 +318,16 @@ const Auth = () => {
             <img 
               src={khaiLogo} 
               alt="Khai AI" 
-              className="w-16 h-16 mx-auto mb-4"
+              className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4"
             />
           </button>
-          <h1 className="text-3xl font-bold mb-2">{t('auth.welcomeTitle')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">{t('auth.welcomeTitle')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground px-2">
             {isLogin ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}
           </p>
         </div>
 
-        <div className="bg-card border rounded-lg p-8 shadow-lg">
+        <div className="bg-card border rounded-lg p-4 sm:p-8 shadow-lg">
           {isResetPassword ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">

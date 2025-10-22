@@ -31,27 +31,28 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
   return (
     <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Top Bar */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex items-center gap-2 flex-wrap">
         <LanguageSwitch />
         {user && <SubscriptionBadge />}
         {!user ? (
           <Button
             variant="outline"
             onClick={() => navigate("/auth")}
-            className="border-border hover:bg-secondary px-4 py-2 text-sm"
+            className="border-border hover:bg-secondary px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm"
             size="sm"
           >
-            <LogIn className="w-3 h-3 mr-2" />
-            {t('hero.login')}
+            <LogIn className="w-3 h-3 sm:mr-2" />
+            <span className="hidden sm:inline">{t('hero.login')}</span>
           </Button>
         ) : (
           <Button
             variant="outline"
             onClick={() => navigate("/settings")}
-            className="border-border hover:bg-secondary px-4 py-2 text-sm"
+            className="border-border hover:bg-secondary px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm"
             size="sm"
           >
-            {t('hero.account')}
+            <span className="hidden sm:inline">{t('hero.account')}</span>
+            <span className="sm:hidden">{t('hero.account')}</span>
           </Button>
         )}
       </div>
@@ -63,34 +64,34 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8 animate-fade-in">
+      <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8 animate-fade-in px-4">
         {/* Logo */}
         <button 
           onClick={() => navigate("/")}
-          className="flex justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex justify-center mb-6 sm:mb-8 cursor-pointer hover:opacity-80 transition-opacity"
         >
           <img 
             src={logo} 
             alt="Khai AI Logo" 
-            className="w-12 h-12 object-contain"
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
           />
         </button>
 
         {/* Main heading */}
-        <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white leading-tight px-2">
           Khai <AITypewriter />
         </h1>
         
-        <p className="text-xl md:text-2xl text-white max-w-2xl mx-auto">
+        <p className="text-base sm:text-xl md:text-2xl text-white max-w-2xl mx-auto px-4">
           {t('hero.subtitle')}
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-2 sm:pt-4 px-4">
           <Button 
             size="lg" 
             onClick={onStartChat}
-            className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg transition-all hover:shadow-glow group"
+            className="bg-gradient-primary hover:opacity-90 text-white px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg transition-all hover:shadow-glow group w-full sm:w-auto"
           >
             {t('hero.startChatting')}
             <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -99,7 +100,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             size="sm" 
             variant="outline"
             onClick={() => navigate("/learn-more")}
-            className="border-border hover:bg-secondary px-4 py-2 text-sm"
+            className="border-border hover:bg-secondary px-4 py-2 text-sm w-full sm:w-auto"
           >
             {t('hero.learnMore')}
           </Button>
@@ -107,7 +108,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             <Button 
               size="sm" 
               onClick={() => navigate("/premium")}
-              className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm border border-white/20"
+              className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm border border-white/20 w-full sm:w-auto"
             >
               <Crown className="mr-2 w-3 h-3" />
               {t('hero.goPremium')}
@@ -116,7 +117,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
         </div>
 
         {/* Suggestion Cards */}
-        <div className="pt-12 w-full max-w-4xl mx-auto">
+        <div className="pt-8 sm:pt-12 w-full max-w-4xl mx-auto">
           <SuggestionCards onSelect={handleSuggestion} />
         </div>
       </div>

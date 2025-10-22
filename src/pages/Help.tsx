@@ -144,49 +144,49 @@ const Help = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl py-12 px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Help Center</h1>
-          <p className="text-muted-foreground text-lg">Find answers to common questions</p>
+      <main className="container max-w-4xl py-8 sm:py-12 px-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4">Help Center</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">Find answers to common questions</p>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/premium")}>
-            <CardContent className="pt-6 text-center">
-              <Crown className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-semibold">Premium</h3>
-              <p className="text-sm text-muted-foreground">Upgrade</p>
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <Crown className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-primary" />
+              <h3 className="font-semibold text-sm sm:text-base">Premium</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Upgrade</p>
             </CardContent>
           </Card>
 
           <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/usage")}>
-            <CardContent className="pt-6 text-center">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-semibold">Usage</h3>
-              <p className="text-sm text-muted-foreground">Track limits</p>
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-primary" />
+              <h3 className="font-semibold text-sm sm:text-base">Usage</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Track limits</p>
             </CardContent>
           </Card>
 
           <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/image-gen")}>
-            <CardContent className="pt-6 text-center">
-              <Image className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-semibold">Images</h3>
-              <p className="text-sm text-muted-foreground">Generate AI art</p>
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <Image className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-primary" />
+              <h3 className="font-semibold text-sm sm:text-base">Images</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Generate AI art</p>
             </CardContent>
           </Card>
 
           <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate("/settings")}>
-            <CardContent className="pt-6 text-center">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-semibold">Settings</h3>
-              <p className="text-sm text-muted-foreground">Preferences</p>
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <FileText className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-primary" />
+              <h3 className="font-semibold text-sm sm:text-base">Settings</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Preferences</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <HelpCircle className="w-6 h-6" />
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             Frequently Asked Questions
           </h2>
           

@@ -20,8 +20,8 @@ const Privacy = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl py-12 px-4">
-        <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+      <main className="container max-w-4xl py-8 sm:py-12 px-4">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8">Privacy Policy</h1>
         
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>

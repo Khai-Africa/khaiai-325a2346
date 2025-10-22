@@ -88,10 +88,10 @@ const Usage = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl py-12 px-4 space-y-6">
+      <main className="container max-w-4xl py-8 sm:py-12 px-4 space-y-6">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Usage Dashboard</h1>
-          <p className="text-muted-foreground">Track your AI usage and limits</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Usage Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Track your AI usage and limits</p>
         </div>
 
         {loading ? (
@@ -100,7 +100,7 @@ const Usage = () => {
           </div>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">

@@ -174,10 +174,10 @@ const Settings = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl py-12 px-4 space-y-6">
+      <main className="container max-w-4xl py-8 sm:py-12 px-4 space-y-6">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account preferences and settings</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Settings</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your account preferences and settings</p>
         </div>
 
         <Card>

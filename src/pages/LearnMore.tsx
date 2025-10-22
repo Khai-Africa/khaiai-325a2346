@@ -101,46 +101,46 @@ const LearnMore = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-lg border-b border-border/50 bg-background/80">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <Button
               variant="ghost"
               onClick={() => navigate("/?chat=true")}
-              className="group"
+              className="group flex-shrink-0"
             >
-              <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
             </Button>
             <button 
               onClick={() => navigate("/")}
-              className="cursor-pointer hover:opacity-80 transition-opacity"
+              className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
             >
-              <img src={logo} alt="Khai AI" className="h-10 w-10 object-contain" />
+              <img src={logo} alt="Khai AI" className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
             </button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-          <div className="inline-flex items-center justify-center p-2 bg-primary/10 rounded-full mb-4">
-            <Sparkles className="w-6 h-6 text-primary animate-pulse" />
+      <section className="container mx-auto px-4 py-12 sm:py-16 text-center">
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
+          <div className="inline-flex items-center justify-center p-2 bg-primary/10 rounded-full mb-3 sm:mb-4">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary animate-pulse" />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent px-2">
             How Khai AI Works
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             Your intelligent AI assistant designed to help you learn, create, and solve problems with the power of advanced artificial intelligence.
           </p>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12">
             Simple Steps to Get Started
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {howItWorks.map((step, index) => {
               const Icon = step.icon;
               return (
@@ -162,15 +162,15 @@ const LearnMore = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+      <section className="container mx-auto px-4 py-12 sm:py-16 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4">
             Powerful Features
           </h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-center mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base px-4">
             Khai AI is packed with features to help you accomplish more, faster and smarter.
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -189,15 +189,15 @@ const LearnMore = () => {
       </section>
 
       {/* Use Cases Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4">
             What You Can Do
           </h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-center mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base px-4">
             Khai AI adapts to your needs, whether you're a student, developer, entrepreneur, or creative professional.
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {useCases.map((useCase, index) => {
               const Icon = useCase.icon;
               return (
@@ -220,12 +220,12 @@ const LearnMore = () => {
       </section>
 
       {/* Why Choose Section */}
-      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-transparent via-accent/5 to-transparent">
+      <section className="container mx-auto px-4 py-12 sm:py-16 bg-gradient-to-b from-transparent via-accent/5 to-transparent">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12">
             Why Choose Khai AI?
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center space-y-3">
               <div className="flex justify-center">
                 <div className="p-4 bg-primary/10 rounded-full">
@@ -258,18 +258,18 @@ const LearnMore = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto text-center space-y-8 bg-gradient-primary/10 backdrop-blur border border-border rounded-3xl p-12">
-          <h2 className="text-3xl md:text-4xl font-bold">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
+        <div className="max-w-3xl mx-auto text-center space-y-6 sm:space-y-8 bg-gradient-primary/10 backdrop-blur border border-border rounded-3xl p-8 sm:p-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-xl text-muted-foreground px-4">
             Join thousands of users who are already leveraging AI to learn, create, and innovate.
           </p>
           <Button
             size="lg"
             onClick={() => navigate("/")}
-            className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg transition-all hover:shadow-glow group"
+            className="bg-gradient-primary hover:opacity-90 text-white px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg transition-all hover:shadow-glow group w-full sm:w-auto"
           >
             Start Chatting Now
             <Sparkles className="ml-2 group-hover:scale-110 transition-transform" />

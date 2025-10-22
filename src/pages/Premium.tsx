@@ -227,18 +227,18 @@ const Premium = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <Button
             onClick={() => navigate(-1)}
             variant="ghost"
-            className="gap-2"
+            className="gap-2 self-start"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select value={selectedCurrency} onValueChange={updateCurrency}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <Globe className="w-4 h-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -250,7 +250,7 @@ const Premium = () => {
             </Select>
 
             <Select value={paymentProvider} onValueChange={(v) => setPaymentProvider(v as any)}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -265,6 +265,7 @@ const Premium = () => {
                 variant="outline"
                 size="sm"
                 disabled={managingPortal}
+                className="w-full sm:w-auto"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Manage
@@ -275,26 +276,26 @@ const Premium = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
+      <div className="container mx-auto px-4 py-12 sm:py-16 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4 sm:mb-6">
           <Sparkles className="w-4 h-4" />
           <span className="text-sm font-medium">Go Premium</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 px-2">
           Unlock the Full Power of{" "}
           <span className="bg-gradient-primary bg-clip-text text-transparent">
             Khai AI
           </span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
           Get unlimited access to advanced AI capabilities, priority support, and exclusive features
         </p>
       </div>
 
       {/* Pricing Cards */}
-      <div className="container mx-auto px-4 pb-16">
+      <div className="container mx-auto px-4 pb-12 sm:pb-16">
         {loading ? (
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="p-8 animate-pulse">
                 <div className="h-32 bg-muted rounded mb-4"></div>
@@ -308,7 +309,7 @@ const Premium = () => {
             ))}
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const Icon = getPlanIcon(plan.name);
               const isPremiumPlan = plan.name.toLowerCase().includes("premium");
