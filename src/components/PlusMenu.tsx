@@ -1,5 +1,6 @@
 import { Plus, Paperclip, Image, Lightbulb, Telescope, Globe, Pencil, Calendar, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,12 +47,48 @@ const PlusMenu = ({ onFilesSelect, onModeSelect }: PlusMenuProps) => {
     navigate("/canvas");
   };
 
-  const handleGoogleCalendar = () => {
-    toast.info("Google Calendar integration coming soon! Setup required: OAuth credentials and token storage.");
+  const handleGoogleCalendar = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in first");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("google-oauth", {
+        body: { action: "initiate", service: "calendar" },
+      });
+
+      if (error) throw error;
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (error) {
+      console.error("Calendar auth error:", error);
+      toast.error("Failed to connect Google Calendar");
+    }
   };
 
-  const handleGoogleDrive = () => {
-    toast.info("Google Drive integration coming soon! Setup required: OAuth credentials and token storage.");
+  const handleGoogleDrive = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in first");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("google-oauth", {
+        body: { action: "initiate", service: "drive" },
+      });
+
+      if (error) throw error;
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (error) {
+      console.error("Drive auth error:", error);
+      toast.error("Failed to connect Google Drive");
+    }
   };
 
   return (
