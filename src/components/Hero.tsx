@@ -58,13 +58,16 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8 animate-fade-in">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
+        <button 
+          onClick={() => navigate("/")}
+          className="flex justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <img 
             src={logo} 
             alt="Khai AI Logo" 
             className="w-24 h-24 object-contain animate-glow"
           />
-        </div>
+        </button>
 
         {/* Main heading */}
         <h1 className="text-5xl md:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">

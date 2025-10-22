@@ -50,9 +50,12 @@ const Install = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 text-center">
-        <div className="flex justify-center">
+        <button 
+          onClick={() => navigate("/")}
+          className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <img src={logo} alt="Khai AI" className="w-24 h-24" />
-        </div>
+        </button>
 
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Install Khai AI</h1>

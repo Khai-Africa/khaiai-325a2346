@@ -110,7 +110,12 @@ const LearnMore = () => {
               <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
               Back to Home
             </Button>
-            <img src={logo} alt="Khai AI" className="h-10 w-10 object-contain" />
+            <button 
+              onClick={() => navigate("/")}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <img src={logo} alt="Khai AI" className="h-10 w-10 object-contain" />
+            </button>
           </div>
         </div>
       </header>

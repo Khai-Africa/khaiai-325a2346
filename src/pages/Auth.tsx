@@ -318,11 +318,16 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
-            src="/kai-ai-logo.png" 
-            alt="Khai AI" 
-            className="w-16 h-16 mx-auto mb-4"
-          />
+          <button 
+            onClick={() => navigate("/")}
+            className="inline-block cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src="/kai-ai-logo.png" 
+              alt="Khai AI" 
+              className="w-16 h-16 mx-auto mb-4"
+            />
+          </button>
           <h1 className="text-3xl font-bold mb-2">Welcome to Khai AI</h1>
           <p className="text-muted-foreground">
             {isLogin ? "Sign in to continue" : "Create your account"}
