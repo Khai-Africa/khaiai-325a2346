@@ -23,7 +23,7 @@ export default function Codex() {
   const { user, session, loading: authLoading } = useAuth();
   const { isPremium, canDownload, freeDownloadsRemaining, refetch: refetchUsage } = useCodexUsage();
   const { projects, activeProject, createProject, setActiveProject } = useCodexProjects();
-  const { files, uploadFile, updateFile, deleteFile } = useCodexFiles(activeProject?.id || null);
+  const { files, uploadFile, updateFile, deleteFile, refetch: refetchFiles } = useCodexFiles(activeProject?.id || null);
   
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -107,9 +107,14 @@ export default function Codex() {
   }
 
   const handlePromptSubmit = async (prompt: string, mode: 'ask' | 'code') => {
-    if (!activeProject) {
-      const project = await createProject("My Project", "Auto-created project");
-      if (!project) return;
+    // Ensure we have a project before proceeding
+    let project = activeProject;
+    if (!project) {
+      project = await createProject("My Project", "Auto-created project");
+      if (!project) {
+        toast.error("Failed to create project");
+        return;
+      }
     }
 
     setLoading(true);
@@ -121,7 +126,7 @@ export default function Codex() {
           prompt,
           files: mode === 'ask' ? files : [],
           context: mode === 'code' ? files.map((f: any) => f.file_content).join('\n\n') : null,
-          projectId: activeProject?.id,
+          projectId: project.id, // Use the guaranteed project ID
         },
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
@@ -130,13 +135,40 @@ export default function Codex() {
 
       if (error) throw error;
 
-      toast.success(mode === 'ask' ? 'Analysis complete' : 'Code generated');
+      // If code was generated, save it as a file
+      if (mode === 'code' && data?.code) {
+        const timestamp = new Date().getTime();
+        const fileName = `generated_${timestamp}.txt`;
+        
+        const { error: fileError } = await supabase
+          .from('codex_files')
+          .insert({
+            user_id: user!.id,
+            project_id: project.id,
+            file_name: fileName,
+            file_path: `/${fileName}`,
+            file_type: 'text',
+            file_content: data.code,
+            file_size: new Blob([data.code]).size,
+          });
+
+        if (fileError) {
+          console.error('Error saving generated code:', fileError);
+          toast.error('Code generated but failed to save as file');
+        } else {
+          toast.success('Code generated and saved');
+          // Refresh the files list to show the new file
+          refetchFiles();
+        }
+      } else if (mode === 'ask') {
+        toast.success('Analysis complete');
+      }
       
-      // Fetch updated tasks
+      // Fetch updated tasks and files
       const { data: tasksData } = await supabase
         .from('codex_tasks')
         .select('*')
-        .eq('project_id', activeProject?.id)
+        .eq('project_id', project.id)
         .order('created_at', { ascending: false })
         .limit(10);
       
@@ -150,9 +182,14 @@ export default function Codex() {
   };
 
   const handleFileUpload = async (fileList: FileList) => {
-    if (!activeProject) {
-      const project = await createProject("My Project", "Auto-created project");
-      if (!project) return;
+    // Ensure we have a project before uploading
+    let project = activeProject;
+    if (!project) {
+      project = await createProject("My Project", "Auto-created project");
+      if (!project) {
+        toast.error("Failed to create project");
+        return;
+      }
     }
 
     const uploadPromises = Array.from(fileList).map(file => {
@@ -160,10 +197,10 @@ export default function Codex() {
         toast.error(`${file.name} exceeds 20MB limit`);
         return null;
       }
-      return uploadFile(file, activeProject.id);
+      return uploadFile(file, project!.id);
     });
 
-    await Promise.all(uploadPromises);
+    await Promise.all(uploadPromises.filter(p => p !== null));
   };
 
   const handleDownload = async (fileId: string) => {
@@ -173,11 +210,16 @@ export default function Codex() {
       return;
     }
 
+    if (!activeProject) {
+      toast.error("No active project");
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('codex-download-payment', {
         body: {
           fileIds: [fileId],
-          projectId: activeProject?.id,
+          projectId: activeProject.id,
           currency: 'XAF',
           paymentProvider: 'free',
         },
@@ -238,10 +280,29 @@ export default function Codex() {
       
       <div className="container mx-auto px-4 py-6 space-y-6 flex-1">
         <div className="flex items-center justify-between">
-          <DownloadCounter 
-            isPremium={isPremium} 
-            freeDownloadsRemaining={freeDownloadsRemaining} 
-          />
+          <div className="flex items-center gap-4">
+            <DownloadCounter 
+              isPremium={isPremium} 
+              freeDownloadsRemaining={freeDownloadsRemaining} 
+            />
+            
+            {projects.length > 1 && (
+              <select
+                value={activeProject?.id || ''}
+                onChange={(e) => {
+                  const project = projects.find(p => p.id === e.target.value);
+                  if (project) setActiveProject(project);
+                }}
+                className="px-3 py-2 border border-border rounded-md bg-background text-sm"
+              >
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           
           <div className="flex items-center gap-2">
             <Button
