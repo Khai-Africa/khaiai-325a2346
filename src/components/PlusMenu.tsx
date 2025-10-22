@@ -47,11 +47,11 @@ const PlusMenu = ({ onFilesSelect, onModeSelect }: PlusMenuProps) => {
   };
 
   const handleGoogleCalendar = () => {
-    navigate("/google-auth?service=calendar");
+    toast.info("Google Calendar integration coming soon! Setup required: OAuth credentials and token storage.");
   };
 
   const handleGoogleDrive = () => {
-    navigate("/google-auth?service=drive");
+    toast.info("Google Drive integration coming soon! Setup required: OAuth credentials and token storage.");
   };
 
   return (
