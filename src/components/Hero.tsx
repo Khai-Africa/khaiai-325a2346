@@ -37,17 +37,19 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           <Button
             variant="outline"
             onClick={() => navigate("/auth")}
-            className="border-border hover:bg-secondary"
+            className="border-border hover:bg-secondary px-4 py-2 text-sm"
+            size="sm"
           >
-            <LogIn className="w-4 h-4 mr-2" />
+            <LogIn className="w-3 h-3 mr-2" />
             {t('hero.login')}
           </Button>
         ) : !isPremium && (
           <Button
             onClick={() => navigate("/premium")}
-            className="bg-gradient-primary hover:opacity-90 text-white"
+            className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm"
+            size="sm"
           >
-            <Crown className="w-4 h-4 mr-2" />
+            <Crown className="w-3 h-3 mr-2" />
             {t('hero.upgradeToPremium')}
           </Button>
         )}
