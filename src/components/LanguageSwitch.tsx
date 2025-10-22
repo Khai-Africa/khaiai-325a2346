@@ -24,14 +24,14 @@ export const LanguageSwitch = () => {
           onClick={() => setLanguage('en')}
           className={language === 'en' ? 'bg-accent' : ''}
         >
-          <span className="mr-2">🇬🇧</span>
+          <span className="mr-2">🇳🇬</span>
           English
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setLanguage('fr')}
           className={language === 'fr' ? 'bg-accent' : ''}
         >
-          <span className="mr-2">🇫🇷</span>
+          <span className="mr-2">🇨🇲</span>
           Français
         </DropdownMenuItem>
       </DropdownMenuContent>

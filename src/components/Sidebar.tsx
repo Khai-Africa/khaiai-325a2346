@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionBadge } from "./SubscriptionBadge";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Conversation {
   id: string;
@@ -24,6 +25,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationId, onClose }: SidebarProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isPremium } = useSubscription();
@@ -32,7 +34,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Signed out successfully");
+    toast.success(t('chat.signedOut'));
     navigate("/auth");
   };
 
@@ -94,14 +96,14 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         .eq("id", conversationId);
 
       if (error) throw error;
-      toast.success("Conversation deleted");
+      toast.success(t('chat.conversationDeleted'));
       
       if (currentConversationId === conversationId) {
         onNewChat();
       }
     } catch (error) {
       console.error("Error deleting conversation:", error);
-      toast.error("Failed to delete conversation");
+      toast.error(t('chat.deleteConversationFailed'));
     }
   };
 
@@ -154,7 +156,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Chat
+          {t('sidebar.backToChat')}
         </Button>
         <Button
           onClick={onNewChat}
@@ -162,7 +164,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="lg"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Chat
+          {t('sidebar.newChat')}
         </Button>
         <Button
           onClick={() => navigate("/image-gen")}
@@ -171,7 +173,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <Image className="w-4 h-4 mr-2" />
-          Generate Images
+          {t('sidebar.generateImages')}
         </Button>
       </div>
       <ScrollArea className="flex-1 p-4">
@@ -183,7 +185,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           </div>
         ) : conversations.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-8">
-            No conversations yet
+            {t('sidebar.noConversations')}
           </div>
         ) : (
           <div className="space-y-4">
@@ -193,7 +195,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
               return (
                 <div key={group} className="space-y-2">
                   <div className="text-xs text-muted-foreground px-2 py-1 font-semibold">
-                    {group}
+                    {t(`chat.${group.toLowerCase()}`)}
                   </div>
                   {convs.map((conv) => (
                     <Button
@@ -244,9 +246,67 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
             size="sm"
           >
             <Crown className="w-4 h-4 mr-2" />
-            Upgrade to Premium
+            {t('sidebar.upgradeToPremium')}
           </Button>
         )}
+
+        {/* Navigation Links */}
+        <div className="space-y-1">
+          <Button
+            onClick={() => navigate("/settings")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            {t('settings.title')}
+          </Button>
+          <Button
+            onClick={() => navigate("/usage")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            {t('usage.title')}
+          </Button>
+          <Button
+            onClick={() => navigate("/help")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <HelpCircle className="w-4 h-4 mr-2" />
+            {t('help.title')}
+          </Button>
+          <Button
+            onClick={() => navigate("/learn-more")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            {t('learnMore.title')}
+          </Button>
+          <Button
+            onClick={() => navigate("/privacy")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            {t('privacy.title')}
+          </Button>
+          <Button
+            onClick={() => navigate("/terms")}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            {t('terms.title')}
+          </Button>
+        </div>
 
         {/* Logout Button */}
         <Button
@@ -256,7 +316,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
+          {t('sidebar.signOut')}
         </Button>
       </div>
     </div>

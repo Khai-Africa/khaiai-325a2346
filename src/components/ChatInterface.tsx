@@ -17,6 +17,8 @@ import { useAnonymousUsage } from "@/hooks/useAnonymousUsage";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LanguageSwitch } from "./LanguageSwitch";
 
 interface Message {
   id: string;
@@ -33,6 +35,7 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversationId, onSelectConversation }: ChatInterfaceProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -96,7 +99,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       setMessages(loadedMessages);
     } catch (error) {
       console.error("Error loading conversation:", error);
-      toast.error("Failed to load conversation");
+      toast.error(t('chat.loadConversationFailed'));
     }
   };
 
@@ -109,7 +112,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
 
   const handleModeSelect = (mode: string) => {
     setSelectedMode(mode);
-    toast.info(`Switched to ${mode} mode`);
+    toast.info(t('chat.switchedToMode', { mode }));
   };
 
   const handleVoiceInput = async () => {
@@ -144,8 +147,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           reader.onloadend = async () => {
             const base64Audio = reader.result?.toString().split(',')[1];
             
-            if (base64Audio) {
-              toast.info("Transcribing audio...");
+              if (base64Audio) {
+              toast.info(t('chat.transcribing'));
               
               try {
                 const { data, error } = await supabase.functions.invoke('transcribe-audio', {
@@ -156,13 +159,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                 
                 if (data.text) {
                   setInput(data.text);
-                  toast.success("Audio transcribed successfully!");
+                  toast.success(t('chat.audioTranscribed'));
                 } else {
-                  toast.error("No speech detected");
+                  toast.error(t('chat.noSpeechDetected'));
                 }
               } catch (error) {
                 console.error('Transcription error:', error);
-                toast.error("Failed to transcribe audio");
+                toast.error(t('chat.transcribeFailed'));
               }
             }
           };
@@ -174,10 +177,10 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         mediaRecorderRef.current = mediaRecorder;
         mediaRecorder.start();
         setIsRecording(true);
-        toast.info("Recording... Click again to stop");
+        toast.info(t('chat.recording'));
       } catch (error) {
         console.error('Error accessing microphone:', error);
-        toast.error("Could not access microphone");
+        toast.error(t('chat.microphoneError'));
       }
     }
   };
@@ -196,7 +199,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }
 
       setIsSpeaking(true);
-      toast.info("Generating speech...");
+      toast.info(t('chat.generatingSpeech'));
 
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: { text, voice: 'alloy' }
@@ -221,19 +224,19 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         
         audio.onerror = () => {
           setIsSpeaking(false);
-          toast.error("Failed to play audio");
+          toast.error(t('chat.speechFailed'));
           URL.revokeObjectURL(audioUrl);
           currentAudioRef.current = null;
         };
         
         currentAudioRef.current = audio;
         await audio.play();
-        toast.success("Playing audio...");
+        toast.success(t('chat.playingAudio'));
       }
     } catch (error) {
       console.error('TTS error:', error);
       setIsSpeaking(false);
-      toast.error("Failed to generate speech");
+      toast.error(t('chat.speechFailed'));
     }
   };
 
@@ -242,7 +245,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
       setIsSpeaking(false);
-      toast.info("Stopped speaking");
+      toast.info(t('chat.stoppedSpeaking'));
     }
   };
 
@@ -252,10 +255,10 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     // Check anonymous user quota
     if (isAnonymous) {
       if (!anonymousUsage.hasMessageQuota()) {
-        toast.error('Free trial limit reached. Create an account to continue chatting!', {
+        toast.error(t('chat.freeTrialLimit'), {
           duration: 6000,
           action: {
-            label: 'Sign Up',
+            label: t('chat.signUp'),
             onClick: () => navigate('/auth')
           }
         });
@@ -336,28 +339,28 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       // Handle specific error codes
       if (!response.ok) {
         if (data.errorCode === 'RATE_LIMIT') {
-          toast.error('Rate limit exceeded. Please wait a moment and try again.');
+          toast.error(t('chat.rateLimitExceeded'));
           throw new Error('Rate limit exceeded');
         } else if (data.errorCode === 'PAYMENT_REQUIRED') {
           if (isAnonymous) {
-            toast.error('Free trial limit reached. Create an account to continue!', {
+            toast.error(t('chat.freeTrialLimit'), {
               duration: 6000,
               action: {
-                label: 'Sign Up',
+                label: t('chat.signUp'),
                 onClick: () => navigate('/auth')
               }
             });
           } else {
-            toast.error('Message limit reached. Upgrade to Premium for unlimited messages.', {
+            toast.error(t('chat.messageLimitReached'), {
               action: {
-                label: 'Upgrade',
+                label: t('chat.upgrade'),
                 onClick: () => navigate('/premium')
               }
             });
           }
           throw new Error('Payment required');
         } else if (response.status === 401) {
-          toast.error('Authentication error. Please log in again.');
+          toast.error(t('chat.authError'));
           throw new Error('Authentication required');
         } else {
           throw new Error(data.error || 'Failed to get AI response');
@@ -389,10 +392,10 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         // Show signup prompt after a few messages
         const newCount = anonymousUsage.usage.messageCount + 1;
         if (newCount === 3) {
-          toast.info('You have 2 messages left. Sign up for a free account to get more!', {
+          toast.info(t('chat.messagesLeft', { count: 2 }), {
             duration: 5000,
             action: {
-              label: 'Sign Up',
+              label: t('chat.signUp'),
               onClick: () => navigate('/auth')
             }
           });
@@ -408,7 +411,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       if (!errorString.includes('Rate limit') && 
           !errorString.includes('Payment required') && 
           !errorString.includes('Authentication')) {
-        toast.error('Failed to send message. Please try again.');
+        toast.error(t('chat.sendFailed'));
       }
       
       // Remove the user message if there was an error
@@ -453,6 +456,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               <span className="text-lg font-semibold">Khai AI</span>
             </button>
           </div>
+          <LanguageSwitch />
         </div>
 
         {/* Messages */}
@@ -460,7 +464,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium">
-                What can I help with?
+                {t('chat.whatCanIHelp')}
               </h1>
             </div>
           ) : (
@@ -488,7 +492,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                           onSpeak={handleSpeakMessage}
                           onRegenerate={index === messages.length - 1 && !isLoading ? () => {
                             // Handle regenerate
-                            toast.info("Regenerating response...");
+                            toast.info(t('actions.regenerating'));
                           } : undefined}
                         />
                       </div>
