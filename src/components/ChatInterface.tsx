@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
 import ChatInputMenu from "./ChatInputMenu";
+import PlusMenu from "./PlusMenu";
 import MessageActions from "./MessageActions";
 import { UsageIndicator } from "./UsageIndicator";
 import { supabase } from "@/integrations/supabase/client";
@@ -379,6 +380,14 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
             <div className="relative bg-card rounded-[28px] shadow-lg">
               <div className="flex flex-col gap-2 p-4">
                 <div className="flex items-start gap-3">
+                  <PlusMenu 
+                    onModeSelect={handleModeSelect}
+                    onFilesSelect={() => {
+                      // Trigger file upload via the FileUpload component in ChatInputMenu
+                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      fileInput?.click();
+                    }}
+                  />
                   <Textarea
                     ref={textareaRef}
                     value={input}
