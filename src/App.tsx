@@ -17,6 +17,8 @@ import Usage from "./pages/Usage";
 import Help from "./pages/Help";
 import Admin from "./pages/Admin";
 import Notifications from "./pages/Notifications";
+import Canvas from "./pages/Canvas";
+import GoogleAuth from "./pages/GoogleAuth";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { InstallPrompt } from "./components/InstallPrompt";
@@ -96,6 +98,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ImageGen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/canvas"
+              element={
+                <ProtectedRoute>
+                  <Canvas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/google-auth"
+              element={
+                <ProtectedRoute>
+                  <GoogleAuth />
                 </ProtectedRoute>
               }
             />

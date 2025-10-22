@@ -43,18 +43,15 @@ const PlusMenu = ({ onFilesSelect, onModeSelect }: PlusMenuProps) => {
   };
 
   const handleCanvas = () => {
-    onModeSelect?.("canvas");
-    toast.success("Canvas mode activated - Let's create something visual");
+    navigate("/canvas");
   };
 
   const handleGoogleCalendar = () => {
-    toast.info("Google Calendar integration - Coming soon!");
-    // TODO: Implement Google Calendar OAuth and API integration
+    navigate("/google-auth?service=calendar");
   };
 
   const handleGoogleDrive = () => {
-    toast.info("Google Drive integration - Coming soon!");
-    // TODO: Implement Google Drive OAuth and file picker
+    navigate("/google-auth?service=drive");
   };
 
   return (

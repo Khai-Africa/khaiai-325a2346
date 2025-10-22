@@ -22,7 +22,7 @@ interface Message {
 interface ChatRequest {
   messages: Message[];
   conversationId?: string;
-  mode?: 'chat' | 'study' | 'search';
+  mode?: 'chat' | 'study' | 'search' | 'thinking' | 'deep-research' | 'canvas';
 }
 
 serve(async (req) => {
@@ -168,7 +168,13 @@ serve(async (req) => {
     if (mode === 'study') {
       systemPrompt += ' Focus on educational content, explanations, and helping users learn. Break down complex topics into understandable parts and provide examples.';
     } else if (mode === 'search') {
-      systemPrompt += ' Provide informative and factual responses based on your knowledge. When relevant, suggest topics for further exploration.';
+      systemPrompt += ' Provide informative and factual responses based on your knowledge. Cite sources when possible and suggest topics for further exploration.';
+    } else if (mode === 'thinking') {
+      systemPrompt += ' Show your reasoning process step-by-step. Break down complex problems, analyze different perspectives, and explain your thought process clearly before reaching conclusions.';
+    } else if (mode === 'deep-research') {
+      systemPrompt += ' Provide comprehensive, in-depth research-quality responses. Cover multiple angles, include relevant context, analyze implications, and provide detailed explanations with structured reasoning.';
+    } else if (mode === 'canvas') {
+      systemPrompt += ' Help users with visual and creative tasks. Provide detailed descriptions for visual concepts, assist with design thinking, and guide creative processes.';
     }
 
     // Call OpenAI API
