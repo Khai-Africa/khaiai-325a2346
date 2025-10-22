@@ -34,7 +34,7 @@ export const ImageGenerator = ({ conversationId }: ImageGeneratorProps) => {
       
       if (currentImages >= imageLimit) {
         toast.error("Daily image limit reached", {
-          description: "Upgrade to Premium for unlimited images",
+          description: "Go Premium for unlimited images",
           action: {
             label: "Upgrade",
             onClick: () => navigate("/premium")

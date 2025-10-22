@@ -117,7 +117,7 @@ const Usage = () => {
                   </div>
                   <Progress value={Math.min(messagePercentage, 100)} />
                   {messagePercentage >= 100 && (
-                    <p className="text-sm text-destructive">Daily limit reached. Upgrade to Premium for unlimited messages!</p>
+                    <p className="text-sm text-destructive">Daily limit reached. Go Premium for unlimited messages!</p>
                   )}
                 </CardContent>
               </Card>
@@ -137,7 +137,7 @@ const Usage = () => {
                   </div>
                   <Progress value={Math.min(imagePercentage, 100)} />
                   {imagePercentage >= 100 && (
-                    <p className="text-sm text-destructive">Daily limit reached. Upgrade to Premium for unlimited images!</p>
+                    <p className="text-sm text-destructive">Daily limit reached. Go Premium for unlimited images!</p>
                   )}
                 </CardContent>
               </Card>
@@ -183,7 +183,7 @@ const Usage = () => {
             <Card className="bg-gradient-primary text-white">
               <CardContent className="pt-6">
                 <h3 className="text-xl font-bold mb-2">Want Unlimited Access?</h3>
-                <p className="mb-4 opacity-90">Upgrade to Premium for unlimited messages and image generation</p>
+                <p className="mb-4 opacity-90">Go Premium for unlimited messages and image generation</p>
                 <Button onClick={() => navigate("/premium")} variant="secondary">
                   Upgrade Now
                 </Button>

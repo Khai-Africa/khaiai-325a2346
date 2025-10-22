@@ -27,7 +27,7 @@ export const translations = {
       goPremium: 'Go Premium',
       login: 'Login',
       account: 'Account',
-      upgradeToPremium: 'Upgrade to Premium',
+      upgradeToPremium: 'Go Premium',
     },
     
     // Auth
@@ -135,7 +135,7 @@ export const translations = {
       newChat: 'New Chat',
       generateImages: 'Generate Images',
       noConversations: 'No conversations yet',
-      upgradeToPremium: 'Upgrade to Premium',
+      upgradeToPremium: 'Go Premium',
       signOut: 'Sign Out',
     },
     
@@ -172,7 +172,7 @@ export const translations = {
     
     // Premium
     premium: {
-      upgradeToPremium: 'Upgrade to Premium',
+      upgradeToPremium: 'Go Premium',
       unlockFullPower: 'Unlock the Full Power of',
       subtitle: 'Get unlimited access to advanced AI capabilities, priority support, and exclusive features',
       mostPopular: 'Most Popular',

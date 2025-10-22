@@ -279,7 +279,7 @@ const Premium = () => {
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
           <Sparkles className="w-4 h-4" />
-          <span className="text-sm font-medium">Upgrade to Premium</span>
+          <span className="text-sm font-medium">Go Premium</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
           Unlock the Full Power of{" "}

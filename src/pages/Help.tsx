@@ -9,7 +9,7 @@ const Help = () => {
 
   const faqs = [
     {
-      question: "How do I upgrade to Premium?",
+      question: "How do I go Premium?",
       answer: "Click on the 'Premium' link in the sidebar or visit the Premium page. Choose your preferred plan and payment method (Mobile Money for African currencies or Card for international payments)."
     },
     {

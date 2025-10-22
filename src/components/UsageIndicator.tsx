@@ -183,7 +183,7 @@ export const UsageIndicator = () => {
             className="w-full bg-gradient-primary hover:opacity-90"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Upgrade to Premium
+            Go Premium
           </Button>
         </div>
       )}

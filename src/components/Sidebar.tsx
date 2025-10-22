@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +32,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const { isPremium } = useSubscription();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -155,8 +157,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           className="w-full justify-start"
           size="sm"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          {t('sidebar.goBack')}
+          <ArrowLeft className="w-4 h-4" />
         </Button>
         <Button
           onClick={onNewChat}
@@ -251,62 +252,68 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         )}
 
         {/* Navigation Links */}
-        <div className="space-y-1">
-          <Button
-            onClick={() => navigate("/settings")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <Settings className="w-3 h-3 mr-2" />
-            {t('settings.title')}
-          </Button>
-          <Button
-            onClick={() => navigate("/usage")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <BarChart3 className="w-3 h-3 mr-2" />
-            {t('usage.title')}
-          </Button>
-          <Button
-            onClick={() => navigate("/help")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <HelpCircle className="w-3 h-3 mr-2" />
-            {t('help.title')}
-          </Button>
-          <Button
-            onClick={() => navigate("/learn-more")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <BookOpen className="w-3 h-3 mr-2" />
-            {t('learnMore.title')}
-          </Button>
-          <Button
-            onClick={() => navigate("/privacy")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <Shield className="w-3 h-3 mr-2" />
-            {t('privacy.title')}
-          </Button>
-          <Button
-            onClick={() => navigate("/terms")}
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
-            size="sm"
-          >
-            <FileText className="w-3 h-3 mr-2" />
-            {t('terms.title')}
-          </Button>
-        </div>
+        <Collapsible open={isNavOpen} onOpenChange={setIsNavOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-between text-muted-foreground hover:text-foreground h-8 text-xs"
+              size="sm"
+            >
+              <div className="flex items-center">
+                <Settings className="w-3 h-3 mr-2" />
+                {t('settings.title')}
+              </div>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isNavOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-1 pt-1">
+            <Button
+              onClick={() => navigate("/usage")}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs pl-7"
+              size="sm"
+            >
+              <BarChart3 className="w-3 h-3 mr-2" />
+              {t('usage.title')}
+            </Button>
+            <Button
+              onClick={() => navigate("/help")}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs pl-7"
+              size="sm"
+            >
+              <HelpCircle className="w-3 h-3 mr-2" />
+              {t('help.title')}
+            </Button>
+            <Button
+              onClick={() => navigate("/learn-more")}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs pl-7"
+              size="sm"
+            >
+              <BookOpen className="w-3 h-3 mr-2" />
+              {t('learnMore.title')}
+            </Button>
+            <Button
+              onClick={() => navigate("/privacy")}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs pl-7"
+              size="sm"
+            >
+              <Shield className="w-3 h-3 mr-2" />
+              {t('privacy.title')}
+            </Button>
+            <Button
+              onClick={() => navigate("/terms")}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs pl-7"
+              size="sm"
+            >
+              <FileText className="w-3 h-3 mr-2" />
+              {t('terms.title')}
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Logout Button */}
         <Button
