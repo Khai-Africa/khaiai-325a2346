@@ -39,6 +39,13 @@ const Premium = () => {
   const [managingPortal, setManagingPortal] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState<"stripe" | "flutterwave">("flutterwave");
 
+  // Safety: auto-clear any stuck processing state after 10s
+  useEffect(() => {
+    if (!selectedPlan) return;
+    const t = setTimeout(() => setSelectedPlan(null), 10000);
+    return () => clearTimeout(t);
+  }, [selectedPlan]);
+
   useEffect(() => {
     fetchPlans();
     
