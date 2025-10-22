@@ -52,9 +52,19 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { refetch: refetchUsage } = useUsage();
   const anonymousUsage = useAnonymousUsage();
   const isAnonymous = !user;
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   // Auto-hide sidebar on mobile
   useEffect(() => {
@@ -512,6 +522,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </ScrollArea>
