@@ -61,6 +61,60 @@ serve(async (req) => {
 
     let accessToken = tokenData.access_token;
 
+    // Check if token is expired and refresh if needed
+    if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
+      if (!tokenData.refresh_token) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Token expired and no refresh token available",
+            needsAuth: true 
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 401,
+          }
+        );
+      }
+
+      // Refresh the token
+      const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: Deno.env.get("GOOGLE_CLIENT_ID") ?? "",
+          client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET") ?? "",
+          refresh_token: tokenData.refresh_token,
+          grant_type: "refresh_token",
+        }),
+      });
+
+      const refreshData = await refreshResponse.json();
+      if (refreshData.error) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to refresh token",
+            needsAuth: true 
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 401,
+          }
+        );
+      }
+
+      accessToken = refreshData.access_token;
+
+      // Update the stored token
+      await supabaseClient
+        .from("user_tokens")
+        .update({
+          access_token: refreshData.access_token,
+          expires_at: new Date(Date.now() + (refreshData.expires_in * 1000)).toISOString(),
+        })
+        .eq("user_id", user.id)
+        .eq("provider", "google_drive");
+    }
+
     // Handle different actions
     let response;
     switch (action) {
