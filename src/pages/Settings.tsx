@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, Bell, Globe, Palette, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Bell, Globe, Palette, Download, Trash2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -19,9 +19,26 @@ const Settings = () => {
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     loadNotificationPreferences();
+    
+    // Check if app is already installed
+    setIsInstalled(window.matchMedia("(display-mode: standalone)").matches);
+    
+    // Listen for install prompt
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    
+    window.addEventListener("beforeinstallprompt", handler);
+    
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, [user]);
 
   const loadNotificationPreferences = async () => {
@@ -100,6 +117,27 @@ const Settings = () => {
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Failed to export data");
+    }
+  };
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) {
+      toast.info("App installation is not available on this device");
+      return;
+    }
+
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        toast.success("App installed successfully!");
+        setDeferredPrompt(null);
+        setIsInstalled(true);
+      }
+    } catch (error) {
+      console.error("Install error:", error);
+      toast.error("Failed to install app");
     }
   };
 
@@ -220,6 +258,24 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {!isInstalled && deferredPrompt && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5" />
+                <CardTitle>Install App</CardTitle>
+              </div>
+              <CardDescription>Install Khai AI for quick access and offline use</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleInstallApp} variant="outline" className="w-full">
+                <Smartphone className="w-4 h-4 mr-2" />
+                Install Khai AI
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

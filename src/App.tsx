@@ -18,6 +18,7 @@ import Help from "./pages/Help";
 import Admin from "./pages/Admin";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { InstallPrompt } from "./components/InstallPrompt";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <InstallPrompt />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/learn-more" element={<LearnMore />} />

@@ -19,12 +19,30 @@ export const InstallPrompt = () => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Auto-show prompt on mobile devices if user hasn't dismissed it
-      const dismissed = localStorage.getItem("installPromptDismissed");
-      if (!dismissed && isMobile) {
-        setTimeout(() => setShowPrompt(true), 3000);
-      } else if (!dismissed && !isMobile) {
-        setTimeout(() => setShowPrompt(true), 5000);
+      // Check if user has dismissed the prompt
+      const dismissedData = localStorage.getItem("installPromptDismissed");
+      let shouldShow = true;
+      
+      if (dismissedData) {
+        try {
+          const { timestamp } = JSON.parse(dismissedData);
+          const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+          const timeSinceDismissed = Date.now() - timestamp;
+          
+          // Show again after 7 days
+          if (timeSinceDismissed < sevenDaysInMs) {
+            shouldShow = false;
+          }
+        } catch {
+          // If parsing fails, show the prompt
+          shouldShow = true;
+        }
+      }
+      
+      if (shouldShow) {
+        // Show immediately on mobile for better UX, delayed on desktop
+        const delay = isMobile ? 3000 : 5000;
+        setTimeout(() => setShowPrompt(true), delay);
       }
     };
 
@@ -55,7 +73,9 @@ export const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("installPromptDismissed", "true");
+    localStorage.setItem("installPromptDismissed", JSON.stringify({
+      timestamp: Date.now()
+    }));
   };
 
   if (!showPrompt || !deferredPrompt) return null;
