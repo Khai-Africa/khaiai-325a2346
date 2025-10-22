@@ -104,16 +104,6 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           >
             {t('hero.learnMore')}
           </Button>
-          {user && !isPremium && (
-            <Button 
-              size="sm" 
-              onClick={() => navigate("/premium")}
-              className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm border border-white/20 w-full sm:w-auto"
-            >
-              <Crown className="mr-2 w-3 h-3" />
-              {t('hero.goPremium')}
-            </Button>
-          )}
         </div>
 
         {/* Suggestion Cards */}
