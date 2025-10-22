@@ -60,5 +60,6 @@ export const useSubscription = () => {
     loading, 
     refetch: checkSubscription,
     isPremium: subscriptionStatus.subscribed,
+    provider: subscriptionStatus.product_id === "flutterwave_premium" ? "flutterwave" : "stripe",
   };
 };

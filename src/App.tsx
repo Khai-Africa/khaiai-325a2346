@@ -12,6 +12,9 @@ import ImageGen from "./pages/ImageGen";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Settings from "./pages/Settings";
+import Usage from "./pages/Usage";
+import Help from "./pages/Help";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -49,6 +52,9 @@ const App = () => (
             <Route path="/install" element={<Install />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/usage" element={<Usage />} />
+            <Route path="/help" element={<Help />} />
             {/* Allow immediate access to chat like ChatGPT */}
             <Route path="/" element={<Index />} />
             <Route

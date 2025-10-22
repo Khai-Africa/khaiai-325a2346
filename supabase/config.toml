@@ -23,3 +23,12 @@ verify_jwt = true
 
 [functions.flutterwave-webhook]
 verify_jwt = false
+
+[functions.process-file]
+verify_jwt = true
+
+[functions.google-calendar]
+verify_jwt = true
+
+[functions.google-drive]
+verify_jwt = true

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Hero from "@/components/Hero";
 import ChatInterface from "@/components/ChatInterface";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
