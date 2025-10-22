@@ -230,6 +230,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile_number: string | null
+          secret_word_hash: string
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          mobile_number?: string | null
+          secret_word_hash: string
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile_number?: string | null
+          secret_word_hash?: string
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_period: string

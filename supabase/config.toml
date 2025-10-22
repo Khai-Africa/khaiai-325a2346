@@ -1,5 +1,8 @@
 project_id = "olofegxhytctncyhsmpy"
 
+[functions.auth-login]
+verify_jwt = false
+
 [functions.chat]
 verify_jwt = false
 
@@ -32,3 +35,6 @@ verify_jwt = true
 
 [functions.google-drive]
 verify_jwt = true
+
+[functions.reset-password]
+verify_jwt = false
