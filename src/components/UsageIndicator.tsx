@@ -47,7 +47,7 @@ export const UsageIndicator = () => {
           </div>
           {isLimitApproaching && (
             <Button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?redirect=premium")}
               size="sm"
               variant="ghost"
               className="h-6 text-xs gap-1 text-primary hover:text-primary"
@@ -74,7 +74,7 @@ export const UsageIndicator = () => {
               Free trial limit reached
             </p>
             <Button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?redirect=premium")}
               size="sm"
               className="w-full bg-gradient-primary hover:opacity-90 text-white"
             >

@@ -50,7 +50,10 @@ const Auth = () => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        // Check if user came from upgrade flow
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        navigate(redirect === 'premium' ? '/premium' : '/');
       }
     });
   }, [navigate]);
@@ -96,7 +99,11 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've successfully logged in.",
         });
-        navigate("/");
+        
+        // Check if user came from upgrade flow
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        navigate(redirect === 'premium' ? '/premium' : '/');
       }
     } catch (error) {
       toast({
@@ -192,7 +199,11 @@ const Auth = () => {
           title: "Account Created!",
           description: "You've successfully signed up. Welcome to Khai AI!",
         });
-        navigate("/");
+        
+        // Check if user came from upgrade flow
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        navigate(redirect === 'premium' ? '/premium' : '/');
       }
     } catch (error) {
       toast({
@@ -250,10 +261,15 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
+      // Check if user came from upgrade flow
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+      const redirectPath = redirect === 'premium' ? '/premium' : '/';
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
 

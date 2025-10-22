@@ -50,7 +50,7 @@ export const ImageGenerator = ({ conversationId }: ImageGeneratorProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please sign in to generate images");
-        navigate("/auth");
+        navigate("/auth?redirect=premium");
         return;
       }
 

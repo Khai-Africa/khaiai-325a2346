@@ -137,7 +137,7 @@ const Premium = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please sign in to upgrade");
-        navigate("/auth");
+        navigate("/auth?redirect=premium");
         setSelectedPlan(null);
         return;
       }
