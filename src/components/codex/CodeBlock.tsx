@@ -1,6 +1,4 @@
 import { useState } from "react";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -50,19 +48,12 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
         </Button>
       </div>
       <div className="overflow-x-auto">
-        <SyntaxHighlighter
-          language={language}
-          style={atomOneDark}
-          customStyle={{
-            margin: 0,
-            padding: "1rem",
-            background: "hsl(var(--card))",
-            fontSize: "0.875rem",
-          }}
-          wrapLongLines={true}
+        <pre
+          className="m-0 p-4 text-xs md:text-sm font-mono leading-relaxed bg-card"
+          style={{ tabSize: 2, whiteSpace: "pre" }}
         >
-          {code}
-        </SyntaxHighlighter>
+          <code>{code}</code>
+        </pre>
       </div>
     </div>
   );
