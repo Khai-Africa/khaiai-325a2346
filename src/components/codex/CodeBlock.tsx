@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -52,7 +52,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
       <div className="overflow-x-auto">
         <SyntaxHighlighter
           language={language}
-          style={vscDarkPlus}
+          style={atomOneDark}
           customStyle={{
             margin: 0,
             padding: "1rem",

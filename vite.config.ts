@@ -44,10 +44,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Fix react-syntax-highlighter prism-async-light ESM resolution
-      "refractor/lib/core": "refractor/core.js",
-      "refractor/lib/common": "refractor/common.js",
-      "refractor/lib/all": "refractor/all.js",
     },
   },
 }));
