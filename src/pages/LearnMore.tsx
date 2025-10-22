@@ -108,7 +108,6 @@ const LearnMore = () => {
               className="group"
             >
               <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
-              Back to Chat
             </Button>
             <button 
               onClick={() => navigate("/")}

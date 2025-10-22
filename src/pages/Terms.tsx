@@ -16,7 +16,6 @@ const Terms = () => {
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Chat
           </Button>
         </div>
       </header>
