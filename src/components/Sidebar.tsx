@@ -156,7 +156,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          {t('sidebar.backToChat')}
+          {t('sidebar.goBack')}
         </Button>
         <Button
           onClick={onNewChat}
@@ -255,55 +255,55 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           <Button
             onClick={() => navigate("/settings")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings className="w-3 h-3 mr-2" />
             {t('settings.title')}
           </Button>
           <Button
             onClick={() => navigate("/usage")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <BarChart3 className="w-4 h-4 mr-2" />
+            <BarChart3 className="w-3 h-3 mr-2" />
             {t('usage.title')}
           </Button>
           <Button
             onClick={() => navigate("/help")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <HelpCircle className="w-4 h-4 mr-2" />
+            <HelpCircle className="w-3 h-3 mr-2" />
             {t('help.title')}
           </Button>
           <Button
             onClick={() => navigate("/learn-more")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <BookOpen className="w-4 h-4 mr-2" />
+            <BookOpen className="w-3 h-3 mr-2" />
             {t('learnMore.title')}
           </Button>
           <Button
             onClick={() => navigate("/privacy")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <Shield className="w-4 h-4 mr-2" />
+            <Shield className="w-3 h-3 mr-2" />
             {t('privacy.title')}
           </Button>
           <Button
             onClick={() => navigate("/terms")}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground h-8 text-xs"
             size="sm"
           >
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText className="w-3 h-3 mr-2" />
             {t('terms.title')}
           </Button>
         </div>

@@ -5,6 +5,7 @@ export const translations = {
     // Common
     common: {
       back: 'Back',
+      goBack: 'Go back',
       backToChat: 'Back to Chat',
       loading: 'Loading...',
       save: 'Save',
@@ -120,6 +121,7 @@ export const translations = {
     
     // Sidebar
     sidebar: {
+      goBack: 'Go back',
       backToChat: 'Back to Chat',
       newChat: 'New Chat',
       generateImages: 'Generate Images',
@@ -307,6 +309,7 @@ export const translations = {
     // Common
     common: {
       back: 'Retour',
+      goBack: 'Retour',
       backToChat: 'Retour au Chat',
       loading: 'Chargement...',
       save: 'Enregistrer',
@@ -422,6 +425,7 @@ export const translations = {
     
     // Sidebar
     sidebar: {
+      goBack: 'Retour',
       backToChat: 'Retour au Chat',
       newChat: 'Nouveau Chat',
       generateImages: 'Générer des Images',
