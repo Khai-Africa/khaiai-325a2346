@@ -366,7 +366,7 @@ export default function Codex() {
 
             <TabsContent value="chat" className="h-[calc(100vh-250px)]">
               <div className="border border-border rounded-lg h-full">
-                <CodexChat projectId={activeProject?.id || null} />
+                <CodexChat projectId={activeProject?.id || null} onFilesCreated={refetchFiles} />
               </div>
             </TabsContent>
 

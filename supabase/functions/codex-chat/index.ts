@@ -130,8 +130,111 @@ serve(async (req) => {
       });
     }
 
-    // Return the stream directly
-    return new Response(response.body, {
+    // Stream the response and collect the full content
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    fullContent += content;
+                  }
+                } catch (e) {
+                  // Ignore parse errors for incomplete chunks
+                }
+              }
+            }
+
+            // Forward the chunk to the client
+            controller.enqueue(value);
+          }
+
+          // After streaming completes, save the assistant message and detect code blocks
+          if (fullContent) {
+            // Save assistant message
+            await supabase
+              .from('codex_chat_messages')
+              .insert({
+                project_id: projectId,
+                user_id: user.id,
+                role: 'assistant',
+                content: fullContent,
+              });
+
+            // Detect and save code blocks
+            const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+            const matches = [...fullContent.matchAll(codeBlockRegex)];
+            const createdFiles = [];
+
+            for (const match of matches) {
+              const language = match[1] || 'txt';
+              const code = match[2].trim();
+              
+              if (code) {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                const extension = getFileExtension(language);
+                const fileName = `chat_generated_${timestamp}${extension}`;
+
+                const { data: fileData, error: fileError } = await supabase
+                  .from('codex_files')
+                  .insert({
+                    project_id: projectId,
+                    user_id: user.id,
+                    file_name: fileName,
+                    file_path: `/${fileName}`,
+                    file_type: language,
+                    file_content: code,
+                    file_size: code.length,
+                    is_modified: false,
+                  })
+                  .select()
+                  .single();
+
+                if (!fileError && fileData) {
+                  createdFiles.push({ fileName, fileId: fileData.id });
+                }
+              }
+            }
+
+            // Send file creation info as final event
+            if (createdFiles.length > 0) {
+              const fileInfoEvent = `data: ${JSON.stringify({ type: 'files_created', files: createdFiles })}\n\n`;
+              controller.enqueue(encoder.encode(fileInfoEvent));
+            }
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
       headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
     });
   } catch (error) {
@@ -142,3 +245,33 @@ serve(async (req) => {
     });
   }
 });
+
+function getFileExtension(language: string): string {
+  const extensionMap: Record<string, string> = {
+    javascript: '.js',
+    js: '.js',
+    typescript: '.ts',
+    ts: '.ts',
+    jsx: '.jsx',
+    tsx: '.tsx',
+    python: '.py',
+    py: '.py',
+    java: '.java',
+    cpp: '.cpp',
+    'c++': '.cpp',
+    c: '.c',
+    html: '.html',
+    css: '.css',
+    json: '.json',
+    xml: '.xml',
+    sql: '.sql',
+    shell: '.sh',
+    bash: '.sh',
+    yaml: '.yaml',
+    yml: '.yml',
+    markdown: '.md',
+    md: '.md',
+  };
+  
+  return extensionMap[language.toLowerCase()] || '.txt';
+}

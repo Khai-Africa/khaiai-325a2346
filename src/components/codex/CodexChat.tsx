@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 
 interface CodexChatProps {
   projectId: string | null;
+  onFilesCreated?: () => void;
 }
 
-export const CodexChat = ({ projectId }: CodexChatProps) => {
+export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
   const [input, setInput] = useState("");
   const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,7 +28,7 @@ export const CodexChat = ({ projectId }: CodexChatProps) => {
 
     const message = input.trim();
     setInput("");
-    await sendMessage(message);
+    await sendMessage(message, onFilesCreated);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

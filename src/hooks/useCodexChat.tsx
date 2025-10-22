@@ -40,7 +40,7 @@ export const useCodexChat = (projectId: string | null) => {
     fetchMessages();
   }, [fetchMessages]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, onFilesCreated?: () => void) => {
     if (!user || !projectId || !session) return;
 
     setLoading(true);
@@ -102,6 +102,15 @@ export const useCodexChat = (projectId: string | null) => {
 
           try {
             const parsed = JSON.parse(jsonStr);
+            
+            // Check for files_created event
+            if (parsed.type === 'files_created' && parsed.files) {
+              const fileNames = parsed.files.map((f: any) => f.fileName).join(', ');
+              toast.success(`Code saved as: ${fileNames}`);
+              onFilesCreated?.();
+              continue;
+            }
+            
             const delta = parsed.choices?.[0]?.delta?.content;
             
             if (delta) {
