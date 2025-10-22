@@ -130,7 +130,7 @@ const Help = () => {
           <CardContent className="pt-6">
             <h3 className="text-lg font-semibold mb-2">Still need help?</h3>
             <p className="text-muted-foreground mb-4">
-              Contact our support team at support@khai-ai.com or check our documentation for more detailed guides.
+              Contact our support team at support@khai.africa or check our documentation for more detailed guides.
             </p>
             <div className="flex gap-2">
               <Button onClick={() => navigate("/terms")}>Terms of Service</Button>

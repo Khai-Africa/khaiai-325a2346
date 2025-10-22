@@ -157,7 +157,7 @@ export const translations = {
       deleteAccount: 'Delete Account',
       deleting: 'Deleting...',
       deleteConfirm: 'Are you sure you want to delete your account? This action cannot be undone.',
-      deleteInstructions: 'Please contact support@khai-ai.com to delete your account',
+      deleteInstructions: 'Please contact support@khai.africa to delete your account',
       signOutFailed: 'Failed to sign out',
     },
     
@@ -461,7 +461,7 @@ export const translations = {
       deleteAccount: 'Supprimer le Compte',
       deleting: 'Suppression...',
       deleteConfirm: 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action ne peut pas être annulée.',
-      deleteInstructions: 'Veuillez contacter support@khai-ai.com pour supprimer votre compte',
+      deleteInstructions: 'Veuillez contacter support@khai.africa pour supprimer votre compte',
       signOutFailed: 'Échec de la déconnexion',
     },
     

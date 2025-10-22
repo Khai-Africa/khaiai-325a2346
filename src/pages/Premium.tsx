@@ -58,7 +58,7 @@ const Premium = () => {
       }
       window.history.replaceState({}, "", "/premium");
     } else if (canceled) {
-      toast.info("Checkout canceled. You can upgrade anytime!");
+      toast.info("Checkout canceled.");
       window.history.replaceState({}, "", "/premium");
     }
   }, [searchParams, refetch]);
@@ -211,12 +211,12 @@ const Premium = () => {
       <div className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
           <Button
-            onClick={() => navigate("/?chat=true")}
+            onClick={() => navigate(-1)}
             variant="ghost"
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Chat
+            Go Back
           </Button>
           
           <div className="flex items-center gap-2">
@@ -294,18 +294,20 @@ const Premium = () => {
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const Icon = getPlanIcon(plan.name);
-              const isPremium = plan.name.toLowerCase().includes("premium");
+              const isPremiumPlan = plan.name.toLowerCase().includes("premium");
+              const isYearly = plan.billing_period === "yearly";
+              const isPopular = isPremiumPlan && isYearly;
               
               return (
                 <Card
                   key={plan.id}
                   className={`p-8 relative ${
-                    isPremium
+                    isPopular
                       ? "border-primary shadow-lg scale-105"
                       : "border-border"
                   }`}
                 >
-                  {isPremium && (
+                  {isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-primary text-white text-sm font-semibold rounded-full">
                       Most Popular
                     </div>
@@ -342,6 +344,7 @@ const Premium = () => {
 
                   <Button
                     onClick={() => {
+                      if (plan.price === 0) return;
                       if (!plan.stripe_price_id && paymentProvider === "stripe") {
                         toast.error("Stripe price not configured for this plan. Please use Mobile Money.");
                         return;
@@ -353,8 +356,8 @@ const Premium = () => {
                       );
                     }}
                     disabled={
-                      selectedPlan === plan.stripe_price_id || 
                       plan.price === 0 || 
+                      selectedPlan === plan.stripe_price_id ||
                       (isPremium && plan.name.toLowerCase().includes("premium"))
                     }
                     className={`w-full ${
@@ -364,11 +367,11 @@ const Premium = () => {
                     }`}
                     variant={plan.name.toLowerCase().includes("premium") ? "default" : "outline"}
                   >
-                    {selectedPlan === plan.stripe_price_id
+                    {plan.price === 0
+                      ? "Current Plan"
+                      : selectedPlan === plan.stripe_price_id
                       ? "Processing..."
                       : (isPremium && plan.name.toLowerCase().includes("premium"))
-                      ? "Current Plan"
-                      : plan.price === 0
                       ? "Current Plan"
                       : "Upgrade Now"}
                   </Button>

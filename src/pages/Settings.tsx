@@ -110,7 +110,7 @@ const Settings = () => {
 
     setDeleting(true);
     try {
-      toast.info("Please contact support@khai-ai.com to delete your account");
+      toast.info("Please contact support@khai.africa to delete your account");
       await signOut();
       navigate("/");
     } catch (error) {

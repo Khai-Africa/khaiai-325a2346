@@ -104,7 +104,7 @@ const Terms = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-4">9. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
-              For questions about these Terms of Service, please contact us at support@khai-ai.com
+              For questions about these Terms of Service, please contact us at support@khai.africa
             </p>
           </section>
 
