@@ -65,7 +65,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
           <img 
             src={logo} 
             alt="Khai AI Logo" 
-            className="w-24 h-24 object-contain animate-glow"
+            className="w-24 h-24 object-contain"
           />
         </button>
 
