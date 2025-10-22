@@ -171,7 +171,7 @@ export default function Codex() {
             <Crown className="w-16 h-16 mx-auto text-primary" />
             <h2 className="text-3xl font-bold">Premium Feature</h2>
             <p className="text-lg text-muted-foreground">
-              Developer Codex is a premium feature. Upgrade your plan to access powerful code generation and analysis tools.
+              Coda House is a premium feature. Upgrade your plan to access powerful code generation and analysis tools.
             </p>
             <Button size="lg" asChild>
               <Link to="/premium">

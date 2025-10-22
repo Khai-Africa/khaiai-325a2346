@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -179,6 +179,15 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         >
           <Image className="w-4 h-4 mr-2" />
           {t('sidebar.generateImages')}
+        </Button>
+        <Button
+          onClick={() => navigate("/codex")}
+          variant="outline"
+          className="w-full justify-start"
+          size="sm"
+        >
+          <Code2 className="w-4 h-4 mr-2" />
+          Coda House
         </Button>
       </div>
       <ScrollArea className="flex-1 p-4">

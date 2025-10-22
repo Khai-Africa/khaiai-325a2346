@@ -17,7 +17,7 @@ export const CodexHeader = () => {
               Back
             </Button>
           </Link>
-          <h1 className="text-xl font-semibold">Developer Codex</h1>
+          <h1 className="text-xl font-semibold">Coda House</h1>
         </div>
         
         <div className="flex items-center gap-3">

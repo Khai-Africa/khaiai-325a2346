@@ -32,7 +32,7 @@ export const CodexPromptInput = ({ onSubmit, onFileUpload, loading }: CodexPromp
     <div className="space-y-4">
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          What should we code next?
+          What are we coding next?
         </h2>
         <p className="text-muted-foreground">
           Describe what you want to build and I'll help you code it

@@ -74,3 +74,15 @@ verify_jwt = false
 
 [functions.submit-ticket]
 verify_jwt = true
+
+[functions.codex-analyze-code]
+verify_jwt = true
+
+[functions.codex-generate-code]
+verify_jwt = true
+
+[functions.codex-download-payment]
+verify_jwt = true
+
+[functions.codex-prepare-download]
+verify_jwt = true
