@@ -12,24 +12,40 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, newPassword } = await req.json();
-
-    if (!userId || !newPassword) {
-      throw new Error("Missing required parameters");
+    // Get the authenticated user from the request
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error("Authentication required");
     }
 
-    if (newPassword.length < 6) {
+    const token = authHeader.replace('Bearer ', '');
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      throw new Error("Invalid authentication");
+    }
+
+    const { newPassword } = await req.json();
+
+    if (!newPassword || newPassword.length < 6) {
       throw new Error("Password must be at least 6 characters");
     }
 
+    // User can only update their own password
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Update user password using admin API
     const { error } = await supabaseAdmin.auth.admin.updateUserById(
-      userId,
+      user.id,
       { password: newPassword }
     );
 
@@ -52,7 +68,7 @@ serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 401 
       }
     );
   }

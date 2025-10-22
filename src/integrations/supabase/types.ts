@@ -218,6 +218,33 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          token: string
+          used: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          token: string
+          used?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_providers: {
         Row: {
           config: Json | null
@@ -289,7 +316,6 @@ export type Database = {
           created_at: string | null
           id: string
           mobile_number: string | null
-          secret_word_hash: string
           updated_at: string | null
           username: string
         }
@@ -297,7 +323,6 @@ export type Database = {
           created_at?: string | null
           id: string
           mobile_number?: string | null
-          secret_word_hash: string
           updated_at?: string | null
           username: string
         }
@@ -305,7 +330,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           mobile_number?: string | null
-          secret_word_hash?: string
           updated_at?: string | null
           username?: string
         }
@@ -496,6 +520,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_reset_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

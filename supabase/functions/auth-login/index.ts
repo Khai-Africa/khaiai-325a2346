@@ -23,14 +23,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Look up user by username or mobile number
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Look up user by username or mobile number - use safe query builder to prevent SQL injection
+    let profile = null;
+    
+    // Try username first
+    const { data: usernameProfile } = await supabaseAdmin
       .from("profiles")
       .select("id")
-      .or(`username.eq.${identifier},mobile_number.eq.${identifier}`)
-      .single();
+      .eq("username", identifier)
+      .maybeSingle();
+    
+    if (usernameProfile) {
+      profile = usernameProfile;
+    } else {
+      // Try mobile number
+      const { data: mobileProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("mobile_number", identifier)
+        .maybeSingle();
+      
+      profile = mobileProfile;
+    }
 
-    if (profileError || !profile) {
+    if (!profile) {
       return new Response(
         JSON.stringify({ error: "Invalid credentials" }),
         { 

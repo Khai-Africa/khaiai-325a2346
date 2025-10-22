@@ -14,16 +14,16 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 const signupSchema = z.object({
   username: z.string().trim().min(3, { message: "Username must be at least 3 characters" }).max(30),
   mobile: z.string().trim().optional(),
-  email: z.string().trim().email({ message: "Invalid email address" }).max(255).optional().or(z.literal("")),
+  email: z.string().trim().email({ message: "Invalid email address" }).max(255),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(100),
-  secretWord: z.string().trim().min(3, { message: "Secret word must be at least 3 characters" }).max(50),
-  confirmSecretWord: z.string().trim(),
-}).refine((data) => data.secretWord === data.confirmSecretWord, {
-  message: "Secret words don't match",
-  path: ["confirmSecretWord"],
-}).refine((data) => data.email || data.mobile, {
-  message: "Either email or mobile number is required",
-  path: ["email"],
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+const resetSchema = z.object({
+  email: z.string().trim().email({ message: "Invalid email address" }),
 });
 
 const loginSchema = z.object({
@@ -40,10 +40,9 @@ const Auth = () => {
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [secretWord, setSecretWord] = useState("");
-  const [confirmSecretWord, setConfirmSecretWord] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -118,8 +117,7 @@ const Auth = () => {
       mobile, 
       email, 
       password, 
-      secretWord, 
-      confirmSecretWord 
+      confirmPassword 
     });
     
     if (!result.success) {
@@ -139,24 +137,21 @@ const Auth = () => {
         .from("profiles")
         .select("username")
         .eq("username", result.data.username)
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         toast({
           title: "Username Taken",
-          description: "This username is already in use. Please choose another.",
+          description: "Please choose a different username.",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      // Use email if provided, otherwise generate one
-      const userEmail = result.data.email || `${result.data.username}@khaiapp.local`;
-      
       const redirectUrl = `${window.location.origin}/`;
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: userEmail,
+        email: result.data.email,
         password: result.data.password,
         options: {
           emailRedirectTo: redirectUrl,
@@ -174,9 +169,6 @@ const Auth = () => {
       }
 
       if (authData.user) {
-        // Hash secret word (in production, this should be done server-side)
-        const secretWordHash = btoa(result.data.secretWord); // Simple encoding for demo
-
         // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
@@ -184,7 +176,6 @@ const Auth = () => {
             id: authData.user.id,
             username: result.data.username,
             mobile_number: result.data.mobile || null,
-            secret_word_hash: secretWordHash,
           });
 
         if (profileError) {
@@ -217,10 +208,11 @@ const Auth = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!identifier || !secretWord || !newPassword) {
+    const result = resetSchema.safeParse({ email: resetEmail });
+    if (!result.success) {
       toast({
         title: "Validation Error",
-        description: "All fields are required",
+        description: result.error.errors[0].message,
         variant: "destructive",
       });
       return;
@@ -229,60 +221,25 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Look up user and verify secret word
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, secret_word_hash")
-        .or(`username.eq.${identifier},mobile_number.eq.${identifier}`)
-        .single();
-
-      if (!profile) {
-        toast({
-          title: "Reset Failed",
-          description: "User not found.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Verify secret word
-      const secretWordHash = btoa(secretWord);
-      if (profile.secret_word_hash !== secretWordHash) {
-        toast({
-          title: "Reset Failed",
-          description: "Invalid secret word.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Update password via edge function
-      const { error } = await supabase.functions.invoke("reset-password", {
-        body: { userId: profile.id, newPassword },
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
       });
 
       if (error) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to reset password.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success!",
-          description: "Your password has been reset successfully.",
-        });
-        setIsResetPassword(false);
-        setIdentifier("");
-        setSecretWord("");
-        setNewPassword("");
+        throw error;
       }
+
+      toast({
+        title: "Check Your Email",
+        description: "If an account exists with that email, a password reset link has been sent.",
+      });
+      
+      setIsResetPassword(false);
+      setResetEmail("");
     } catch (error) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "An error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -345,47 +302,20 @@ const Auth = () => {
           {isResetPassword ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="reset-identifier">Username or Mobile Number</Label>
+                <Label htmlFor="reset-email">Email Address</Label>
                 <Input
-                  id="reset-identifier"
-                  type="text"
-                  placeholder="Enter your username or mobile"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  id="reset-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
                   required
                   disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reset-secret">Secret Word</Label>
-                <Input
-                  id="reset-secret"
-                  type="password"
-                  placeholder="Enter your secret word"
-                  value={secretWord}
-                  onChange={(e) => setSecretWord(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  minLength={6}
                 />
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Resetting..." : "Reset Password"}
+                {loading ? "Sending Reset Link..." : "Send Reset Link"}
               </Button>
 
               <Button
@@ -394,9 +324,7 @@ const Auth = () => {
                 className="w-full"
                 onClick={() => {
                   setIsResetPassword(false);
-                  setIdentifier("");
-                  setSecretWord("");
-                  setNewPassword("");
+                  setResetEmail("");
                 }}
                 disabled={loading}
               >
@@ -528,31 +456,16 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="secret-word">Secret Word *</Label>
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
                   <Input
-                    id="secret-word"
+                    id="confirm-password"
                     type="password"
-                    placeholder="Enter a secret word"
-                    value={secretWord}
-                    onChange={(e) => setSecretWord(e.target.value)}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     disabled={loading}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Keep this safe! You'll need it to reset your password.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-secret">Confirm Secret Word *</Label>
-                  <Input
-                    id="confirm-secret"
-                    type="password"
-                    placeholder="Confirm your secret word"
-                    value={confirmSecretWord}
-                    onChange={(e) => setConfirmSecretWord(e.target.value)}
-                    required
-                    disabled={loading}
+                    minLength={6}
                   />
                 </div>
 
