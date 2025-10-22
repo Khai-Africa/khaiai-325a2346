@@ -71,44 +71,55 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-3 md:p-4" ref={scrollRef}>
-        <div className="space-y-3 md:space-y-4">
+      <ScrollArea className="flex-1 p-2 sm:p-3 md:p-4 lg:p-6" ref={scrollRef}>
+        <div className="space-y-2 sm:space-y-3 md:space-y-4 max-w-4xl mx-auto">
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-6 md:py-8">
-              <MessageSquare className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 opacity-50" />
-              <p className="text-xs md:text-sm">Ask me anything about your code!</p>
-              <p className="text-xs mt-2">I have context of your project files</p>
+            <div className="text-center text-muted-foreground py-8 md:py-12 lg:py-16 px-4">
+              <MessageSquare className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 md:mb-6 opacity-50" />
+              <p className="text-sm md:text-base lg:text-lg font-medium mb-2">Ask me anything about your code!</p>
+              <p className="text-xs md:text-sm opacity-70">I have context of your project files</p>
             </div>
           ) : (
             messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "flex",
+                  "flex gap-2 sm:gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
                   message.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
                 <div
                   className={cn(
-                    "max-w-[85%] md:max-w-[80%] rounded-lg",
+                    "rounded-lg shadow-sm",
+                    "w-full sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%]",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground p-2 md:p-3"
-                      : "bg-muted/50"
+                      ? "bg-primary text-primary-foreground p-3 sm:p-4"
+                      : "bg-card border border-border"
                   )}
                 >
-                  <div className="text-xs font-medium mb-1 opacity-70 px-2 pt-2">
-                    {message.role === "user" ? "You" : "AI Assistant"}
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className={cn(
+                      "w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-medium",
+                      message.role === "user" 
+                        ? "bg-primary-foreground/20 text-primary-foreground" 
+                        : "bg-primary/10 text-primary"
+                    )}>
+                      {message.role === "user" ? "U" : "AI"}
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium opacity-70">
+                      {message.role === "user" ? "You" : "AI Assistant"}
+                    </span>
                   </div>
                   {message.role === "user" ? (
-                    <div className="text-xs md:text-sm whitespace-pre-wrap break-words px-2 pb-2">
+                    <div className="text-sm sm:text-base whitespace-pre-wrap break-words px-1 leading-relaxed">
                       {message.content}
                     </div>
                   ) : (
-                    <div className="px-2 pb-2">
+                    <div className="space-y-2">
                       {parseMessageContent(message.content).map((segment, idx) => (
                         <div key={idx}>
                           {segment.type === "text" ? (
-                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
+                            <p className="text-sm sm:text-base whitespace-pre-wrap break-words px-1 leading-relaxed">
                               {segment.content}
                             </p>
                           ) : (
@@ -123,35 +134,36 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
             ))
           )}
           {streaming && (
-            <div className="flex justify-start">
-              <div className="bg-muted rounded-lg p-2 md:p-3">
-                <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
+            <div className="flex justify-start animate-in fade-in duration-300">
+              <div className="bg-card border border-border rounded-lg p-3 sm:p-4 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-xs sm:text-sm text-muted-foreground">AI is thinking...</span>
               </div>
             </div>
           )}
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-3 md:p-4 border-t">
-        <div className="flex gap-2">
+      <form onSubmit={handleSubmit} className="p-2 sm:p-3 md:p-4 border-t bg-background">
+        <div className="flex gap-2 max-w-4xl mx-auto">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about your code..."
-            className="min-h-[50px] md:min-h-[60px] max-h-[100px] md:max-h-[120px] resize-none text-sm"
+            className="min-h-[60px] sm:min-h-[70px] md:min-h-[80px] max-h-[120px] md:max-h-[150px] resize-none text-sm sm:text-base"
             disabled={loading}
           />
           <Button
             type="submit"
             disabled={!input.trim() || loading || !projectId}
             size="icon"
-            className="self-end h-9 w-9 md:h-10 md:w-10"
+            className="self-end h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 flex-shrink-0"
           >
             {loading ? (
-              <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
             ) : (
-              <Send className="w-3 h-3 md:w-4 md:h-4" />
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
           </Button>
         </div>
