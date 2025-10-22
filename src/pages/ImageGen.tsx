@@ -46,7 +46,7 @@ const ImageGen = () => {
       <div className="border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/?chat=true")}
             variant="ghost"
             className="gap-2"
           >

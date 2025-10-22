@@ -68,7 +68,7 @@ const Settings = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/?chat=true")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />

@@ -154,7 +154,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
+          Back to Chat
         </Button>
         <Button
           onClick={onNewChat}

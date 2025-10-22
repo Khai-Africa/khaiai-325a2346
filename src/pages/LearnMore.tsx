@@ -104,11 +104,11 @@ const LearnMore = () => {
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/?chat=true")}
               className="group"
             >
               <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
-              Back to Home
+              Back to Chat
             </Button>
             <button 
               onClick={() => navigate("/")}

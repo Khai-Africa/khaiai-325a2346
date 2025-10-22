@@ -4,16 +4,34 @@ import ChatInterface from "@/components/ChatInterface";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
 
 const Index = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showChat, setShowChat] = useState(false);
   const [skipLanding, setSkipLanding] = useState(false);
   const [initialMessage, setInitialMessage] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
 
-  // Check if user has conversations on mount
+  // Check if user has conversations on mount or chat param is present
   useEffect(() => {
+    const chatParam = searchParams.get("chat");
+    const conversationParam = searchParams.get("conversation");
+    
+    if (chatParam === "true") {
+      setShowChat(true);
+      setSkipLanding(true);
+      return;
+    }
+    
+    if (conversationParam) {
+      setConversationId(conversationParam);
+      setShowChat(true);
+      setSkipLanding(true);
+      return;
+    }
+    
     const checkConversations = async () => {
       if (!user) return;
       
@@ -30,7 +48,7 @@ const Index = () => {
     };
     
     checkConversations();
-  }, [user]);
+  }, [user, searchParams]);
 
   const handleSuggestionSelect = (suggestion: string) => {
     setInitialMessage(suggestion);

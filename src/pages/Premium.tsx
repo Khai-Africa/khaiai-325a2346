@@ -209,12 +209,12 @@ const Premium = () => {
       <div className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/?chat=true")}
             variant="ghost"
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Back to Chat
           </Button>
           
           <div className="flex items-center gap-2">
