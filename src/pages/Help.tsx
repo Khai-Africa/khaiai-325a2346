@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, HelpCircle, MessageSquare, Crown, Image, FileText, Send, MessageCircle } from "lucide-react";
+import { ArrowLeft, HelpCircle, MessageSquare, Crown, Image, FileText, Send, MessageCircle, Code2, Zap, Github, Download, FolderTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -183,6 +183,168 @@ const Help = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Coda House Section */}
+        <section id="coda-house" className="mb-8 sm:mb-12 scroll-mt-20">
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <Code2 className="w-8 h-8 text-primary" />
+                <CardTitle className="text-2xl">Coda House - AI-Powered Code Generation</CardTitle>
+              </div>
+              <CardDescription className="text-base">
+                Your intelligent coding companion that transforms ideas into production-ready code
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-primary" />
+                  What is Coda House?
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Coda House is an advanced AI code generation and analysis platform integrated into Khai AI. 
+                  It helps developers, students, and coding enthusiasts generate, analyze, and manage code projects 
+                  with the power of artificial intelligence. Whether you're building a new feature, debugging existing code, 
+                  or learning programming concepts, Coda House accelerates your development workflow.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Key Features</h3>
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <Code2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">Intelligent Code Generation</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Generate complete code files from natural language descriptions. Simply describe what you want to build, 
+                        and Coda House creates production-ready code in your preferred programming language with proper structure, 
+                        comments, and best practices.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <HelpCircle className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">Code Analysis & Q&A</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Upload your existing code and ask questions about it. Get explanations, identify bugs, suggest improvements, 
+                        understand complex algorithms, or learn how specific functions work. Perfect for code reviews and learning.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <FolderTree className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">Project Management</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Organize your code in projects with multiple files. Create, edit, and manage files in a familiar tree structure. 
+                        Track your tasks and development progress with an integrated task list showing all AI-generated code and analysis.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Github className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">GitHub Integration</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Connect your GitHub account to sync your Coda House projects with GitHub repositories. Push changes, 
+                        pull updates, and maintain version control seamlessly. Perfect for collaboration and backup.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Download className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">Code Download System</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Free users get 3 complimentary downloads to try the service. Download individual files or entire projects 
+                        as ZIP archives. Premium members enjoy unlimited downloads with no restrictions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium mb-1">Built-in Code Editor</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Edit your code directly in the browser with syntax highlighting, line numbers, and a clean interface. 
+                        Save changes instantly and see them reflected in your project structure. Supports multiple file types 
+                        and programming languages.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">How to Use Coda House</h3>
+                <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
+                  <li className="leading-relaxed">
+                    <strong>Access Coda House:</strong> Click the "Coda House" button in the sidebar or navigate to /codex
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Create Your First Project:</strong> On first visit, you'll see a prompt input. Describe what you want to code, 
+                    and a project will be auto-created with your generated code
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Choose Your Mode:</strong> Use "Ask" mode to analyze existing code and get answers, or "Code" mode to generate new code files
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Upload Files (Optional):</strong> Upload your existing code files (up to 20MB each) to provide context or for analysis
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Review & Edit:</strong> Generated code appears in the file tree. Click any file to view and edit it in the built-in editor
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Track Progress:</strong> Switch to the "Tasks" tab to see your AI interaction history and generated outputs
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Download:</strong> Click the download button on any file. Free users have 3 downloads; Premium users have unlimited
+                  </li>
+                  <li className="leading-relaxed">
+                    <strong>Connect GitHub (Optional):</strong> Link your GitHub account to sync projects and enable version control
+                  </li>
+                </ol>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Pricing & Limits</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Free Users:</span>
+                    <span className="font-medium">3 free downloads</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Premium Users:</span>
+                    <span className="font-medium">Unlimited downloads</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">File Upload Limit:</span>
+                    <span className="font-medium">20MB per file</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Additional Downloads:</span>
+                    <span className="font-medium">$0.83 per file</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <Button onClick={() => navigate("/codex")} size="lg" className="w-full">
+                  <Code2 className="w-5 h-5 mr-2" />
+                  Start Coding with Coda House
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
         <div className="mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2">

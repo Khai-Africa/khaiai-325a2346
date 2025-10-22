@@ -6,6 +6,7 @@ import { CodeEditor } from "@/components/codex/CodeEditor";
 import { TaskList } from "@/components/codex/TaskList";
 import { DownloadCounter } from "@/components/codex/DownloadCounter";
 import { DownloadPaymentDialog } from "@/components/codex/DownloadPaymentDialog";
+import { GitHubConnectDialog } from "@/components/codex/GitHubConnectDialog";
 import { useCodexUsage } from "@/hooks/useCodexUsage";
 import { useCodexProjects } from "@/hooks/useCodexProjects";
 import { useCodexFiles } from "@/hooks/useCodexFiles";
@@ -13,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus, Crown } from "lucide-react";
+import { Plus, Crown, Github } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -29,6 +30,9 @@ export default function Codex() {
   const [loading, setLoading] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [pendingDownloadFileId, setPendingDownloadFileId] = useState<string | null>(null);
+  const [showGitHubDialog, setShowGitHubDialog] = useState(false);
+  const [gitHubRepoUrl, setGitHubRepoUrl] = useState<string>("");
+  const [isGitHubConnected, setIsGitHubConnected] = useState(false);
 
   // Redirect if not logged in (wrapped in useEffect)
   useEffect(() => {
@@ -58,6 +62,35 @@ export default function Codex() {
 
     loadTasks();
   }, [activeProject?.id]);
+
+  // Load GitHub connection status
+  useEffect(() => {
+    const loadGitHubConnection = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('github_repo_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (data && data.github_repo_url) {
+          setGitHubRepoUrl(data.github_repo_url);
+          setIsGitHubConnected(true);
+        }
+      } catch (error) {
+        console.error('Error loading GitHub connection:', error);
+      }
+    };
+
+    loadGitHubConnection();
+  }, [user]);
+
+  const handleGitHubConnect = (repoUrl: string) => {
+    setGitHubRepoUrl(repoUrl);
+    setIsGitHubConnected(!!repoUrl);
+  };
 
   // Show loading while checking auth
   if (authLoading) {
@@ -210,16 +243,27 @@ export default function Codex() {
             freeDownloadsRemaining={freeDownloadsRemaining} 
           />
           
-          {projects.length > 0 && (
+          <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant={isGitHubConnected ? "default" : "outline"}
               size="sm"
-              onClick={() => createProject("New Project", "New project")}
+              onClick={() => setShowGitHubDialog(true)}
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Project
+              <Github className="w-4 h-4 mr-2" />
+              {isGitHubConnected ? "GitHub Connected" : "Connect GitHub"}
             </Button>
-          )}
+            
+            {projects.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => createProject("New Project", "New project")}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Project
+              </Button>
+            )}
+          </div>
         </div>
 
         {projects.length === 0 ? (
@@ -269,6 +313,14 @@ export default function Codex() {
         onClose={() => setShowPaymentDialog(false)}
         onProceed={handlePaymentProceed}
         amount={0.83}
+      />
+
+      <GitHubConnectDialog
+        open={showGitHubDialog}
+        onClose={() => setShowGitHubDialog(false)}
+        onConnect={handleGitHubConnect}
+        isConnected={isGitHubConnected}
+        currentRepo={gitHubRepoUrl}
       />
     </div>
   );
