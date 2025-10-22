@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
-
-const prompts = [
-  "Ask Khai...",
-  "Write code...",
-  "Farm guide...",
-  "Create image...",
-  "How do I find...",
-  "10% of 150...",
-];
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const TypewriterPlaceholder = () => {
+  const { t, language } = useTranslation();
   const [currentPrompt, setCurrentPrompt] = useState("");
   const [promptIndex, setPromptIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const prompts = [
+    t('typewriter.askKhai'),
+    t('typewriter.writeCode'),
+    t('typewriter.farmGuide'),
+    t('typewriter.createImage'),
+    t('typewriter.howToFind'),
+    t('typewriter.calculate'),
+  ];
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -34,7 +36,7 @@ export const TypewriterPlaceholder = () => {
     }, isDeleting ? 50 : 100);
 
     return () => clearTimeout(timeout);
-  }, [charIndex, isDeleting, promptIndex]);
+  }, [charIndex, isDeleting, promptIndex, language]);
 
   return <span className="text-muted-foreground">{currentPrompt}</span>;
 };

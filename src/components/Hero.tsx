@@ -6,6 +6,8 @@ import SuggestionCards from "./SuggestionCards";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionBadge } from "./SubscriptionBadge";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LanguageSwitch } from "./LanguageSwitch";
 
 interface HeroProps {
   onStartChat: () => void;
@@ -13,6 +15,7 @@ interface HeroProps {
 }
 
 const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isPremium } = useSubscription();
@@ -28,6 +31,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
     <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Top Bar */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
+        <LanguageSwitch />
         {user && <SubscriptionBadge />}
         {!user ? (
           <Button
@@ -36,7 +40,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             className="border-border hover:bg-secondary"
           >
             <LogIn className="w-4 h-4 mr-2" />
-            Login
+            {t('hero.login')}
           </Button>
         ) : !isPremium && (
           <Button
@@ -44,7 +48,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             className="bg-gradient-primary hover:opacity-90 text-white"
           >
             <Crown className="w-4 h-4 mr-2" />
-            Upgrade to Premium
+            {t('hero.upgradeToPremium')}
           </Button>
         )}
       </div>
@@ -71,11 +75,11 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
 
         {/* Main heading */}
         <h1 className="text-5xl md:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
-          Khai AI
+          {t('hero.title')}
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-          What can I help with?
+          {t('hero.subtitle')}
         </p>
 
         {/* CTA Buttons */}
@@ -85,7 +89,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             onClick={onStartChat}
             className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg transition-all hover:shadow-glow group"
           >
-            Start Chatting
+            {t('hero.startChatting')}
             <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button 
@@ -95,7 +99,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             className="border-border hover:bg-secondary px-8 py-6 text-lg"
           >
             <Image className="mr-2" />
-            Generate Images
+            {t('hero.generateImages')}
           </Button>
           <Button 
             size="lg" 
@@ -103,7 +107,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             onClick={() => navigate("/learn-more")}
             className="border-border hover:bg-secondary px-8 py-6 text-lg"
           >
-            Learn More
+            {t('hero.learnMore')}
           </Button>
           {user && !isPremium && (
             <Button 
@@ -112,7 +116,7 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
               className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg border-2 border-white/20"
             >
               <Crown className="mr-2" />
-              Go Premium
+              {t('hero.goPremium')}
             </Button>
           )}
         </div>

@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
 import khaiLogo from "@/assets/khai-ai-logo.png";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
 
 const signupSchema = z.object({
   username: z.string().trim().min(3, { message: "Username must be at least 3 characters" }).max(30),
@@ -30,6 +32,7 @@ const loginSchema = z.object({
 });
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
@@ -317,6 +320,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitch />
+      </div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <button 
@@ -329,9 +335,9 @@ const Auth = () => {
               className="w-16 h-16 mx-auto mb-4"
             />
           </button>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Khai AI</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('auth.welcomeTitle')}</h1>
           <p className="text-muted-foreground">
-            {isLogin ? "Sign in to continue" : "Create your account"}
+            {isLogin ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}
           </p>
         </div>
 
