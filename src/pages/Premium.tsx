@@ -32,7 +32,7 @@ const Premium = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isPremium, loading: subLoading, refetch } = useSubscription();
-  const { selectedCurrency, currencies, formatPrice, updateCurrency } = useCurrency();
+  const { selectedCurrency, currencies, formatPrice, updateCurrency, convertPrice } = useCurrency();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -145,9 +145,12 @@ const Premium = () => {
       toast.loading("Creating checkout session...");
 
       if (paymentProvider === "flutterwave") {
+        // Convert USD price to selected currency
+        const convertedAmount = convertPrice(usdPrice, selectedCurrency);
+        
         const { data, error } = await supabase.functions.invoke("flutterwave-checkout", {
           body: { 
-            amount: usdPrice,
+            amount: convertedAmount,
             currency: selectedCurrency,
             planName 
           },
