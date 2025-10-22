@@ -71,10 +71,10 @@ const FileUpload = ({ onFilesSelect, selectedFiles, onRemoveFile }: FileUploadPr
         variant="ghost"
         size="sm"
         onClick={() => fileInputRef.current?.click()}
-        className="h-9 rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
+        className="h-6 px-2 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
-        <Paperclip className="w-4 h-4 mr-2" />
-        Attach {selectedFiles.length > 0 && `(${selectedFiles.length})`}
+        <Paperclip className="w-3 h-3 mr-1" />
+        <span className="text-[10px]">Attach {selectedFiles.length > 0 && `(${selectedFiles.length})`}</span>
       </Button>
     </div>
   );

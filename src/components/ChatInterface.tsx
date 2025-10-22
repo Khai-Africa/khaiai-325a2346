@@ -445,6 +445,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             <img src={logo} alt="Khai AI" className="w-8 h-8" />
+            <span className="text-lg font-semibold">Khai AI</span>
           </div>
         </div>
 
@@ -534,6 +535,14 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                     rows={1}
                   />
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`rounded-full h-10 w-10 ${isRecording ? "text-primary animate-pulse" : "text-muted-foreground"}`}
+                      onClick={handleVoiceInput}
+                    >
+                      {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    </Button>
                     {isSpeaking ? (
                       <Button
                         variant="ghost"
@@ -547,10 +556,16 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`rounded-full h-10 w-10 ${isRecording ? "text-primary animate-pulse" : "text-muted-foreground"}`}
-                        onClick={handleVoiceInput}
+                        className="rounded-full h-10 w-10 text-muted-foreground"
+                        onClick={() => {
+                          const lastMessage = messages[messages.length - 1];
+                          if (lastMessage?.role === 'assistant') {
+                            handleSpeakMessage(lastMessage.content);
+                          }
+                        }}
+                        disabled={!messages.length || messages[messages.length - 1]?.role !== 'assistant'}
                       >
-                        {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                        <Volume2 className="w-5 h-5" />
                       </Button>
                     )}
                     <Button
