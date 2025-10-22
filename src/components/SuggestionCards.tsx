@@ -55,10 +55,11 @@ const SuggestionCards = ({ onSelect }: SuggestionCardsProps) => {
           <Button
             key={index}
             variant="outline"
+            size="sm"
             onClick={() => onSelect(suggestion.title)}
-            className="group rounded-full px-6 py-5 h-auto border-border hover:bg-card/50 transition-all"
+            className="group rounded-full border-border hover:bg-card/50 transition-all"
           >
-            <Icon className={`w-4 h-4 mr-2 ${suggestion.color} group-hover:scale-110 transition-transform`} />
+            <Icon className={`w-3 h-3 mr-2 ${suggestion.color} group-hover:scale-110 transition-transform`} />
             <span className="text-sm">{suggestion.title}</span>
           </Button>
         );
