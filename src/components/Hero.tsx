@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, LogIn, Crown, Image } from "lucide-react";
+import { ArrowRight, LogIn, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kai-ai-logo.png";
 import SuggestionCards from "./SuggestionCards";
@@ -93,29 +93,20 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button 
-            size="lg" 
-            variant="outline"
-            onClick={() => navigate("/image-gen")}
-            className="border-border hover:bg-secondary px-8 py-6 text-lg"
-          >
-            <Image className="mr-2" />
-            {t('hero.generateImages')}
-          </Button>
-          <Button 
-            size="lg" 
+            size="sm" 
             variant="outline"
             onClick={() => navigate("/learn-more")}
-            className="border-border hover:bg-secondary px-8 py-6 text-lg"
+            className="border-border hover:bg-secondary px-4 py-2 text-sm"
           >
             {t('hero.learnMore')}
           </Button>
           {user && !isPremium && (
             <Button 
-              size="lg" 
+              size="sm" 
               onClick={() => navigate("/premium")}
-              className="bg-gradient-primary hover:opacity-90 text-white px-8 py-6 text-lg border-2 border-white/20"
+              className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm border border-white/20"
             >
-              <Crown className="mr-2" />
+              <Crown className="mr-2 w-3 h-3" />
               {t('hero.goPremium')}
             </Button>
           )}

@@ -20,7 +20,7 @@ export const translations = {
     // Hero
     hero: {
       title: 'Khai AI',
-      subtitle: 'What can I help with?',
+      subtitle: 'Knowledge Hub for African Ideas',
       startChatting: 'Start Chatting',
       generateImages: 'Generate Images',
       learnMore: 'Learn More',
@@ -324,7 +324,7 @@ export const translations = {
     // Hero
     hero: {
       title: 'Khai AI',
-      subtitle: 'Comment puis-je vous aider ?',
+      subtitle: 'Centre de Connaissances pour les Idées Africaines',
       startChatting: 'Commencer à Discuter',
       generateImages: 'Générer des Images',
       learnMore: 'En Savoir Plus',
