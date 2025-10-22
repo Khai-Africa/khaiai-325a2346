@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionBadge } from "./SubscriptionBadge";
 import { useTranslation } from "@/hooks/useTranslation";
+import { NotificationBell } from "./NotificationBell";
 
 interface Conversation {
   id: string;
@@ -151,14 +152,17 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
       
       <div className="w-64 bg-card border-r border-border flex flex-col fixed md:relative h-full z-50 md:z-auto">
       <div className="p-4 border-b border-border space-y-2">
-        <Button
-          onClick={() => navigate(-1)}
-          variant="ghost"
-          className="w-full justify-start"
-          size="sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate(-1)}
+            variant="ghost"
+            className="flex-1 justify-start"
+            size="sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <NotificationBell />
+        </div>
         <Button
           onClick={onNewChat}
           className="w-full bg-gradient-primary hover:opacity-90 text-white"

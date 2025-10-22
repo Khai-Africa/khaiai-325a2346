@@ -148,6 +148,24 @@ const Settings = () => {
 
     setDeleting(true);
     try {
+      // Send account deletion email
+      if (user?.email) {
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              templateKey: 'account_deletion',
+              recipientEmail: user.email,
+              userId: user.id,
+              variables: {
+                deletion_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+              },
+            },
+          });
+        } catch (emailError) {
+          console.error('Failed to send deletion email:', emailError);
+        }
+      }
+
       toast.info("Please contact support@khai.africa to delete your account");
       await signOut();
       navigate("/");

@@ -208,6 +208,39 @@ const Auth = () => {
           return;
         }
 
+        // Send welcome email
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              templateKey: 'welcome',
+              recipientEmail: result.data.email,
+              recipientName: result.data.username,
+              userId: authData.user.id,
+              variables: {
+                username: result.data.username,
+              },
+            },
+          });
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't block signup if email fails
+        }
+
+        // Send in-app notification
+        try {
+          await supabase.functions.invoke('send-in-app-notification', {
+            body: {
+              userId: authData.user.id,
+              title: 'Welcome to Khai AI! 🎉',
+              message: 'Your AI assistant is ready. Start chatting now!',
+              type: 'success',
+              actionUrl: '/',
+            },
+          });
+        } catch (notifError) {
+          console.error('Failed to send notification:', notifError);
+        }
+
         toast({
           title: "Account Created!",
           description: "You've successfully signed up. Welcome to Khai AI!",

@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import Usage from "./pages/Usage";
 import Help from "./pages/Help";
 import Admin from "./pages/Admin";
+import Notifications from "./pages/Notifications";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { InstallPrompt } from "./components/InstallPrompt";
@@ -72,6 +73,14 @@ const App = () => (
               } 
             />
             <Route path="/help" element={<Help />} />
+            <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/admin" 
               element={

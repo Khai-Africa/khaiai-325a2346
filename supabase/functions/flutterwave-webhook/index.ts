@@ -64,8 +64,47 @@ serve(async (req) => {
 
       logStep("Transaction updated", { userId: transaction.user_id });
 
-      // Here you would typically create/update the user's subscription
-      // For now, we'll just log it
+      // Get user email for notification
+      const { data: userData } = await supabaseClient.auth.admin.getUserById(transaction.user_id);
+      
+      if (userData?.user?.email) {
+        // Send payment confirmation email
+        try {
+          await supabaseClient.functions.invoke('send-email', {
+            body: {
+              templateKey: 'payment_confirmed',
+              recipientEmail: userData.user.email,
+              userId: transaction.user_id,
+              variables: {
+                plan_name: 'Premium',
+                amount: amount.toString(),
+                currency: currency,
+                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              },
+            },
+          });
+          logStep("Payment confirmation email sent");
+        } catch (emailError) {
+          logStep("Email send error", emailError);
+        }
+
+        // Send in-app notification
+        try {
+          await supabaseClient.functions.invoke('send-in-app-notification', {
+            body: {
+              userId: transaction.user_id,
+              title: 'Payment Confirmed! ✅',
+              message: `Your payment of ${amount} ${currency} was successful. Welcome to Premium!`,
+              type: 'success',
+              actionUrl: '/premium',
+            },
+          });
+          logStep("In-app notification sent");
+        } catch (notifError) {
+          logStep("Notification error", notifError);
+        }
+      }
+
       logStep("Payment successful", { 
         userId: transaction.user_id, 
         amount, 
