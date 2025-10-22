@@ -1,4 +1,4 @@
-import { Copy, ThumbsUp, ThumbsDown, Share2, RotateCw, MoreHorizontal, Flag } from "lucide-react";
+import { Copy, ThumbsUp, ThumbsDown, Share2, RotateCw, MoreHorizontal, Flag, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,9 +15,10 @@ interface MessageActionsProps {
   content: string;
   conversationId?: string | null;
   onRegenerate?: () => void;
+  onSpeak?: (text: string) => void;
 }
 
-const MessageActions = ({ content, conversationId, onRegenerate }: MessageActionsProps) => {
+const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: MessageActionsProps) => {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -99,6 +100,16 @@ const MessageActions = ({ content, conversationId, onRegenerate }: MessageAction
       >
         <Copy className="h-4 w-4" />
       </Button>
+      {onSpeak && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          onClick={() => onSpeak(content)}
+        >
+          <Volume2 className="h-4 w-4" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon"

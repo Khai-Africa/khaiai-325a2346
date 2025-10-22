@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
@@ -41,9 +41,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
   const [selectedMode, setSelectedMode] = useState<string>("chat");
   const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const { refetch: refetchUsage } = useUsage();
   const anonymousUsage = useAnonymousUsage();
   const isAnonymous = !user;
@@ -107,10 +111,137 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     toast.info(`Switched to ${mode} mode`);
   };
 
-  const handleVoiceInput = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      toast.info("Voice input feature coming soon!");
+  const handleVoiceInput = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+    } else {
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm',
+        });
+        
+        audioChunksRef.current = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          
+          // Convert to base64
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result?.toString().split(',')[1];
+            
+            if (base64Audio) {
+              toast.info("Transcribing audio...");
+              
+              try {
+                const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+                  body: { audio: base64Audio }
+                });
+                
+                if (error) throw error;
+                
+                if (data.text) {
+                  setInput(data.text);
+                  toast.success("Audio transcribed successfully!");
+                } else {
+                  toast.error("No speech detected");
+                }
+              } catch (error) {
+                console.error('Transcription error:', error);
+                toast.error("Failed to transcribe audio");
+              }
+            }
+          };
+          
+          // Stop all tracks
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
+        setIsRecording(true);
+        toast.info("Recording... Click again to stop");
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        toast.error("Could not access microphone");
+      }
+    }
+  };
+
+  const handleSpeakMessage = async (text: string) => {
+    try {
+      // Stop any currently playing audio
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+        setIsSpeaking(false);
+      }
+
+      if (isSpeaking) {
+        return;
+      }
+
+      setIsSpeaking(true);
+      toast.info("Generating speech...");
+
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text, voice: 'alloy' }
+      });
+
+      if (error) throw error;
+
+      if (data.audioContent) {
+        // Convert base64 to audio
+        const audioBlob = new Blob(
+          [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+          { type: 'audio/mpeg' }
+        );
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          currentAudioRef.current = null;
+        };
+        
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          toast.error("Failed to play audio");
+          URL.revokeObjectURL(audioUrl);
+          currentAudioRef.current = null;
+        };
+        
+        currentAudioRef.current = audio;
+        await audio.play();
+        toast.success("Playing audio...");
+      }
+    } catch (error) {
+      console.error('TTS error:', error);
+      setIsSpeaking(false);
+      toast.error("Failed to generate speech");
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+      setIsSpeaking(false);
+      toast.info("Stopped speaking");
     }
   };
 
@@ -347,6 +478,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         <MessageActions 
                           content={message.content}
                           conversationId={conversationId}
+                          onSpeak={handleSpeakMessage}
                           onRegenerate={index === messages.length - 1 && !isLoading ? () => {
                             // Handle regenerate
                             toast.info("Regenerating response...");
@@ -402,14 +534,25 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                     rows={1}
                   />
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`rounded-full h-10 w-10 ${isRecording ? "text-primary" : "text-muted-foreground"}`}
-                      onClick={handleVoiceInput}
-                    >
-                      <Mic className="w-5 h-5" />
-                    </Button>
+                    {isSpeaking ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full h-10 w-10 text-primary animate-pulse"
+                        onClick={stopSpeaking}
+                      >
+                        <Square className="w-5 h-5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={`rounded-full h-10 w-10 ${isRecording ? "text-primary animate-pulse" : "text-muted-foreground"}`}
+                        onClick={handleVoiceInput}
+                      >
+                        {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      </Button>
+                    )}
                     <Button
                       onClick={handleSend}
                       disabled={!input.trim() || isLoading}

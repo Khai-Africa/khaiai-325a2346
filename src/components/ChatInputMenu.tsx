@@ -29,7 +29,7 @@ const ChatInputMenu = ({ onModeSelect, selectedFiles, onFilesSelect, onRemoveFil
   };
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-1 flex-wrap">
       <FileUpload 
         onFilesSelect={onFilesSelect}
         selectedFiles={selectedFiles}
@@ -39,28 +39,28 @@ const ChatInputMenu = ({ onModeSelect, selectedFiles, onFilesSelect, onRemoveFil
         variant="ghost"
         size="sm"
         onClick={handleImageGen}
-        className="h-7 px-2.5 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
+        className="h-6 px-2 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
-        <Image className="w-3.5 h-3.5 mr-1.5" />
-        Generate Image
+        <Image className="w-3 h-3 mr-1" />
+        <span className="text-[10px]">Image</span>
       </Button>
       <Button
         variant="ghost"
         size="sm"
         onClick={handleSearch}
-        className="h-7 px-2.5 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
+        className="h-6 px-2 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
-        <Globe className="w-3.5 h-3.5 mr-1.5" />
-        Search Web
+        <Globe className="w-3 h-3 mr-1" />
+        <span className="text-[10px]">Search</span>
       </Button>
       <Button
         variant="ghost"
         size="sm"
         onClick={handleStudy}
-        className="h-7 px-2.5 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
+        className="h-6 px-2 text-xs rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
-        <BookOpen className="w-3.5 h-3.5 mr-1.5" />
-        Study Mode
+        <BookOpen className="w-3 h-3 mr-1" />
+        <span className="text-[10px]">Study</span>
       </Button>
     </div>
   );
