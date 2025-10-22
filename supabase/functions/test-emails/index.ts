@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// Test emails edge function - sends all email templates for testing
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -20,11 +21,12 @@ serve(async (req) => {
     const testEmail = 'umojami@gmail.com';
     const templateKeys = [
       'welcome',
-      'payment_confirmation',
-      'subscription_cancelled',
+      'payment_confirmed',
+      'cancellation_notice',
       'payment_reminder_monthly',
       'payment_reminder_yearly',
-      'support_ticket_response'
+      'feature_announcement',
+      'account_deletion'
     ];
 
     const results = [];
