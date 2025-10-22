@@ -215,38 +215,67 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         body: { text, voice: 'alloy' }
       });
 
-      if (error) throw error;
+      // Handle errors from edge function
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error('Failed to connect to speech service');
+      }
 
-      if (data.audioContent) {
-        // Convert base64 to audio
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
-          { type: 'audio/mpeg' }
-        );
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        
-        audio.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-          currentAudioRef.current = null;
-        };
-        
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          toast.error(t('chat.speechFailed'));
-          URL.revokeObjectURL(audioUrl);
-          currentAudioRef.current = null;
-        };
-        
-        currentAudioRef.current = audio;
-        await audio.play();
-        toast.success(t('chat.playingAudio'));
+      // Check for error in response data
+      if (data?.error) {
+        console.error('TTS API error:', data.error);
+        throw new Error(data.error);
+      }
+
+      // Validate audio content exists
+      if (!data?.audioContent) {
+        console.error('No audio content in response:', data);
+        throw new Error('No audio content received from service');
+      }
+
+      // Convert base64 to audio
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
+      };
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setIsSpeaking(false);
+        toast.error(t('chat.speechFailed'));
+        URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
+      };
+      
+      currentAudioRef.current = audio;
+      
+      // Handle play promise rejection
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            toast.success(t('chat.playingAudio'));
+          })
+          .catch(error => {
+            console.error('Audio play error:', error);
+            setIsSpeaking(false);
+            toast.error(t('chat.speechFailed'));
+            URL.revokeObjectURL(audioUrl);
+          });
       }
     } catch (error) {
       console.error('TTS error:', error);
       setIsSpeaking(false);
-      toast.error(t('chat.speechFailed'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`${t('chat.speechFailed')}: ${errorMessage}`);
     }
   };
 
