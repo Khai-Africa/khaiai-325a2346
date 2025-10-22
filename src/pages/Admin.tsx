@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface UserData {
   id: string;
   email: string;
+  username?: string;
   created_at: string;
-  role: string;
+  roles: string[];
   message_count: number;
   image_count: number;
 }
@@ -71,29 +72,13 @@ const Admin = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load users with their roles and usage
-      const { data: usersData, error: usersError } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          created_at,
-          user_roles (role),
-          user_usage (message_count, image_count)
-        `);
+      // Load users via admin edge function
+      const { data, error } = await supabase.functions.invoke("admin-operations", {
+        body: { operation: "list_users" },
+      });
 
-      if (usersError) throw usersError;
-
-      // Get emails from auth.users metadata
-      const formattedUsers: UserData[] = usersData?.map((u: any) => ({
-        id: u.id,
-        email: "Hidden for security",
-        created_at: u.created_at,
-        role: u.user_roles?.[0]?.role || "user",
-        message_count: u.user_usage?.reduce((sum: number, usage: any) => sum + (usage.message_count || 0), 0) || 0,
-        image_count: u.user_usage?.reduce((sum: number, usage: any) => sum + (usage.image_count || 0), 0) || 0,
-      })) || [];
-
-      setUsers(formattedUsers);
+      if (error) throw error;
+      setUsers(data.users || []);
 
       // Load admin logs
       const { data: logsData, error: logsError } = await supabase
@@ -112,38 +97,54 @@ const Admin = () => {
     }
   };
 
-  const logAdminAction = async (action: string, targetUserId?: string, details?: any) => {
-    try {
-      await supabase.from("admin_logs").insert({
-        admin_id: user?.id,
-        action,
-        target_user_id: targetUserId || null,
-        details: details || {},
-      });
-    } catch (error) {
-      console.error("Error logging admin action:", error);
-    }
-  };
-
   const handleDeleteUser = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       return;
     }
 
     try {
-      toast.loading("Deleting user...");
+      const loadingToast = toast.loading("Deleting user...");
       
-      // Note: Actual user deletion should be done via an edge function for security
-      // This is a placeholder that logs the action
-      await logAdminAction("delete_user_requested", userId, { 
-        reason: "Admin dashboard action" 
+      const { error } = await supabase.functions.invoke("admin-operations", {
+        body: { 
+          operation: "delete_user",
+          targetUserId: userId 
+        },
       });
 
-      toast.success("User deletion request logged. Contact system admin to complete.");
+      toast.dismiss(loadingToast);
+
+      if (error) throw error;
+
+      toast.success("User deleted successfully");
       loadData();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
+    }
+  };
+
+  const handleToggleRole = async (userId: string, role: "admin" | "moderator") => {
+    try {
+      const loadingToast = toast.loading(`Updating role...`);
+      
+      const { error } = await supabase.functions.invoke("admin-operations", {
+        body: { 
+          operation: "update_role",
+          targetUserId: userId,
+          role 
+        },
+      });
+
+      toast.dismiss(loadingToast);
+
+      if (error) throw error;
+
+      toast.success("Role updated successfully");
+      loadData();
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Failed to update role");
     }
   };
 
@@ -236,8 +237,9 @@ const Admin = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>User ID</TableHead>
-                        <TableHead>Role</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Roles</TableHead>
                         <TableHead>Messages</TableHead>
                         <TableHead>Images</TableHead>
                         <TableHead>Joined</TableHead>
@@ -245,33 +247,67 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-mono text-xs">
-                            {user.id.slice(0, 8)}...
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{user.message_count}</TableCell>
-                          <TableCell>{user.image_count}</TableCell>
-                          <TableCell>
-                            {new Date(user.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteUser(user.id)}
-                              disabled={user.role === "admin"}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {users.map((userData) => {
+                        const isAdmin = userData.roles.includes("admin");
+                        const isModerator = userData.roles.includes("moderator");
+                        
+                        return (
+                          <TableRow key={userData.id}>
+                            <TableCell className="text-xs">
+                              {userData.email}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {userData.username || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {userData.roles.map((role) => (
+                                  <Badge 
+                                    key={role}
+                                    variant={role === "admin" ? "default" : "secondary"}
+                                  >
+                                    {role}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>{userData.message_count}</TableCell>
+                            <TableCell>{userData.image_count}</TableCell>
+                            <TableCell>
+                              {new Date(userData.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant={isAdmin ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handleToggleRole(userData.id, "admin")}
+                                  disabled={userData.id === user?.id}
+                                  title={isAdmin ? "Remove admin" : "Make admin"}
+                                >
+                                  <Shield className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant={isModerator ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handleToggleRole(userData.id, "moderator")}
+                                  title={isModerator ? "Remove moderator" : "Make moderator"}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteUser(userData.id)}
+                                  disabled={isAdmin || userData.id === user?.id}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
