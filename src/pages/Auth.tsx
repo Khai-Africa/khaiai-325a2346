@@ -318,11 +318,11 @@ const Auth = () => {
           {isResetPassword ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="reset-email">Email Address</Label>
+                <Label htmlFor="reset-email">{t('auth.emailAddress')}</Label>
                 <Input
                   id="reset-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.enterYourEmail')}
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   required
@@ -331,7 +331,7 @@ const Auth = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending Reset Link..." : "Send Reset Link"}
+                {loading ? t('auth.sendingResetLink') : t('auth.sendResetLink')}
               </Button>
 
               <Button
@@ -344,18 +344,18 @@ const Auth = () => {
                 }}
                 disabled={loading}
               >
-                Back to Login
+                {t('auth.backToLogin')}
               </Button>
             </form>
           ) : isLogin ? (
             <>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="identifier">Username or Mobile Number</Label>
+                  <Label htmlFor="identifier">{t('auth.usernameOrMobile')}</Label>
                   <Input
                     id="identifier"
                     type="text"
-                    placeholder="Enter username or mobile"
+                    placeholder={t('auth.enterUsername')}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
@@ -364,11 +364,11 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('auth.password')}</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('auth.enterPassword')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -378,7 +378,7 @@ const Auth = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Please wait..." : "Sign In"}
+                  {loading ? t('auth.pleaseWait') : t('auth.signIn')}
                 </Button>
               </form>
 
@@ -397,7 +397,7 @@ const Auth = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google
+                {t('auth.continueWithGoogle')}
               </Button>
 
               <div className="mt-6 text-center space-y-2">
@@ -406,14 +406,14 @@ const Auth = () => {
                   className="text-sm text-primary hover:underline block w-full"
                   disabled={loading}
                 >
-                  Don't have an account? Sign up
+                  {t('auth.dontHaveAccount')}
                 </button>
                 <button
                   onClick={() => setIsResetPassword(true)}
                   className="text-sm text-muted-foreground hover:underline block w-full"
                   disabled={loading}
                 >
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             </>
@@ -421,11 +421,11 @@ const Auth = () => {
             <>
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username *</Label>
+                  <Label htmlFor="username">{t('auth.username')} *</Label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder={t('auth.chooseUsername')}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -434,11 +434,11 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="mobile">Mobile Number</Label>
+                  <Label htmlFor="mobile">{t('auth.mobile')}</Label>
                   <Input
                     id="mobile"
                     type="tel"
-                    placeholder="Enter your mobile number (optional)"
+                    placeholder={t('auth.enterMobile')}
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     disabled={loading}
@@ -446,11 +446,11 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('auth.email')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email (optional)"
+                    placeholder={t('auth.enterEmail')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -458,11 +458,11 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password *</Label>
+                  <Label htmlFor="signup-password">{t('auth.password')} *</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder={t('auth.createPassword')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -472,11 +472,11 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
                   <Input
                     id="confirm-password"
                     type="password"
-                    placeholder="Confirm your password"
+                    placeholder={t('auth.confirmYourPassword')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -486,7 +486,7 @@ const Auth = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Sign Up"}
+                  {loading ? t('auth.creatingAccount') : t('auth.signUp')}
                 </Button>
               </form>
 
@@ -505,7 +505,7 @@ const Auth = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Sign up with Google
+                {t('auth.continueWithGoogle')}
               </Button>
 
               <div className="mt-6 text-center">
@@ -514,7 +514,7 @@ const Auth = () => {
                   className="text-sm text-primary hover:underline"
                   disabled={loading}
                 >
-                  Already have an account? Sign in
+                  {t('auth.alreadyHaveAccount')}
                 </button>
               </div>
             </>
