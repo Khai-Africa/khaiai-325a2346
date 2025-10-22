@@ -315,6 +315,7 @@ const Premium = () => {
               const isPremiumPlan = plan.name.toLowerCase().includes("premium");
               const isYearly = plan.billing_period === "yearly";
               const isPopular = isPremiumPlan && isYearly;
+              const priceIdUsed = plan.stripe_price_id || (isPremiumPlan ? STRIPE_CONFIG.premium.price_id : null);
               
               return (
                 <Card
@@ -368,14 +369,14 @@ const Premium = () => {
                         return;
                       }
                       handleUpgrade(
-                        plan.stripe_price_id || STRIPE_CONFIG.premium.price_id, 
+                        priceIdUsed || "", 
                         plan.name, 
                         plan.price
                       );
                     }}
                     disabled={
                       plan.price === 0 || 
-                      selectedPlan === plan.stripe_price_id ||
+                      selectedPlan === priceIdUsed ||
                       (isPremium && plan.name.toLowerCase().includes("premium"))
                     }
                     className={`w-full ${
@@ -387,7 +388,7 @@ const Premium = () => {
                   >
                     {plan.price === 0
                       ? "Current Plan"
-                      : selectedPlan === plan.stripe_price_id
+                      : selectedPlan === priceIdUsed
                       ? "Processing..."
                       : (isPremium && plan.name.toLowerCase().includes("premium"))
                       ? "Current Plan"
