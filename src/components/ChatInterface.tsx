@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp } from "lucide-react";
+import { Mic, ArrowUp, Menu, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
@@ -14,6 +14,7 @@ import { useUsage } from "@/hooks/useUsage";
 import { useAnonymousUsage } from "@/hooks/useAnonymousUsage";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Message {
   id: string;
@@ -32,16 +33,26 @@ interface ChatInterfaceProps {
 const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversationId, onSelectConversation }: ChatInterfaceProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
   const [selectedMode, setSelectedMode] = useState<string>("chat");
   const [isRecording, setIsRecording] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { refetch: refetchUsage } = useUsage();
   const anonymousUsage = useAnonymousUsage();
   const isAnonymous = !user;
+
+  // Auto-hide sidebar on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     if (conversationId) {
@@ -278,18 +289,29 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar 
-        onNewChat={handleNewChat} 
-        onBack={onBack} 
-        onSelectConversation={onSelectConversation}
-        currentConversationId={conversationId}
-      />
+      {sidebarOpen && (
+        <Sidebar 
+          onNewChat={handleNewChat} 
+          onBack={onBack} 
+          onSelectConversation={onSelectConversation}
+          currentConversationId={conversationId}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="h-16 border-b border-border flex items-center justify-between px-6">
+        <div className="h-16 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
             <img src={logo} alt="Khai AI" className="w-8 h-8" />
             <span className="font-semibold">Khai</span>
           </div>
@@ -324,6 +346,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         </p>
                         <MessageActions 
                           content={message.content}
+                          conversationId={conversationId}
                           onRegenerate={index === messages.length - 1 && !isLoading ? () => {
                             // Handle regenerate
                             toast.info("Regenerating response...");
@@ -351,9 +374,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t border-border p-4">
+        <div className="p-4">
           <div className="max-w-3xl mx-auto">
-            <div className="relative bg-card border border-border rounded-[28px] shadow-lg">
+            <div className="relative bg-card rounded-[28px] shadow-lg">
               <div className="flex flex-col gap-2 p-4">
                 <div className="flex items-start gap-3">
                   <Textarea
@@ -389,7 +412,16 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                     </Button>
                   </div>
                 </div>
-                <ChatInputMenu onModeSelect={handleModeSelect} />
+                <ChatInputMenu 
+                  onModeSelect={handleModeSelect}
+                  selectedFiles={selectedFiles}
+                  onFilesSelect={setSelectedFiles}
+                  onRemoveFile={(index) => {
+                    const newFiles = [...selectedFiles];
+                    newFiles.splice(index, 1);
+                    setSelectedFiles(newFiles);
+                  }}
+                />
               </div>
             </div>
             <div className="mt-3 space-y-2">

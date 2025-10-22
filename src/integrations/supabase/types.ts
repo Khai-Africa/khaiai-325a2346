@@ -73,6 +73,44 @@ export type Database = {
           },
         ]
       }
+      message_feedback: {
+        Row: {
+          comment: string | null
+          conversation_id: string | null
+          created_at: string
+          feedback_type: string
+          id: string
+          message_content: string
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          feedback_type: string
+          id?: string
+          message_content: string
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          message_content?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

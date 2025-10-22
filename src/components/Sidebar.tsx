@@ -20,9 +20,10 @@ interface SidebarProps {
   onBack: () => void;
   onSelectConversation: (conversationId: string) => void;
   currentConversationId?: string | null;
+  onClose?: () => void;
 }
 
-const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationId }: SidebarProps) => {
+const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationId, onClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isPremium } = useSubscription();
@@ -135,7 +136,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const conversationGroups = groupConversations();
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col">
+    <div className="w-64 bg-card border-r border-border flex flex-col fixed md:relative h-full z-50 md:z-auto">
       <div className="p-4 border-b border-border space-y-2">
         <Button
           onClick={onBack}

@@ -1,28 +1,27 @@
-import { Paperclip, Search, BookOpen, Image } from "lucide-react";
+import { Search, BookOpen, Image, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import FileUpload from "./FileUpload";
 
 interface ChatInputMenuProps {
   onModeSelect: (mode: string) => void;
+  selectedFiles: File[];
+  onFilesSelect: (files: File[]) => void;
+  onRemoveFile: (index: number) => void;
 }
 
-const ChatInputMenu = ({ onModeSelect }: ChatInputMenuProps) => {
+const ChatInputMenu = ({ onModeSelect, selectedFiles, onFilesSelect, onRemoveFile }: ChatInputMenuProps) => {
   const navigate = useNavigate();
-
-  const handleAttach = () => {
-    onModeSelect("chat");
-    toast.info("File upload feature coming soon");
-  };
 
   const handleSearch = () => {
     onModeSelect("search");
-    toast.info("Switched to search mode");
+    toast.success("Search mode activated - I can now search the web for you!");
   };
 
   const handleStudy = () => {
     onModeSelect("study");
-    toast.info("Switched to study mode");
+    toast.success("Study mode activated - I'll help you learn and understand better!");
   };
 
   const handleImageGen = () => {
@@ -30,16 +29,12 @@ const ChatInputMenu = ({ onModeSelect }: ChatInputMenuProps) => {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleAttach}
-        className="h-9 rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
-      >
-        <Paperclip className="w-4 h-4 mr-2" />
-        Attach
-      </Button>
+    <div className="flex items-center gap-2 flex-wrap">
+      <FileUpload 
+        onFilesSelect={onFilesSelect}
+        selectedFiles={selectedFiles}
+        onRemoveFile={onRemoveFile}
+      />
       <Button
         variant="ghost"
         size="sm"
@@ -55,8 +50,8 @@ const ChatInputMenu = ({ onModeSelect }: ChatInputMenuProps) => {
         onClick={handleSearch}
         className="h-9 rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
-        <Search className="w-4 h-4 mr-2" />
-        Search
+        <Globe className="w-4 h-4 mr-2" />
+        Search Web
       </Button>
       <Button
         variant="ghost"
@@ -65,7 +60,7 @@ const ChatInputMenu = ({ onModeSelect }: ChatInputMenuProps) => {
         className="h-9 rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
       >
         <BookOpen className="w-4 h-4 mr-2" />
-        Study
+        Study Mode
       </Button>
     </div>
   );
