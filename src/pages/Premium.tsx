@@ -24,6 +24,7 @@ interface Plan {
   billing_period: string;
   features: string[];
   message_limit: number | null;
+  stripe_price_id: string | null;
 }
 
 const Premium = () => {
@@ -106,6 +107,7 @@ const Premium = () => {
           ? plan.features.map(f => String(f))
           : [],
         message_limit: plan.message_limit,
+        stripe_price_id: plan.stripe_price_id || null,
       }));
       
       setPlans(formattedPlans);
@@ -339,8 +341,22 @@ const Premium = () => {
                   </ul>
 
                   <Button
-                    onClick={() => handleUpgrade(STRIPE_CONFIG.premium.price_id, plan.name, plan.price)}
-                    disabled={selectedPlan === STRIPE_CONFIG.premium.price_id || plan.price === 0 || isPremium}
+                    onClick={() => {
+                      if (!plan.stripe_price_id && paymentProvider === "stripe") {
+                        toast.error("Stripe price not configured for this plan. Please use Mobile Money.");
+                        return;
+                      }
+                      handleUpgrade(
+                        plan.stripe_price_id || STRIPE_CONFIG.premium.price_id, 
+                        plan.name, 
+                        plan.price
+                      );
+                    }}
+                    disabled={
+                      selectedPlan === plan.stripe_price_id || 
+                      plan.price === 0 || 
+                      (isPremium && plan.name.toLowerCase().includes("premium"))
+                    }
                     className={`w-full ${
                       plan.name.toLowerCase().includes("premium")
                         ? "bg-gradient-primary hover:opacity-90 text-white"
@@ -348,9 +364,9 @@ const Premium = () => {
                     }`}
                     variant={plan.name.toLowerCase().includes("premium") ? "default" : "outline"}
                   >
-                    {selectedPlan === STRIPE_CONFIG.premium.price_id
+                    {selectedPlan === plan.stripe_price_id
                       ? "Processing..."
-                      : isPremium && plan.name.toLowerCase().includes("premium")
+                      : (isPremium && plan.name.toLowerCase().includes("premium"))
                       ? "Current Plan"
                       : plan.price === 0
                       ? "Current Plan"

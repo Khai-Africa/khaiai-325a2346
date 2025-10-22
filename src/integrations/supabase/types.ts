@@ -266,6 +266,7 @@ export type Database = {
           message_limit: number | null
           name: string
           price: number
+          stripe_price_id: string | null
         }
         Insert: {
           billing_period: string
@@ -275,6 +276,7 @@ export type Database = {
           message_limit?: number | null
           name: string
           price: number
+          stripe_price_id?: string | null
         }
         Update: {
           billing_period?: string
@@ -284,6 +286,7 @@ export type Database = {
           message_limit?: number | null
           name?: string
           price?: number
+          stripe_price_id?: string | null
         }
         Relationships: []
       }
