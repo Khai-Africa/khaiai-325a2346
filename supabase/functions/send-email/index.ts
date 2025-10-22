@@ -58,11 +58,12 @@ serve(async (req) => {
     let subject = template.subject;
 
     // Add default variables
+    const appUrl = Deno.env.get('APP_URL') || 'https://khai.africa';
     const allVariables = {
       username: recipientName || 'User',
-      app_url: Deno.env.get('APP_URL') || 'https://your-app-url.com',
-      help_url: Deno.env.get('APP_URL') + '/help' || 'https://your-app-url.com/help',
-      manage_subscription_url: Deno.env.get('APP_URL') + '/premium' || 'https://your-app-url.com/premium',
+      app_url: appUrl,
+      help_url: `${appUrl}/help`,
+      manage_subscription_url: `${appUrl}/premium`,
       ...variables,
     };
 
@@ -76,7 +77,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'Khai AI <onboarding@resend.dev>',
+      from: 'Khai AI <noreply@khai.africa>',
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,
