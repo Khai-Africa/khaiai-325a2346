@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, User, Bell, Globe, Palette, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,66 @@ const Settings = () => {
   const [notifications, setNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+
+  useEffect(() => {
+    loadNotificationPreferences();
+  }, [user]);
+
+  const loadNotificationPreferences = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("Error loading preferences:", error);
+      }
+
+      if (data) {
+        setNotifications(data.push_notifications);
+        setEmailUpdates(data.email_updates);
+      }
+    } catch (error) {
+      console.error("Error loading preferences:", error);
+    } finally {
+      setLoadingPrefs(false);
+    }
+  };
+
+  const updateNotificationPreferences = async (pushNotifications: boolean, emailUpdates: boolean) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("notification_preferences")
+        .upsert({
+          user_id: user.id,
+          push_notifications: pushNotifications,
+          email_updates: emailUpdates,
+        });
+
+      if (error) throw error;
+      toast.success("Preferences updated");
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      toast.error("Failed to update preferences");
+    }
+  };
+
+  const handleNotificationsChange = async (checked: boolean) => {
+    setNotifications(checked);
+    await updateNotificationPreferences(checked, emailUpdates);
+  };
+
+  const handleEmailUpdatesChange = async (checked: boolean) => {
+    setEmailUpdates(checked);
+    await updateNotificationPreferences(notifications, checked);
+  };
 
   const handleExportData = async () => {
     try {
@@ -68,11 +128,11 @@ const Settings = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/?chat=true")}
+            onClick={() => navigate(-1)}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Chat
+            Go Back
           </Button>
         </div>
       </header>
@@ -141,14 +201,22 @@ const Settings = () => {
                 <Label>Push Notifications</Label>
                 <p className="text-sm text-muted-foreground">Receive notifications in the app</p>
               </div>
-              <Switch checked={notifications} onCheckedChange={setNotifications} />
+              <Switch 
+                checked={notifications} 
+                onCheckedChange={handleNotificationsChange}
+                disabled={loadingPrefs}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>Email Updates</Label>
                 <p className="text-sm text-muted-foreground">Receive updates via email</p>
               </div>
-              <Switch checked={emailUpdates} onCheckedChange={setEmailUpdates} />
+              <Switch 
+                checked={emailUpdates} 
+                onCheckedChange={handleEmailUpdatesChange}
+                disabled={loadingPrefs}
+              />
             </div>
           </CardContent>
         </Card>

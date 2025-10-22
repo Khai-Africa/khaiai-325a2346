@@ -15,6 +15,7 @@ import Privacy from "./pages/Privacy";
 import Settings from "./pages/Settings";
 import Usage from "./pages/Usage";
 import Help from "./pages/Help";
+import Admin from "./pages/Admin";
 import { useAuth } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -52,9 +53,31 @@ const App = () => (
             <Route path="/install" element={<Install />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/usage" element={<Usage />} />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/usage" 
+              element={
+                <ProtectedRoute>
+                  <Usage />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/help" element={<Help />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              } 
+            />
             {/* Allow immediate access to chat like ChatGPT */}
             <Route path="/" element={<Index />} />
             <Route
