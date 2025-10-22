@@ -23,9 +23,9 @@ export const useCodexUsage = () => {
         .from('user_codex_usage')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code === 'PGRST116') {
+      if (!data) {
         // No record exists, create one
         const { data: newUsage, error: insertError } = await supabase
           .from('user_codex_usage')

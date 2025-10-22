@@ -37,6 +37,28 @@ export default function Codex() {
     }
   }, [user, authLoading, navigate]);
 
+  // Load tasks for active project
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (!activeProject?.id) return;
+      
+      try {
+        const { data: tasksData } = await supabase
+          .from('codex_tasks')
+          .select('*')
+          .eq('project_id', activeProject.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        setTasks(tasksData || []);
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+      }
+    };
+
+    loadTasks();
+  }, [activeProject?.id]);
+
   // Show loading while checking auth
   if (authLoading) {
     return (
@@ -176,29 +198,6 @@ export default function Codex() {
     toast.info('Payment integration coming soon');
     setShowPaymentDialog(false);
   };
-
-  if (!isPremium) {
-    return (
-      <div className="min-h-screen bg-background">
-        <CodexHeader />
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center space-y-6">
-            <Crown className="w-16 h-16 mx-auto text-primary" />
-            <h2 className="text-3xl font-bold">Premium Feature</h2>
-            <p className="text-lg text-muted-foreground">
-              Coda House is a premium feature. Upgrade your plan to access powerful code generation and analysis tools.
-            </p>
-            <Button size="lg" asChild>
-              <Link to="/premium">
-                <Crown className="w-5 h-5 mr-2" />
-                Upgrade to Premium
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

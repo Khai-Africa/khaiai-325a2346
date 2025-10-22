@@ -48,9 +48,9 @@ serve(async (req) => {
       .from('user_codex_usage')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (usageError || !usage) {
+    if (!usage) {
       const { data: newUsage } = await supabase
         .from('user_codex_usage')
         .insert({ user_id: user.id })
