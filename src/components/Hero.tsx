@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionBadge } from "./SubscriptionBadge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "./LanguageSwitch";
+import { AITypewriter } from "./AITypewriter";
 
 interface HeroProps {
   onStartChat: () => void;
@@ -76,11 +77,11 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
         </button>
 
         {/* Main heading */}
-        <h1 className="text-5xl md:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
-          {t('hero.title')}
+        <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+          Khai <AITypewriter />
         </h1>
         
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-xl md:text-2xl text-white max-w-2xl mx-auto">
           {t('hero.subtitle')}
         </p>
 
