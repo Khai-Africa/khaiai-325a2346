@@ -42,6 +42,9 @@ const Premium = () => {
   useEffect(() => {
     fetchPlans();
     
+    // Clear any selected plan state when component mounts
+    setSelectedPlan(null);
+    
     // Handle success/cancel from Stripe or Flutterwave
     const success = searchParams.get("success");
     const payment = searchParams.get("payment");
@@ -59,6 +62,7 @@ const Premium = () => {
       window.history.replaceState({}, "", "/premium");
     } else if (canceled) {
       toast.info("Checkout canceled.");
+      setSelectedPlan(null);
       window.history.replaceState({}, "", "/premium");
     }
   }, [searchParams, refetch]);
@@ -127,6 +131,7 @@ const Premium = () => {
       if (!session) {
         toast.error("Please sign in to upgrade");
         navigate("/auth");
+        setSelectedPlan(null);
         return;
       }
 
@@ -147,7 +152,10 @@ const Premium = () => {
         if (error) throw error;
         
         if (data?.url) {
+          // User is being redirected, don't clear state
           window.location.href = data.url;
+        } else {
+          setSelectedPlan(null);
         }
       } else {
         const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -160,7 +168,10 @@ const Premium = () => {
         if (error) throw error;
         
         if (data?.url) {
+          // User is being redirected, don't clear state
           window.location.href = data.url;
+        } else {
+          setSelectedPlan(null);
         }
       }
     } catch (error: any) {
