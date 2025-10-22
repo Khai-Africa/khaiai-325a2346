@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
+import khaiLogo from "@/assets/khai-ai-logo.png";
 
 const signupSchema = z.object({
   username: z.string().trim().min(3, { message: "Username must be at least 3 characters" }).max(30),
@@ -323,7 +324,7 @@ const Auth = () => {
             className="inline-block cursor-pointer hover:opacity-80 transition-opacity"
           >
             <img 
-              src="/kai-ai-logo.png" 
+              src={khaiLogo} 
               alt="Khai AI" 
               className="w-16 h-16 mx-auto mb-4"
             />
