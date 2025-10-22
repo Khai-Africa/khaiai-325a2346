@@ -14,10 +14,27 @@ import { useNavigate } from "react-router-dom";
 interface PlusMenuProps {
   onFilesSelect?: () => void;
   onModeSelect?: (mode: string) => void;
+  activeMode?: string;
+  hasFiles?: boolean;
 }
 
-const PlusMenu = ({ onFilesSelect, onModeSelect }: PlusMenuProps) => {
+const PlusMenu = ({ onFilesSelect, onModeSelect, activeMode = "chat", hasFiles = false }: PlusMenuProps) => {
   const navigate = useNavigate();
+
+  // Map modes to their corresponding icons
+  const getActiveIcon = () => {
+    if (hasFiles) return Paperclip;
+    
+    const iconMap: Record<string, typeof Plus> = {
+      'thinking': Lightbulb,
+      'deep-research': Telescope,
+      'search': Globe,
+    };
+    
+    return iconMap[activeMode] || Plus;
+  };
+
+  const ActiveIcon = getActiveIcon();
 
   const handleFileUpload = () => {
     onFilesSelect?.();
@@ -99,7 +116,7 @@ const PlusMenu = ({ onFilesSelect, onModeSelect }: PlusMenuProps) => {
           size="icon"
           className="h-9 w-9 rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
         >
-          <Plus className="w-5 h-5" />
+          <ActiveIcon className="w-5 h-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 

@@ -576,6 +576,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
                       fileInput?.click();
                     }}
+                    activeMode={selectedMode}
+                    hasFiles={selectedFiles.length > 0}
                   />
                   <Textarea
                     ref={textareaRef}
