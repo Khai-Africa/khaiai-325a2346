@@ -44,15 +44,27 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
             <LogIn className="w-3 h-3 mr-2" />
             {t('hero.login')}
           </Button>
-        ) : !isPremium && (
-          <Button
-            onClick={() => navigate("/premium")}
-            className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm"
-            size="sm"
-          >
-            <Crown className="w-3 h-3 mr-2" />
-            {t('hero.upgradeToPremium')}
-          </Button>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/settings")}
+              className="border-border hover:bg-secondary px-4 py-2 text-sm"
+              size="sm"
+            >
+              {t('hero.account')}
+            </Button>
+            {!isPremium && (
+              <Button
+                onClick={() => navigate("/premium")}
+                className="bg-gradient-primary hover:opacity-90 text-white px-4 py-2 text-sm"
+                size="sm"
+              >
+                <Crown className="w-3 h-3 mr-2" />
+                {t('hero.upgradeToPremium')}
+              </Button>
+            )}
+          </>
         )}
       </div>
 

@@ -26,6 +26,7 @@ export const translations = {
       learnMore: 'Learn More',
       goPremium: 'Go Premium',
       login: 'Login',
+      account: 'Account',
       upgradeToPremium: 'Upgrade to Premium',
     },
     
@@ -338,6 +339,7 @@ export const translations = {
       learnMore: 'En Savoir Plus',
       goPremium: 'Passer à Premium',
       login: 'Connexion',
+      account: 'Compte',
       upgradeToPremium: 'Passer à Premium',
     },
     

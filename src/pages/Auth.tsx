@@ -47,15 +47,28 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check if user is already logged in and redirect immediately
+    const checkAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if user came from upgrade flow
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect');
-        navigate(redirect === 'premium' ? '/premium' : '/');
+        navigate(redirect === 'premium' ? '/premium' : '/', { replace: true });
+      }
+    };
+
+    checkAndRedirect();
+
+    // Also listen for auth state changes (important for OAuth redirects)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        navigate(redirect === 'premium' ? '/premium' : '/', { replace: true });
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
