@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCodexChat } from "@/hooks/useCodexChat";
 import { cn } from "@/lib/utils";
+import { CodeBlock } from "./CodeBlock";
+import { parseMessageContent } from "@/lib/messageParser";
 
 interface CodexChatProps {
   projectId: string | null;
@@ -18,9 +20,13 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
     }
-  }, [messages]);
+  }, [messages, streaming]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,18 +90,34 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
               >
                 <div
                   className={cn(
-                    "max-w-[85%] md:max-w-[80%] rounded-lg p-2 md:p-3",
+                    "max-w-[85%] md:max-w-[80%] rounded-lg",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                      ? "bg-primary text-primary-foreground p-2 md:p-3"
+                      : "bg-muted/50"
                   )}
                 >
-                  <div className="text-xs font-medium mb-1 opacity-70">
+                  <div className="text-xs font-medium mb-1 opacity-70 px-2 pt-2">
                     {message.role === "user" ? "You" : "AI Assistant"}
                   </div>
-                  <div className="text-xs md:text-sm whitespace-pre-wrap break-words">
-                    {message.content}
-                  </div>
+                  {message.role === "user" ? (
+                    <div className="text-xs md:text-sm whitespace-pre-wrap break-words px-2 pb-2">
+                      {message.content}
+                    </div>
+                  ) : (
+                    <div className="px-2 pb-2">
+                      {parseMessageContent(message.content).map((segment, idx) => (
+                        <div key={idx}>
+                          {segment.type === "text" ? (
+                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
+                              {segment.content}
+                            </p>
+                          ) : (
+                            <CodeBlock code={segment.content} language={segment.language} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))
