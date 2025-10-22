@@ -314,7 +314,6 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             <img src={logo} alt="Khai AI" className="w-8 h-8" />
-            <span className="font-semibold">Khai</span>
           </div>
         </div>
 
