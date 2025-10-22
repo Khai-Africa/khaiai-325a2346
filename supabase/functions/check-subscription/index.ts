@@ -76,10 +76,40 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
+    // Check Flutterwave transactions for active subscription
+    let flutterwaveActive = false;
+    if (!hasActiveSub) {
+      const { data: fwTransactions } = await supabaseClient
+        .from("payment_transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("provider", "flutterwave")
+        .eq("status", "completed")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (fwTransactions && fwTransactions.length > 0) {
+        const lastPayment = fwTransactions[0];
+        const paymentDate = new Date(lastPayment.created_at);
+        const expiryDate = new Date(paymentDate);
+        expiryDate.setMonth(expiryDate.getMonth() + 1); // Assume monthly
+
+        if (expiryDate > new Date()) {
+          flutterwaveActive = true;
+          subscriptionEnd = expiryDate.toISOString();
+          productId = "flutterwave_premium";
+          logStep("Active Flutterwave subscription found", { expiryDate });
+        }
+      }
+    }
+
+    const isSubscribed = hasActiveSub || flutterwaveActive;
+
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: isSubscribed,
       product_id: productId,
-      subscription_end: subscriptionEnd
+      subscription_end: subscriptionEnd,
+      provider: hasActiveSub ? "stripe" : flutterwaveActive ? "flutterwave" : null
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

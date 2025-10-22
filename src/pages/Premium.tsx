@@ -2,12 +2,20 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, ArrowLeft, Sparkles, Zap, Crown, Settings } from "lucide-react";
+import { Check, ArrowLeft, Sparkles, Zap, Crown, Settings, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCurrency } from "@/hooks/useCurrency";
 import { STRIPE_CONFIG } from "@/constants/stripe";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Plan {
   id: string;
@@ -23,29 +31,62 @@ const Premium = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isPremium, loading: subLoading, refetch } = useSubscription();
+  const { selectedCurrency, currencies, formatPrice, updateCurrency } = useCurrency();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [managingPortal, setManagingPortal] = useState(false);
+  const [paymentProvider, setPaymentProvider] = useState<"stripe" | "flutterwave">("flutterwave");
 
   useEffect(() => {
     fetchPlans();
     
-    // Handle success/cancel from Stripe
+    // Handle success/cancel from Stripe or Flutterwave
     const success = searchParams.get("success");
+    const payment = searchParams.get("payment");
+    const ref = searchParams.get("ref");
     const canceled = searchParams.get("canceled");
     
-    if (success) {
-      toast.success("Subscription activated! Welcome to Premium!");
-      refetch();
-      // Clear URL params
+    if (success || payment === "success") {
+      if (ref) {
+        // Verify Flutterwave payment
+        verifyFlutterwavePayment(ref);
+      } else {
+        toast.success("Subscription activated! Welcome to Premium!");
+        refetch();
+      }
       window.history.replaceState({}, "", "/premium");
     } else if (canceled) {
       toast.info("Checkout canceled. You can upgrade anytime!");
-      // Clear URL params
       window.history.replaceState({}, "", "/premium");
     }
   }, [searchParams, refetch]);
+
+  const verifyFlutterwavePayment = async (reference: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase.functions.invoke("flutterwave-verify", {
+        body: { reference },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("Payment verified! Welcome to Premium!");
+        refetch();
+      } else {
+        toast.error("Payment verification failed. Please contact support.");
+      }
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      toast.error("Failed to verify payment");
+    }
+  };
 
   const fetchPlans = async () => {
     try {
@@ -76,7 +117,7 @@ const Premium = () => {
     }
   };
 
-  const handleUpgrade = async (priceId: string) => {
+  const handleUpgrade = async (priceId: string, planName: string, usdPrice: number) => {
     setSelectedPlan(priceId);
     
     try {
@@ -88,18 +129,37 @@ const Premium = () => {
       }
 
       toast.loading("Creating checkout session...");
-      
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.location.href = data.url;
+      if (paymentProvider === "flutterwave") {
+        const { data, error } = await supabase.functions.invoke("flutterwave-checkout", {
+          body: { 
+            amount: usdPrice,
+            currency: selectedCurrency,
+            planName 
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        const { data, error } = await supabase.functions.invoke("create-checkout", {
+          body: { priceId },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
@@ -147,7 +207,7 @@ const Premium = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
           <Button
             onClick={() => navigate("/")}
             variant="ghost"
@@ -157,17 +217,41 @@ const Premium = () => {
             Back to Home
           </Button>
           
-          {isPremium && (
-            <Button
-              onClick={handleManageSubscription}
-              variant="outline"
-              className="gap-2"
-              disabled={managingPortal}
-            >
-              <Settings className="w-4 h-4" />
-              {managingPortal ? "Opening..." : "Manage Subscription"}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <Select value={selectedCurrency} onValueChange={updateCurrency}>
+              <SelectTrigger className="w-[160px]">
+                <Globe className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={paymentProvider} onValueChange={(v) => setPaymentProvider(v as any)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="flutterwave">Mobile Money</SelectItem>
+                <SelectItem value="stripe">Card</SelectItem>
+              </SelectContent>
+            </Select>
+          
+            {isPremium && (
+              <Button
+                onClick={handleManageSubscription}
+                variant="outline"
+                size="sm"
+                disabled={managingPortal}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -255,7 +339,7 @@ const Premium = () => {
                   </ul>
 
                   <Button
-                    onClick={() => handleUpgrade(STRIPE_CONFIG.premium.price_id)}
+                    onClick={() => handleUpgrade(STRIPE_CONFIG.premium.price_id, plan.name, plan.price)}
                     disabled={selectedPlan === STRIPE_CONFIG.premium.price_id || plan.price === 0 || isPremium}
                     className={`w-full ${
                       plan.name.toLowerCase().includes("premium")

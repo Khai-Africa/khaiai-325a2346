@@ -38,6 +38,27 @@ export type Database = {
         }
         Relationships: []
       }
+      currency_rates: {
+        Row: {
+          currency_code: string
+          id: string
+          last_updated: string
+          rate_to_usd: number
+        }
+        Insert: {
+          currency_code: string
+          id?: string
+          last_updated?: string
+          rate_to_usd: number
+        }
+        Update: {
+          currency_code?: string
+          id?: string
+          last_updated?: string
+          rate_to_usd?: number
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           conversation_id: string | null
@@ -143,6 +164,72 @@ export type Database = {
           },
         ]
       }
+      payment_providers: {
+        Row: {
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          provider: string
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          id?: string
+          metadata?: Json | null
+          provider: string
+          reference: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_period: string
@@ -173,6 +260,69 @@ export type Database = {
         }
         Relationships: []
       }
+      uploaded_files: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          extracted_text: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          extracted_text?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          extracted_text?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_currency_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          preferred_currency: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferred_currency?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferred_currency?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -190,6 +340,39 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          provider: string
+          refresh_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
