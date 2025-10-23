@@ -699,6 +699,7 @@ export type Database = {
           created_at: string | null
           id: string
           mobile_number: string | null
+          secret_word: string | null
           updated_at: string | null
           username: string
         }
@@ -706,6 +707,7 @@ export type Database = {
           created_at?: string | null
           id: string
           mobile_number?: string | null
+          secret_word?: string | null
           updated_at?: string | null
           username: string
         }
@@ -713,6 +715,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           mobile_number?: string | null
+          secret_word?: string | null
           updated_at?: string | null
           username?: string
         }

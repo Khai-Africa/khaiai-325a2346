@@ -17,9 +17,14 @@ const signupSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(100),
   confirmPassword: z.string(),
+  secretWord: z.string().trim().min(3, { message: "Secret word must be at least 3 characters" }).max(50),
+  confirmSecretWord: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => data.secretWord === data.confirmSecretWord, {
+  message: "Secret words don't match",
+  path: ["confirmSecretWord"],
 });
 
 const resetSchema = z.object({
@@ -41,8 +46,12 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [secretWord, setSecretWord] = useState("");
+  const [confirmSecretWord, setConfirmSecretWord] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [resetSecretWord, setResetSecretWord] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -137,7 +146,9 @@ const Auth = () => {
       mobile, 
       email, 
       password, 
-      confirmPassword 
+      confirmPassword,
+      secretWord,
+      confirmSecretWord
     });
     
     if (!result.success) {
@@ -189,13 +200,14 @@ const Auth = () => {
       }
 
       if (authData.user) {
-        // Create profile
+        // Create profile with secret word
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: authData.user.id,
             username: result.data.username,
             mobile_number: result.data.mobile || null,
+            secret_word: result.data.secretWord.toLowerCase(),
           });
 
         if (profileError) {
@@ -265,11 +277,19 @@ const Auth = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const result = resetSchema.safeParse({ email: resetEmail });
-    if (!result.success) {
+    if (!resetEmail || !resetSecretWord || !newPassword) {
       toast({
         title: "Validation Error",
-        description: result.error.errors[0].message,
+        description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 6 characters",
         variant: "destructive",
       });
       return;
@@ -278,21 +298,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      // Call edge function to verify secret word and reset password
+      const { data, error } = await supabase.functions.invoke("reset-password", {
+        body: { 
+          email: resetEmail,
+          secretWord: resetSecretWord.toLowerCase(),
+          newPassword: newPassword
+        },
       });
 
-      if (error) {
-        throw error;
+      if (error || data?.error) {
+        toast({
+          title: "Reset Failed",
+          description: data?.error || "Invalid email or secret word.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Your password has been reset successfully.",
+        });
+        
+        setIsResetPassword(false);
+        setResetEmail("");
+        setResetSecretWord("");
+        setNewPassword("");
       }
-
-      toast({
-        title: "Check Your Email",
-        description: "If an account exists with that email, a password reset link has been sent.",
-      });
-      
-      setIsResetPassword(false);
-      setResetEmail("");
     } catch (error) {
       toast({
         title: "Error",
@@ -376,8 +407,35 @@ const Auth = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="reset-secret">{t('auth.secretWord')}</Label>
+                <Input
+                  id="reset-secret"
+                  type="text"
+                  placeholder={t('auth.enterSecretWord')}
+                  value={resetSecretWord}
+                  onChange={(e) => setResetSecretWord(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder={t('auth.enterNewPassword')}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  minLength={6}
+                />
+              </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? t('auth.sendingResetLink') : t('auth.sendResetLink')}
+                {loading ? t('auth.pleaseWait') : t('auth.resetPassword')}
               </Button>
 
               <Button
@@ -387,6 +445,8 @@ const Auth = () => {
                 onClick={() => {
                   setIsResetPassword(false);
                   setResetEmail("");
+                  setResetSecretWord("");
+                  setNewPassword("");
                 }}
                 disabled={loading}
               >
@@ -528,6 +588,35 @@ const Auth = () => {
                     required
                     disabled={loading}
                     minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="secret-word">{t('auth.secretWord')} *</Label>
+                  <Input
+                    id="secret-word"
+                    type="text"
+                    placeholder={t('auth.enterSecretWord')}
+                    value={secretWord}
+                    onChange={(e) => setSecretWord(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This will be used for password recovery
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-secret">{t('auth.confirmSecretWord')}</Label>
+                  <Input
+                    id="confirm-secret"
+                    type="text"
+                    placeholder={t('auth.confirmSecretWord')}
+                    value={confirmSecretWord}
+                    onChange={(e) => setConfirmSecretWord(e.target.value)}
+                    required
+                    disabled={loading}
                   />
                 </div>
 
