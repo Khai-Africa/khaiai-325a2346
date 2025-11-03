@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X, Volume2, Square } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
@@ -502,7 +502,17 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               <span className="text-lg font-semibold">Khai AI</span>
             </button>
           </div>
-          <LanguageSwitch />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/voice')}
+              className="hover:bg-accent"
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+            <LanguageSwitch />
+          </div>
         </div>
 
         {/* Messages */}

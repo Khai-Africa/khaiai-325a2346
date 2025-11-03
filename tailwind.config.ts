@@ -113,6 +113,7 @@ export default {
         "fade-in": "fade-in 0.5s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
         "glow": "glow 2s ease-in-out infinite",
+        "spin-slow": "spin 8s linear infinite",
       },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
