@@ -226,20 +226,6 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         />
       </div>
 
-      {/* Transcript Display */}
-      {transcript && (
-        <div className="mt-8 max-w-2xl px-6 text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground">You said:</p>
-          <p className="text-lg font-medium">{transcript}</p>
-        </div>
-      )}
-
-      {aiResponse && (
-        <div className="mt-4 max-w-2xl px-6 text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground">AI response:</p>
-          <p className="text-lg font-medium">{aiResponse}</p>
-        </div>
-      )}
 
       {/* Bottom Controls */}
       <div className="absolute bottom-8 w-full px-6 flex items-center justify-between max-w-md mx-auto">
