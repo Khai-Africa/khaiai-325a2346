@@ -68,6 +68,9 @@ All colors MUST be HSL.
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Voice orb animations */
+    --orb-breathe: 3s ease-in-out infinite;
 
     --sidebar-background: 0 0% 98%;
 

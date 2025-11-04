@@ -223,23 +223,83 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-primary/5 to-background z-50 flex flex-col items-center justify-center">
-      {/* Animated Orb */}
-      <div className="relative">
+      {/* Animated Orb - Multi-layered */}
+      <div className="relative w-80 h-80 flex items-center justify-center">
+        {/* Outer glow ring - expands on activity */}
         <div 
-          className={`w-64 h-64 rounded-full bg-gradient-to-br 
-            ${isListening ? 'from-red-400 via-red-300 to-red-200 animate-pulse scale-110' : ''} 
-            ${isProcessing ? 'from-yellow-400 via-yellow-300 to-yellow-200 animate-pulse scale-105' : ''}
-            ${isSpeaking ? 'from-blue-400 via-cyan-300 to-blue-200 animate-ping scale-125' : ''}
-            ${!isListening && !isProcessing && !isSpeaking ? 'from-blue-400 via-cyan-300 to-blue-200' : ''}
-            transition-all duration-500 blur-xl opacity-70`}
+          className={`absolute w-80 h-80 rounded-full transition-all duration-700 ease-in-out
+            ${isListening ? 'scale-125 opacity-40 bg-gradient-to-br from-red-500/30 via-red-400/20 to-transparent blur-3xl animate-pulse' : ''} 
+            ${isProcessing ? 'scale-110 opacity-30 bg-gradient-to-br from-yellow-500/30 via-yellow-400/20 to-transparent blur-3xl animate-pulse' : ''}
+            ${isSpeaking ? 'scale-150 opacity-50 bg-gradient-to-br from-blue-500/40 via-cyan-400/30 to-purple-400/20 blur-3xl animate-ping' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'scale-100 opacity-20 bg-gradient-to-br from-primary/20 via-accent/15 to-transparent blur-2xl' : ''}`}
+          style={{ animation: isListening || isProcessing || isSpeaking ? 'pulse 2s ease-in-out infinite' : '' }}
         />
+
+        {/* Rotating gradient ring */}
         <div 
-          className={`absolute inset-0 w-64 h-64 rounded-full bg-gradient-to-br 
-            ${isListening ? 'from-red-500 via-red-400 to-red-300' : ''}
-            ${isProcessing ? 'from-yellow-500 via-yellow-400 to-yellow-300' : ''}
-            ${isSpeaking ? 'from-blue-500 via-cyan-400 to-blue-300' : ''}
-            ${!isListening && !isProcessing && !isSpeaking ? 'from-blue-500 via-cyan-400 to-blue-300' : ''}
-            opacity-90 animate-spin-slow`}
+          className={`absolute w-72 h-72 rounded-full transition-all duration-500
+            ${isListening ? 'from-red-500/60 via-red-400/40 to-red-300/20' : ''} 
+            ${isProcessing ? 'from-yellow-500/60 via-yellow-400/40 to-yellow-300/20' : ''}
+            ${isSpeaking ? 'from-blue-500/70 via-cyan-400/50 to-purple-400/30' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-primary/50 via-accent/30 to-primary/10' : ''}
+            bg-gradient-to-br blur-2xl opacity-60`}
+          style={{ 
+            animation: 'spin 8s linear infinite',
+            filter: 'blur(40px)'
+          }}
+        />
+
+        {/* Middle breathing layer */}
+        <div 
+          className={`absolute w-64 h-64 rounded-full transition-all duration-700
+            ${isListening ? 'from-red-600/80 via-red-500/60 to-red-400/40 scale-110' : ''} 
+            ${isProcessing ? 'from-yellow-600/80 via-yellow-500/60 to-yellow-400/40 scale-105' : ''}
+            ${isSpeaking ? 'from-blue-600/90 via-cyan-500/70 to-blue-400/50 scale-115' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-primary/70 via-accent/50 to-primary/30 scale-100' : ''}
+            bg-gradient-to-br blur-xl`}
+          style={{ 
+            animation: isListening || isProcessing || isSpeaking ? 'pulse 1.5s ease-in-out infinite' : 'pulse 3s ease-in-out infinite'
+          }}
+        />
+
+        {/* Core orb with sharp edges */}
+        <div 
+          className={`absolute w-56 h-56 rounded-full transition-all duration-500 shadow-2xl
+            ${isListening ? 'from-red-600 via-red-500 to-red-400 shadow-red-500/50' : ''} 
+            ${isProcessing ? 'from-yellow-600 via-yellow-500 to-yellow-400 shadow-yellow-500/50' : ''}
+            ${isSpeaking ? 'from-blue-600 via-cyan-500 to-blue-400 shadow-blue-500/60' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-primary via-accent to-primary shadow-primary/40' : ''}
+            bg-gradient-to-br backdrop-blur-sm`}
+          style={{ 
+            filter: 'blur(1px)',
+            animation: isListening ? 'pulse 0.8s ease-in-out infinite' : isSpeaking ? 'pulse 0.6s ease-in-out infinite' : ''
+          }}
+        />
+
+        {/* Inner shimmer */}
+        <div 
+          className={`absolute w-48 h-48 rounded-full transition-all duration-500
+            ${isListening ? 'from-red-400/40 via-white/30 to-red-500/40' : ''} 
+            ${isProcessing ? 'from-yellow-400/40 via-white/30 to-yellow-500/40' : ''}
+            ${isSpeaking ? 'from-blue-400/50 via-white/40 to-cyan-500/50' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-primary/30 via-white/20 to-accent/30' : ''}
+            bg-gradient-to-tr blur-sm opacity-80`}
+          style={{ 
+            animation: 'spin 6s linear infinite reverse'
+          }}
+        />
+
+        {/* Center highlight */}
+        <div 
+          className={`absolute w-32 h-32 rounded-full transition-all duration-300
+            ${isListening ? 'bg-white/40' : ''} 
+            ${isProcessing ? 'bg-white/30' : ''}
+            ${isSpeaking ? 'bg-white/50' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'bg-white/20' : ''}
+            blur-md`}
+          style={{ 
+            animation: isListening || isSpeaking ? 'pulse 1s ease-in-out infinite' : 'pulse 2s ease-in-out infinite'
+          }}
         />
       </div>
 
