@@ -71,7 +71,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice } = await req.json();
+    const { text, voice, model } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
@@ -82,6 +82,9 @@ serve(async (req) => {
     // Split text into chunks if it's too long
     const textChunks = chunkText(text);
     console.log(`Split into ${textChunks.length} chunks`);
+
+    // Use the faster tts-1 model by default, or custom model if specified
+    const ttsModel = model || 'tts-1';
 
     // Generate audio for each chunk
     const audioChunks: ArrayBuffer[] = [];
@@ -96,7 +99,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'tts-1',
+          model: ttsModel,
           input: textChunks[i],
           voice: voice || 'alloy',
           response_format: 'mp3',

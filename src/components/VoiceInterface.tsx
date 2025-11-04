@@ -14,6 +14,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const { user } = useAuth();
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [transcript, setTranscript] = useState('');
@@ -23,12 +24,22 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Initialize session on mount
   useEffect(() => {
     initializeSession();
+    
+    // Pre-initialize AudioContext for lower latency
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    
     return () => {
       endSession();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, []);
 
@@ -113,13 +124,12 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsListening(false);
+      setIsProcessing(true); // Show processing state immediately
     }
   };
 
   const processAudio = async (audioBlob: Blob) => {
     try {
-      toast.info('Processing audio...');
-
       // Convert blob to base64
       const reader = new FileReader();
       reader.readAsDataURL(audioBlob);
@@ -138,6 +148,8 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           },
         });
 
+        setIsProcessing(false); // Done processing
+
         if (error) {
           console.error('Voice chat error:', error);
           toast.error('Failed to process voice input');
@@ -155,12 +167,11 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         // Play AI response audio
         if (audioEnabled && data.audioContent) {
           playAudio(data.audioContent);
-        } else {
-          toast.success('Response received');
         }
       };
     } catch (error) {
       console.error('Audio processing error:', error);
+      setIsProcessing(false);
       toast.error('Failed to process audio');
     }
   };
@@ -215,14 +226,20 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       {/* Animated Orb */}
       <div className="relative">
         <div 
-          className={`w-64 h-64 rounded-full bg-gradient-to-br from-blue-400 via-cyan-300 to-blue-200 
-            ${isListening ? 'animate-pulse scale-110' : ''} 
-            ${isSpeaking ? 'animate-ping scale-125' : ''}
+          className={`w-64 h-64 rounded-full bg-gradient-to-br 
+            ${isListening ? 'from-red-400 via-red-300 to-red-200 animate-pulse scale-110' : ''} 
+            ${isProcessing ? 'from-yellow-400 via-yellow-300 to-yellow-200 animate-pulse scale-105' : ''}
+            ${isSpeaking ? 'from-blue-400 via-cyan-300 to-blue-200 animate-ping scale-125' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-blue-400 via-cyan-300 to-blue-200' : ''}
             transition-all duration-500 blur-xl opacity-70`}
         />
         <div 
-          className="absolute inset-0 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-blue-300 
-            opacity-90 animate-spin-slow"
+          className={`absolute inset-0 w-64 h-64 rounded-full bg-gradient-to-br 
+            ${isListening ? 'from-red-500 via-red-400 to-red-300' : ''}
+            ${isProcessing ? 'from-yellow-500 via-yellow-400 to-yellow-300' : ''}
+            ${isSpeaking ? 'from-blue-500 via-cyan-400 to-blue-300' : ''}
+            ${!isListening && !isProcessing && !isSpeaking ? 'from-blue-500 via-cyan-400 to-blue-300' : ''}
+            opacity-90 animate-spin-slow`}
         />
       </div>
 
@@ -267,6 +284,12 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 backdrop-blur-sm animate-fade-in">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-sm font-medium">Listening...</span>
+          </div>
+        )}
+        {isProcessing && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/20 backdrop-blur-sm animate-fade-in">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+            <span className="text-sm font-medium">Processing...</span>
           </div>
         )}
         {isSpeaking && (

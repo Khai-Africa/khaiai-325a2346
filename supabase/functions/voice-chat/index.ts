@@ -40,9 +40,10 @@ serve(async (req) => {
 
     console.log('Processing voice chat request for user:', user.id);
 
-    // Step 1: Transcribe audio (Speech-to-Text)
-    console.log('Transcribing audio...');
-    const transcribeResponse = await fetch(
+    // Step 1: Transcribe audio (Speech-to-Text) + Get conversation history in PARALLEL
+    console.log('Starting parallel processing: STT + conversation history...');
+    
+    const transcribePromise = fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/transcribe-audio`,
       {
         method: 'POST',
@@ -53,6 +54,21 @@ serve(async (req) => {
         body: JSON.stringify({ audio: audioData }),
       }
     );
+
+    const messagesPromise = conversationId 
+      ? supabase
+          .from('messages')
+          .select('role, content')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: false })
+          .limit(10) // Only get last 10 messages for faster processing
+      : Promise.resolve({ data: [] });
+
+    // Wait for both to complete in parallel
+    const [transcribeResponse, messagesResult] = await Promise.all([
+      transcribePromise,
+      messagesPromise
+    ]);
 
     if (!transcribeResponse.ok) {
       const error = await transcribeResponse.json();
@@ -66,20 +82,12 @@ serve(async (req) => {
       throw new Error('No speech detected in audio');
     }
 
-    // Step 2: Get conversation history
-    let messages: Array<{ role: string; content: string }> = [];
-    if (conversationId) {
-      const { data: messagesData } = await supabase
-        .from('messages')
-        .select('role, content')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-      
-      messages = messagesData || [];
-    }
+    // Reverse messages to get chronological order
+    const messages: Array<{ role: string; content: string }> = 
+      (messagesResult.data || []).reverse();
 
-    // Step 3: Send to Chat AI
-    console.log('Generating AI response...');
+    // Step 2: Send to Chat AI (using faster model)
+    console.log('Generating AI response with optimized model...');
     const chatResponse = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/chat`,
       {
@@ -92,6 +100,7 @@ serve(async (req) => {
           messages: [...messages, { role: 'user', content: transcribedText }],
           conversationId,
           mode: mode || 'chat',
+          model: 'gpt-4o-mini' // Faster model for voice conversations
         }),
       }
     );
@@ -104,8 +113,8 @@ serve(async (req) => {
     const { message: aiResponse, conversationId: newConvId } = await chatResponse.json();
     console.log('AI response generated');
 
-    // Step 4: Convert AI response to speech (Text-to-Speech)
-    console.log('Generating speech...');
+    // Step 3: Convert AI response to speech (Text-to-Speech) - using faster model
+    console.log('Generating speech with optimized voice...');
     const ttsResponse = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/text-to-speech`,
       {
@@ -116,7 +125,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({ 
           text: aiResponse,
-          voice: voice || 'alloy'
+          voice: voice || 'alloy',
+          model: 'tts-1' // Faster TTS model
         }),
       }
     );
@@ -129,23 +139,30 @@ serve(async (req) => {
     const { audioContent } = await ttsResponse.json();
     console.log('Speech generated successfully');
 
-    // Step 5: Update session tracking
+    // Step 4: Update session tracking (fire-and-forget for faster response)
     if (sessionId) {
-      const { data: sessionData } = await supabase
-        .from('voice_sessions')
-        .select('total_turns')
-        .eq('id', sessionId)
-        .single();
+      // Don't await - let it run in background
+      Promise.resolve().then(async () => {
+        try {
+          const { data: sessionData } = await supabase
+            .from('voice_sessions')
+            .select('total_turns')
+            .eq('id', sessionId)
+            .single();
 
-      if (sessionData) {
-        await supabase
-          .from('voice_sessions')
-          .update({ 
-            total_turns: (sessionData.total_turns || 0) + 1,
-            conversation_id: newConvId || conversationId 
-          })
-          .eq('id', sessionId);
-      }
+          if (sessionData) {
+            await supabase
+              .from('voice_sessions')
+              .update({ 
+                total_turns: (sessionData.total_turns || 0) + 1,
+                conversation_id: newConvId || conversationId 
+              })
+              .eq('id', sessionId);
+          }
+        } catch (err) {
+          console.error('Background session update error:', err);
+        }
+      });
     }
 
     return new Response(
