@@ -50,10 +50,12 @@ serve(async (req) => {
       throw new Error("Failed to verify credentials");
     }
 
-    const user = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    
-    if (!user) {
-      // Don't reveal if email exists
+    // Generic error function to normalize timing and prevent user enumeration
+    const returnAuthError = async () => {
+      // Add minimum delay to prevent timing attacks
+      const minDelay = 200 + Math.random() * 100; // 200-300ms
+      await new Promise(resolve => setTimeout(resolve, minDelay));
+      
       return new Response(
         JSON.stringify({ error: "Invalid email or secret word" }),
         { 
@@ -61,6 +63,12 @@ serve(async (req) => {
           status: 401 
         }
       );
+    };
+
+    const user = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    
+    if (!user) {
+      return await returnAuthError();
     }
 
     // Verify secret word
@@ -72,24 +80,12 @@ serve(async (req) => {
 
     if (profileError || !profile) {
       console.error("Error fetching profile:", profileError);
-      return new Response(
-        JSON.stringify({ error: "Invalid email or secret word" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      );
+      return await returnAuthError();
     }
 
     // Compare secret words (case-insensitive)
     if (profile.secret_word?.toLowerCase() !== secretWord.toLowerCase()) {
-      return new Response(
-        JSON.stringify({ error: "Invalid email or secret word" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      );
+      return await returnAuthError();
     }
 
     // Update password
