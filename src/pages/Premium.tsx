@@ -262,7 +262,7 @@ const Premium = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="flutterwave">Mobile Money</SelectItem>
-                <SelectItem value="stripe">Card</SelectItem>
+                <SelectItem value="stripe">Card Payments</SelectItem>
               </SelectContent>
             </Select>
           
