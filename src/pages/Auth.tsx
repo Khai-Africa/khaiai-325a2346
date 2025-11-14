@@ -60,8 +60,12 @@ const Auth = () => {
     const checkAndRedirect = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Check for stored redirect from OAuth flow
+        const storedRedirect = sessionStorage.getItem('auth_redirect');
+        sessionStorage.removeItem('auth_redirect');
+        
         const params = new URLSearchParams(window.location.search);
-        const redirect = params.get('redirect');
+        const redirect = params.get('redirect') || storedRedirect;
         navigate(redirect === 'premium' ? '/premium' : '/', { replace: true });
       }
     };
@@ -71,8 +75,12 @@ const Auth = () => {
     // Also listen for auth state changes (important for OAuth redirects)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        // Check for stored redirect from OAuth flow
+        const storedRedirect = sessionStorage.getItem('auth_redirect');
+        sessionStorage.removeItem('auth_redirect');
+        
         const params = new URLSearchParams(window.location.search);
-        const redirect = params.get('redirect');
+        const redirect = params.get('redirect') || storedRedirect;
         navigate(redirect === 'premium' ? '/premium' : '/', { replace: true });
       }
     });
@@ -338,15 +346,22 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      // Check if user came from upgrade flow
+      // Store redirect destination for after OAuth completes
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get('redirect');
-      const redirectPath = redirect === 'premium' ? '/premium' : '/';
+      
+      if (redirect) {
+        sessionStorage.setItem('auth_redirect', redirect);
+      }
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}${redirectPath}`,
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
