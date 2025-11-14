@@ -181,7 +181,7 @@ const Auth = () => {
       if (existingUser) {
         toast({
           title: "Username Taken",
-          description: "Please choose a different username.",
+          description: "Unable to complete registration. Please try again.",
           variant: "destructive",
         });
         setLoading(false);
@@ -318,7 +318,7 @@ const Auth = () => {
       if (error || data?.error) {
         toast({
           title: "Reset Failed",
-          description: data?.error || "Invalid email or secret word.",
+          description: "Unable to reset password. Please verify your information and try again.",
           variant: "destructive",
         });
       } else {

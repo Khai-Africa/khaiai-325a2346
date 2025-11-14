@@ -46,7 +46,12 @@ serve(async (req) => {
       profile = mobileProfile;
     }
 
-    if (!profile) {
+    // Generic error function to normalize timing and prevent user enumeration
+    const returnAuthError = async () => {
+      // Add minimum delay to prevent timing attacks
+      const minDelay = 200 + Math.random() * 100; // 200-300ms
+      await new Promise(resolve => setTimeout(resolve, minDelay));
+      
       return new Response(
         JSON.stringify({ error: "Invalid credentials" }),
         { 
@@ -54,19 +59,17 @@ serve(async (req) => {
           status: 401 
         }
       );
+    };
+
+    if (!profile) {
+      return await returnAuthError();
     }
 
     // Get the user's email from auth.users
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
     
     if (userError || !userData.user?.email) {
-      return new Response(
-        JSON.stringify({ error: "Account configuration error" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
-      );
+      return await returnAuthError();
     }
 
     // Verify password by attempting to sign in
@@ -76,13 +79,7 @@ serve(async (req) => {
     });
 
     if (authError) {
-      return new Response(
-        JSON.stringify({ error: "Invalid credentials" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      );
+      return await returnAuthError();
     }
 
     // Return the session
