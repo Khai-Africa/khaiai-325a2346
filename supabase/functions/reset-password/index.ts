@@ -44,12 +44,12 @@ serve(async (req) => {
 
     // Generic error function to normalize timing and prevent user enumeration
     const returnAuthError = async () => {
-      // Add minimum delay to prevent timing attacks
-      const minDelay = 200 + Math.random() * 100; // 200-300ms
+      // Add consistent delay to prevent timing attacks (500ms minimum)
+      const minDelay = 500 + Math.random() * 200; // 500-700ms
       await new Promise(resolve => setTimeout(resolve, minDelay));
       
       return new Response(
-        JSON.stringify({ error: "Invalid email or secret word" }),
+        JSON.stringify({ error: "Unable to reset password. Please verify your information." }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 401 
