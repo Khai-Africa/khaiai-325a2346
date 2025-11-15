@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,11 +33,14 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { subject, message, priority } = await req.json();
+    // Validate input
+    const ticketSchema = z.object({
+      subject: z.string().trim().min(1).max(200),
+      message: z.string().trim().min(1).max(5000),
+      priority: z.enum(['low', 'medium', 'high']).optional(),
+    });
 
-    if (!subject || !message) {
-      throw new Error('Subject and message are required');
-    }
+    const { subject, message, priority } = ticketSchema.parse(await req.json());
 
     // Create ticket
     const { data: ticket, error: ticketError } = await supabase

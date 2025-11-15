@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +58,18 @@ serve(async (req) => {
       );
     }
 
+    // Validate input
+    const campaignSchema = z.object({
+      campaignName: z.string().trim().min(1).max(200),
+      subject: z.string().trim().min(1).max(500),
+      htmlContent: z.string().trim().min(1).max(50000),
+      textContent: z.string().max(50000).optional(),
+      targetAudience: z.enum(['all', 'free', 'premium_monthly', 'premium_yearly', 'specific_users']),
+      targetUserIds: z.array(z.string().uuid()).max(1000).optional().default([]),
+      scheduledAt: z.string().datetime().optional(),
+    });
+
+    const body = await req.json();
     const {
       campaignName,
       subject,
@@ -65,14 +78,7 @@ serve(async (req) => {
       targetAudience,
       targetUserIds = [],
       scheduledAt,
-    }: CampaignRequest = await req.json();
-
-    if (!campaignName || !subject || !htmlContent || !targetAudience) {
-      return new Response(
-        JSON.stringify({ error: 'Campaign name, subject, content, and target audience are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    } = campaignSchema.parse(body);
 
     // Create campaign
     const { data: campaign, error: campaignError } = await supabase

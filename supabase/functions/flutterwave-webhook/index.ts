@@ -32,6 +32,14 @@ serve(async (req) => {
     const signature = req.headers.get("verif-hash");
     const secretHash = Deno.env.get("FLUTTERWAVE_WEBHOOK_SECRET") || flutterwaveKey;
     
+    if (!signature) {
+      logStep("Missing signature header");
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+    
     if (signature !== secretHash) {
       logStep("Invalid signature");
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
