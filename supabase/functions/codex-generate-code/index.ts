@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, context, projectId } = await req.json();
+    // Validate input
+    const requestSchema = z.object({
+      prompt: z.string().trim().min(1).max(10000),
+      context: z.string().max(50000).optional(),
+      projectId: z.string().uuid(),
+    });
+
+    const { prompt, context, projectId } = requestSchema.parse(await req.json());
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {

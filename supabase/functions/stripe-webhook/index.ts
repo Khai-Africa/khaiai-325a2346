@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +21,25 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeKey) {
+      logStep("ERROR: Stripe secret key not configured");
+      return new Response(
+        JSON.stringify({ error: "Stripe secret key not configured" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      logStep("ERROR: Webhook secret not configured");
+      return new Response(
+        JSON.stringify({ error: "Webhook secret not configured" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2025-08-27.basil',
     });
 
@@ -30,30 +49,26 @@ serve(async (req) => {
     );
 
     const signature = req.headers.get('stripe-signature');
-    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-
-    if (!webhookSecret) {
-      logStep("WARNING: No webhook secret configured");
+    if (!signature) {
+      logStep("ERROR: Missing stripe-signature header");
+      return new Response(
+        JSON.stringify({ error: "Missing signature" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const body = await req.text();
     let event: Stripe.Event;
 
-    // Verify webhook signature if secret is configured
-    if (webhookSecret && signature) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Signature verified");
-      } catch (err) {
-        logStep("Signature verification failed", { error: err instanceof Error ? err.message : String(err) });
-        return new Response(
-          JSON.stringify({ error: 'Webhook signature verification failed' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      event = JSON.parse(body);
-      logStep("Processing unverified webhook (no secret configured)");
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      logStep("Signature verified");
+    } catch (err) {
+      logStep("Signature verification failed", { error: err instanceof Error ? err.message : String(err) });
+      return new Response(
+        JSON.stringify({ error: 'Webhook signature verification failed' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     logStep("Event type", { type: event.type });

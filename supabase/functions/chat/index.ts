@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.0';
 import Stripe from 'https://esm.sh/stripe@18.5.0';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -161,6 +162,21 @@ serve(async (req) => {
     }
 
     console.log(`Processing ${messages.length} messages in ${mode} mode`);
+
+    // Validate input
+    const messageSchema = z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string().trim().min(1).max(10000),
+    });
+
+    const chatSchema = z.object({
+      messages: z.array(messageSchema).min(1).max(100),
+      mode: z.string().max(50).optional(),
+      conversationId: z.string().uuid().optional(),
+    });
+
+    const validated = chatSchema.parse({ messages, mode, conversationId });
+    console.log(`Validated ${validated.messages.length} messages in ${validated.mode} mode`);
 
     // Build system prompt based on mode
     let systemPrompt = 'You are Khai, an intelligent AI assistant designed for Africa. You are helpful, knowledgeable, and culturally aware. You can assist with coding, learning, creative tasks, translations, and general questions. Be friendly, concise, and provide accurate information tailored to African contexts when relevant.';

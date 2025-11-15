@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,28 +13,19 @@ serve(async (req) => {
   }
 
   try {
-    const { email, secretWord, newPassword } = await req.json();
+    // Validate input with enhanced password requirements
+    const resetSchema = z.object({
+      email: z.string().trim().email().max(255),
+      secretWord: z.string().trim().min(1).max(100),
+      newPassword: z.string()
+        .min(8, "Password must be at least 8 characters")
+        .max(128, "Password must not exceed 128 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number"),
+    });
 
-    // Validate input
-    if (!email || !secretWord || !newPassword) {
-      return new Response(
-        JSON.stringify({ error: "All fields are required" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
-    }
-
-    if (newPassword.length < 6) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
-    }
+    const { email, secretWord, newPassword } = resetSchema.parse(await req.json());
 
     // Use service role key to access auth.users and profiles
     const supabaseAdmin = createClient(
