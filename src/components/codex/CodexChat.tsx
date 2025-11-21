@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,14 +7,23 @@ import { useCodexChat } from "@/hooks/useCodexChat";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { parseMessageContent } from "@/lib/messageParser";
+import { TemplateGallery } from "./TemplateGallery";
 
 interface CodexChatProps {
   projectId: string | null;
   onFilesCreated?: () => void;
 }
 
+const quickActions = [
+  { label: "Landing Page", icon: <Sparkles className="w-3 h-3" />, prompt: "Create a modern landing page with hero section" },
+  { label: "Button", icon: <Zap className="w-3 h-3" />, prompt: "Create a beautiful button component with variants" },
+  { label: "Navigation", icon: <MessageSquare className="w-3 h-3" />, prompt: "Create a responsive navigation menu" },
+  { label: "Contact Form", icon: <Send className="w-3 h-3" />, prompt: "Create a contact form with validation" },
+];
+
 export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
   const [input, setInput] = useState("");
+  const [showTemplates, setShowTemplates] = useState(false);
   const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +51,14 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
       e.preventDefault();
       handleSubmit(e);
     }
+  };
+
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt);
+  };
+
+  const handleTemplateSelect = (prompt: string) => {
+    setInput(prompt);
   };
 
   if (!projectId) {
@@ -77,7 +94,38 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
             <div className="text-center text-muted-foreground py-8 md:py-12 lg:py-16 px-4">
               <MessageSquare className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 md:mb-6 opacity-50" />
               <p className="text-sm md:text-base lg:text-lg font-medium mb-2">Ask me anything about your code!</p>
-              <p className="text-xs md:text-sm opacity-70">I have context of your project files</p>
+              <p className="text-xs md:text-sm opacity-70 mb-6">I have context of your project files</p>
+              
+              {/* Quick Actions */}
+              <div className="max-w-2xl mx-auto space-y-4">
+                <div className="flex items-center gap-2 justify-center mb-3">
+                  <Sparkles className="w-4 h-4" />
+                  <p className="text-sm font-medium">Quick Start</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {quickActions.map((action) => (
+                    <Button
+                      key={action.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleQuickAction(action.prompt)}
+                      className="justify-start gap-2 h-auto py-3"
+                    >
+                      {action.icon}
+                      <span className="text-xs">{action.label}</span>
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowTemplates(true)}
+                  className="w-full gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Browse Template Gallery
+                </Button>
+              </div>
             </div>
           ) : (
             messages.map((message) => (
@@ -168,6 +216,12 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
           </Button>
         </div>
       </form>
+
+      <TemplateGallery 
+        open={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={handleTemplateSelect}
+      />
     </div>
   );
 };
