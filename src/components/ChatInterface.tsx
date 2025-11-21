@@ -356,6 +356,76 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }
     }
 
+    // Detect image generation requests
+    const imageGenPatterns = [
+      /^(generate|create|make|draw|design|produce|render)\s+(an?\s+)?(image|picture|photo|illustration|artwork|visual|graphic)/i,
+      /^(show\s+me|give\s+me|i\s+want)\s+(an?\s+)?(image|picture|photo)/i,
+      /^(can\s+you|could\s+you|please)\s+(generate|create|make|draw|design)/i
+    ];
+    
+    const isImageGenRequest = imageGenPatterns.some(pattern => pattern.test(input));
+
+    if (isImageGenRequest && selectedFiles.length === 0) {
+      // Handle image generation separately
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content: input,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      
+      const currentInput = input;
+      setInput("");
+      setIsLoading(true);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-image', {
+          body: { 
+            prompt: currentInput,
+            conversationId: conversationId || undefined 
+          }
+        });
+
+        if (error) {
+          console.error('Image generation error:', error);
+          const errorMsg = error.message || 'Failed to generate image';
+          toast.error(errorMsg);
+          setIsLoading(false);
+          return;
+        }
+
+        if (data?.imageUrl) {
+          const assistantMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: [
+              { type: "text", text: "I've generated the image for you:" },
+              { type: "image_url", image_url: { url: data.imageUrl } }
+            ],
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+
+          // Save messages to database if authenticated with conversation
+          if (!isAnonymous && conversationId) {
+            await supabase.from("messages").insert([
+              { conversation_id: conversationId, role: "user", content: currentInput },
+              { conversation_id: conversationId, role: "assistant", content: JSON.stringify(assistantMessage.content) }
+            ]);
+          }
+        }
+
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error('Error in image generation:', error);
+        toast.error('Failed to generate image');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     // Process files before sending
     const messageParts: MessagePart[] = [];
     const attachments: { type: 'image' | 'document'; name: string; url?: string }[] = [];
