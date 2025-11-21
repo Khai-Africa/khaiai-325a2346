@@ -20,11 +20,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "./LanguageSwitch";
 
+interface MessagePart {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: {
+    url: string;
+  };
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
-  content: string;
+  content: string | MessagePart[];
   timestamp: Date;
+  attachments?: { type: 'image' | 'document'; name: string; url?: string }[];
 }
 
 interface ChatInterfaceProps {
@@ -295,8 +304,43 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   };
 
+  // Helper: Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+  };
+
+  // Helper: Check if file is an image
+  const isImageFile = (file: File): boolean => {
+    return file.type.startsWith('image/');
+  };
+
+  // Helper: Upload document for text extraction
+  const uploadDocument = async (file: File, convId: string | null): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (convId) formData.append('conversationId', convId);
+      
+      const { data, error } = await supabase.functions.invoke('process-file', {
+        body: formData
+      });
+      
+      if (error) throw error;
+      return data?.extractedText || null;
+    } catch (error) {
+      console.error('Document upload error:', error);
+      toast.error(`Failed to process ${file.name}`);
+      return null;
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && selectedFiles.length === 0) return;
 
     // Check anonymous user quota
     if (isAnonymous) {
@@ -312,16 +356,63 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }
     }
 
+    // Process files before sending
+    const messageParts: MessagePart[] = [];
+    const attachments: { type: 'image' | 'document'; name: string; url?: string }[] = [];
+    let documentContext = '';
+
+    if (selectedFiles.length > 0) {
+      toast.info('Processing files...');
+      
+      for (const file of selectedFiles) {
+        if (isImageFile(file)) {
+          // Convert images to base64 for vision model
+          try {
+            const base64 = await fileToBase64(file);
+            messageParts.push({
+              type: 'image_url',
+              image_url: { url: base64 }
+            });
+            attachments.push({ type: 'image', name: file.name });
+          } catch (error) {
+            console.error('Image conversion error:', error);
+            toast.error(`Failed to process image: ${file.name}`);
+          }
+        } else {
+          // Upload documents for text extraction
+          const extractedText = await uploadDocument(file, conversationId);
+          if (extractedText) {
+            documentContext += `\n\n[Document: ${file.name}]\n${extractedText}`;
+            attachments.push({ type: 'document', name: file.name });
+          }
+        }
+      }
+    }
+
+    // Build final content
+    let messageContent: string | MessagePart[];
+    if (messageParts.length > 0) {
+      // Multimodal message with images
+      messageParts.unshift({ type: 'text', text: input + documentContext });
+      messageContent = messageParts;
+    } else {
+      // Text-only message (possibly with document context)
+      messageContent = input + documentContext;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: messageContent,
       timestamp: new Date(),
+      attachments: attachments.length > 0 ? attachments : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     const currentInput = input;
+    const currentFiles = [...selectedFiles];
     setInput("");
+    setSelectedFiles([]);
     setIsLoading(true);
 
     try {
@@ -373,7 +464,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         body: JSON.stringify({
           messages: messages.concat(userMessage).map(msg => ({
             role: msg.role,
-            content: msg.content
+            content: msg.content // Can be string or MessagePart[]
           })),
           conversationId: currentConvId,
           mode: selectedMode,
@@ -463,6 +554,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       // Remove the user message if there was an error
       setMessages((prev) => prev.filter(msg => msg.id !== userMessage.id));
       setInput(currentInput); // Restore the input
+      setSelectedFiles(currentFiles); // Restore files
     } finally {
       setIsLoading(false);
     }
@@ -530,7 +622,21 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                   {message.role === "user" ? (
                     <div className="flex justify-end mb-8">
                       <div className="bg-card border border-border rounded-3xl px-5 py-3 max-w-[85%]">
-                        <p className="text-sm md:text-base leading-relaxed">{message.content}</p>
+                        {/* Display attachments */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {message.attachments.map((attachment, idx) => (
+                              <div key={idx} className="text-xs bg-muted rounded-full px-3 py-1">
+                                {attachment.type === 'image' ? '🖼️' : '📄'} {attachment.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-sm md:text-base leading-relaxed">
+                          {typeof message.content === 'string' 
+                            ? message.content 
+                            : message.content.find(p => p.type === 'text')?.text || ''}
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -540,10 +646,10 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                          {message.content}
+                          {typeof message.content === 'string' ? message.content : ''}
                         </p>
                         <MessageActions 
-                          content={message.content}
+                          content={typeof message.content === 'string' ? message.content : ''}
                           conversationId={conversationId}
                           onSpeak={handleSpeakMessage}
                           onRegenerate={index === messages.length - 1 && !isLoading ? () => {
@@ -634,7 +740,10 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         onClick={() => {
                           const lastMessage = messages[messages.length - 1];
                           if (lastMessage?.role === 'assistant') {
-                            handleSpeakMessage(lastMessage.content);
+                            const content = typeof lastMessage.content === 'string' 
+                              ? lastMessage.content 
+                              : '';
+                            if (content) handleSpeakMessage(content);
                           }
                         }}
                         disabled={!messages.length || messages[messages.length - 1]?.role !== 'assistant'}

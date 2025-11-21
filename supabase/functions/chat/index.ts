@@ -16,9 +16,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Interfaces for type checking
+interface MessagePart {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: {
+    url: string;
+  };
+}
+
 interface Message {
   role: string;
-  content: string;
+  content: string | MessagePart[];
 }
 
 interface ChatRequest {
@@ -27,7 +36,7 @@ interface ChatRequest {
   mode?: 'chat' | 'study' | 'search' | 'thinking' | 'deep-research' | 'canvas';
 }
 
-// Convert OpenAI message format to Gemini format
+// Convert OpenAI message format to Gemini format (with multimodal support)
 function convertToGeminiFormat(messages: Message[], systemPrompt: string) {
   const geminiContents = [];
   
@@ -41,11 +50,38 @@ function convertToGeminiFormat(messages: Message[], systemPrompt: string) {
     parts: [{ text: 'I understand. I am Khai, ready to assist you.' }]
   });
   
-  // Convert remaining messages
+  // Convert messages with potential multimodal content
   for (const msg of messages) {
+    const parts = [];
+    
+    if (typeof msg.content === 'string') {
+      // Simple text message
+      parts.push({ text: msg.content });
+    } else {
+      // Multimodal message with images
+      for (const part of msg.content) {
+        if (part.type === 'text' && part.text) {
+          parts.push({ text: part.text });
+        } else if (part.type === 'image_url' && part.image_url?.url) {
+          // Extract base64 data and mime type
+          const matches = part.image_url.url.match(/data:(.*?);base64,(.+)/);
+          if (matches) {
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+            parts.push({
+              inline_data: {
+                mime_type: mimeType,
+                data: base64Data
+              }
+            });
+          }
+        }
+      }
+    }
+    
     geminiContents.push({
       role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
+      parts: parts
     });
   }
   
@@ -190,9 +226,20 @@ serve(async (req) => {
     console.log(`Processing ${messages.length} messages in ${mode} mode`);
 
     // Validate input
+    const messagePartSchema = z.object({
+      type: z.enum(['text', 'image_url']),
+      text: z.string().optional(),
+      image_url: z.object({
+        url: z.string()
+      }).optional()
+    });
+
     const messageSchema = z.object({
       role: z.enum(['user', 'assistant', 'system']),
-      content: z.string().trim().min(1).max(10000),
+      content: z.union([
+        z.string().trim().min(1).max(10000),
+        z.array(messagePartSchema)
+      ]),
     });
 
     const chatSchema = z.object({
@@ -276,7 +323,10 @@ serve(async (req) => {
                 role: 'system',
                 content: systemPrompt
               },
-              ...validated.messages
+              ...validated.messages.map(msg => ({
+                role: msg.role,
+                content: msg.content // Supports both string and MessagePart[] for vision
+              }))
             ],
             temperature: 0.7,
             max_tokens: 2000,
