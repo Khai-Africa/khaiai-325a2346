@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ShareDialog } from "@/components/ShareDialog";
+import { ConversationThumbnail } from "@/components/ConversationThumbnail";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,11 +20,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface UploadedFile {
+  id: string;
+  file_name: string;
+  file_type: string;
+  metadata: {
+    thumbnail?: string;
+    isImage?: boolean;
+  } | null;
+}
+
 interface Conversation {
   id: string;
   title: string;
   created_at: string;
   updated_at: string;
+  uploaded_files?: UploadedFile[];
 }
 
 export const ConversationList = () => {
@@ -48,7 +60,16 @@ export const ConversationList = () => {
     try {
       const { data, error } = await supabase
         .from("conversations")
-        .select("*")
+        .select(`
+          *,
+          uploaded_files (
+            id,
+            file_name,
+            file_type,
+            metadata,
+            created_at
+          )
+        `)
         .eq("user_id", user?.id)
         .order("updated_at", { ascending: false });
 
@@ -227,6 +248,7 @@ export const ConversationList = () => {
                     <p className="text-sm text-muted-foreground">
                       {new Date(conversation.updated_at).toLocaleDateString()}
                     </p>
+                    <ConversationThumbnail files={conversation.uploaded_files || []} />
                   </div>
                   <div className="flex gap-1">
                     <Button

@@ -329,6 +329,29 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   };
 
+  // Helper: Create thumbnail for database storage
+  const createThumbnail = async (base64: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Create small thumbnail (48x48)
+        const size = 48;
+        canvas.width = size;
+        canvas.height = size;
+        
+        // Draw scaled image
+        ctx.drawImage(img, 0, 0, size, size);
+        
+        // Convert to compressed base64
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.src = base64;
+    });
+  };
+
   // Helper: Convert file to base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
