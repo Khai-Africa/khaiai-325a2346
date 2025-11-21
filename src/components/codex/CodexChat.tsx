@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate } from "lucide-react";
+import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { parseMessageContent } from "@/lib/messageParser";
 import { TemplateGallery } from "./TemplateGallery";
+import { formatDistanceToNow } from 'date-fns';
 
 interface CodexChatProps {
   projectId: string | null;
@@ -26,8 +27,10 @@ const quickActions = [
 export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexChatProps) => {
   const [input, setInput] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
   const scrollBottomRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Scroll to bottom marker smoothly
@@ -50,6 +53,27 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
       }
     }
   }, [messages, streaming, onCodeGenerated]);
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setShowScrollButton(!isNearBottom && messages.length > 0);
+  };
+
+  const scrollToBottom = () => {
+    scrollBottomRef.current?.scrollIntoView({ 
+      behavior: "smooth",
+      block: "end"
+    });
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    } catch {
+      return '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +134,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 p-3 sm:p-4 md:p-5">
+          <ScrollArea className="flex-1 p-3 sm:p-4 md:p-5" onScrollCapture={handleScroll}>
             {messages.length === 0 ? (
               <div className="space-y-4 sm:space-y-6">
                 <div className="text-center space-y-2 sm:space-y-3 py-6 sm:py-8">
@@ -176,6 +200,16 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                       )}
                     >
                       <div className="p-3 sm:p-4 md:p-5">
+                        {message.created_at && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span className={cn(
+                              "text-[10px] sm:text-xs opacity-70",
+                              message.role === "user" ? "text-primary-foreground" : "text-muted-foreground"
+                            )}>
+                              {formatTimestamp(message.created_at)}
+                            </span>
+                          </div>
+                        )}
                         {message.role === "user" ? (
                           <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed sm:leading-loose">{message.content}</p>
                         ) : (
@@ -231,6 +265,18 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
               </div>
             )}
           </ScrollArea>
+
+          {/* Floating scroll to bottom button */}
+          {showScrollButton && (
+            <Button
+              onClick={scrollToBottom}
+              size="icon"
+              className="fixed bottom-24 right-6 sm:right-8 h-10 w-10 sm:h-12 sm:w-12 rounded-full shadow-lg z-20 animate-in fade-in slide-in-from-bottom-2"
+              variant="default"
+            >
+              <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          )}
 
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-5 border-t bg-muted/30">
             <div className="flex gap-2 sm:gap-3">

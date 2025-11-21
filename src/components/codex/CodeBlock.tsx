@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface CodeBlockProps {
   code: string;
@@ -62,12 +64,24 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
           </Button>
         </div>
         <div className="overflow-x-auto">
-          <pre
-            className="m-0 p-3 sm:p-4 text-xs sm:text-sm font-mono leading-relaxed bg-secondary/20"
-            style={{ tabSize: 2, whiteSpace: "pre" }}
+          <SyntaxHighlighter
+            language={language || 'text'}
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              padding: '0.75rem 1rem',
+              fontSize: '0.875rem',
+              lineHeight: '1.5',
+              background: 'hsl(var(--secondary) / 0.2)',
+            }}
+            codeTagProps={{
+              style: {
+                fontSize: '0.875rem',
+              }
+            }}
           >
-            <code className="break-words">{code}</code>
-          </pre>
+            {code}
+          </SyntaxHighlighter>
         </div>
       </div>
     );
@@ -128,24 +142,48 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
       
       {!isOpen && (
         <div className="overflow-x-auto relative">
-          <pre
-            className="m-0 p-3 sm:p-4 text-xs sm:text-sm font-mono leading-relaxed bg-secondary/20"
-            style={{ tabSize: 2, whiteSpace: "pre" }}
+          <SyntaxHighlighter
+            language={language || 'text'}
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              padding: '0.75rem 1rem',
+              fontSize: '0.875rem',
+              lineHeight: '1.5',
+              background: 'hsl(var(--secondary) / 0.2)',
+            }}
+            codeTagProps={{
+              style: {
+                fontSize: '0.875rem',
+              }
+            }}
           >
-            <code className="break-words">{previewLines}</code>
-          </pre>
+            {previewLines}
+          </SyntaxHighlighter>
           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-secondary/30 to-transparent pointer-events-none" />
         </div>
       )}
       
       <CollapsibleContent>
         <div className="overflow-x-auto">
-          <pre
-            className="m-0 p-3 sm:p-4 text-xs sm:text-sm font-mono leading-relaxed bg-secondary/20"
-            style={{ tabSize: 2, whiteSpace: "pre" }}
+          <SyntaxHighlighter
+            language={language || 'text'}
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              padding: '0.75rem 1rem',
+              fontSize: '0.875rem',
+              lineHeight: '1.5',
+              background: 'hsl(var(--secondary) / 0.2)',
+            }}
+            codeTagProps={{
+              style: {
+                fontSize: '0.875rem',
+              }
+            }}
           >
-            <code className="break-words">{code}</code>
-          </pre>
+            {code}
+          </SyntaxHighlighter>
         </div>
       </CollapsibleContent>
     </Collapsible>
