@@ -423,49 +423,75 @@ export default function Codex() {
               </div>
             </TabsContent>
 
-            <TabsContent value="editor" className="flex-1 mt-3 md:mt-4">
-              {/* Desktop Layout */}
-              <div className="hidden lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-[calc(100vh-250px)]">
-                <div className="lg:col-span-3 h-full">
-                  <FileTree
-                    files={files}
-                    selectedFile={selectedFile}
-                    onFileSelect={setSelectedFile}
-                    onFileDelete={deleteFile}
-                    onFileDownload={handleDownload}
-                  />
-                </div>
-                <div className="lg:col-span-9 h-full">
-                  <CodeEditor
-                    file={selectedFile}
-                    onSave={updateFile}
-                    onDownload={handleDownload}
-                  />
-                </div>
-              </div>
+            <TabsContent value="editor" className="mt-3 md:mt-4">
+              <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)]">
+                {files.length === 0 ? (
+                  <div className="flex items-center justify-center h-full border border-border rounded-lg">
+                    <div className="text-center space-y-4">
+                      <div className="text-muted-foreground">
+                        <p className="text-lg font-medium">No files yet</p>
+                        <p className="text-sm">Upload files to start editing</p>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                        className="hidden"
+                        id="editor-file-upload"
+                      />
+                      <Button onClick={() => document.getElementById('editor-file-upload')?.click()}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Desktop Layout */}
+                    <div className="hidden lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-full">
+                      <div className="lg:col-span-3 h-full">
+                        <FileTree
+                          files={files}
+                          selectedFile={selectedFile}
+                          onFileSelect={setSelectedFile}
+                          onFileDelete={deleteFile}
+                          onFileDownload={handleDownload}
+                        />
+                      </div>
+                      <div className="lg:col-span-9 h-full">
+                        <CodeEditor
+                          file={selectedFile}
+                          onSave={updateFile}
+                          onDownload={handleDownload}
+                        />
+                      </div>
+                    </div>
 
-              {/* Mobile Layout */}
-              <div className="lg:hidden">
-                <FileTree
-                  files={files}
-                  selectedFile={selectedFile}
-                  onFileSelect={(file) => {
-                    setSelectedFile(file);
-                    setMobileEditorOpen(true);
-                  }}
-                  onFileDelete={deleteFile}
-                  onFileDownload={handleDownload}
-                />
-                
-                <Sheet open={mobileEditorOpen} onOpenChange={setMobileEditorOpen}>
-                  <SheetContent side="bottom" className="h-[85vh] p-0">
-                    <CodeEditor
-                      file={selectedFile}
-                      onSave={updateFile}
-                      onDownload={handleDownload}
-                    />
-                  </SheetContent>
-                </Sheet>
+                    {/* Mobile Layout */}
+                    <div className="lg:hidden h-full">
+                      <FileTree
+                        files={files}
+                        selectedFile={selectedFile}
+                        onFileSelect={(file) => {
+                          setSelectedFile(file);
+                          setMobileEditorOpen(true);
+                        }}
+                        onFileDelete={deleteFile}
+                        onFileDownload={handleDownload}
+                      />
+                      
+                      <Sheet open={mobileEditorOpen} onOpenChange={setMobileEditorOpen}>
+                        <SheetContent side="bottom" className="h-[85vh] p-0">
+                          <CodeEditor
+                            file={selectedFile}
+                            onSave={updateFile}
+                            onDownload={handleDownload}
+                          />
+                        </SheetContent>
+                      </Sheet>
+                    </div>
+                  </>
+                )}
               </div>
             </TabsContent>
 
