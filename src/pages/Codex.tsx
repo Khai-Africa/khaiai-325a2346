@@ -403,16 +403,16 @@ export default function Codex() {
               <TabsTrigger value="tasks" className="text-xs md:text-sm">Tasks</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="chat" className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)] mt-3 md:mt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 h-full">
-                <div className="border border-border rounded-lg h-full">
+            <TabsContent value="chat" className="mt-3 md:mt-4">
+              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-3 md:gap-4 h-[calc(100vh-200px)] md:h-[calc(100vh-230px)]">
+                <div className="border border-border rounded-lg h-[50vh] lg:h-full overflow-hidden">
                   <CodexChat 
                     projectId={activeProject?.id || null} 
                     onFilesCreated={refetchFiles}
                     onCodeGenerated={(code, language) => setPreviewCode({ code, language })}
                   />
                 </div>
-                <div className="h-full">
+                <div className="h-[50vh] lg:h-full overflow-hidden">
                   <CodePreview 
                     code={previewCode.code || selectedFile?.file_content || ""} 
                     language={previewCode.language || selectedFile?.file_type || "html"} 
