@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "./LanguageSwitch";
+import imageCompression from 'browser-image-compression';
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -304,6 +305,30 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   };
 
+  // Helper: Compress image before processing
+  const compressImage = async (file: File): Promise<File> => {
+    try {
+      const options = {
+        maxSizeMB: 1, // Maximum file size in MB
+        maxWidthOrHeight: 1920, // Maximum width or height
+        useWebWorker: true,
+        initialQuality: 0.8, // Initial compression quality
+      };
+      
+      const originalSize = (file.size / 1024 / 1024).toFixed(2);
+      const compressedFile = await imageCompression(file, options);
+      const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
+      
+      console.log(`Image compressed: ${originalSize}MB → ${compressedSize}MB`);
+      
+      return compressedFile;
+    } catch (error) {
+      console.error('Image compression error:', error);
+      // If compression fails, return original file
+      return file;
+    }
+  };
+
   // Helper: Convert file to base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -436,9 +461,17 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       
       for (const file of selectedFiles) {
         if (isImageFile(file)) {
-          // Convert images to base64 for vision model
+          // Compress and convert images to base64 for vision model
           try {
-            const base64 = await fileToBase64(file);
+            const originalSize = (file.size / 1024 / 1024).toFixed(2);
+            toast.loading(`Compressing ${file.name} (${originalSize}MB)...`, { id: `compress-${file.name}` });
+            
+            const compressedFile = await compressImage(file);
+            const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
+            
+            toast.success(`Compressed ${file.name}: ${originalSize}MB → ${compressedSize}MB`, { id: `compress-${file.name}` });
+            
+            const base64 = await fileToBase64(compressedFile);
             messageParts.push({
               type: 'image_url',
               image_url: { url: base64 }
