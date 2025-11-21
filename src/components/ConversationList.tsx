@@ -74,7 +74,7 @@ export const ConversationList = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      setConversations(data || []);
+      setConversations((data || []) as Conversation[]);
     } catch (error) {
       console.error("Error fetching conversations:", error);
       toast.error("Failed to load conversations");
