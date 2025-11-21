@@ -102,7 +102,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      setConversations(data || []);
+      setConversations((data || []) as Conversation[]);
     } catch (error) {
       console.error("Error loading conversations:", error);
     } finally {

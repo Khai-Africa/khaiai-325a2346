@@ -34,7 +34,7 @@ interface Message {
   role: "user" | "assistant";
   content: string | MessagePart[];
   timestamp: Date;
-  attachments?: { type: 'image' | 'document'; name: string; url?: string }[];
+  attachments?: { type: 'image' | 'document'; name: string; url?: string; size: number }[];
 }
 
 interface ChatInterfaceProps {
@@ -476,7 +476,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
 
     // Process files before sending
     const messageParts: MessagePart[] = [];
-    const attachments: { type: 'image' | 'document'; name: string; url?: string }[] = [];
+    const attachments: { type: 'image' | 'document'; name: string; url?: string; size: number }[] = [];
     let documentContext = '';
 
     if (selectedFiles.length > 0) {
@@ -499,7 +499,12 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               type: 'image_url',
               image_url: { url: base64 }
             });
-            attachments.push({ type: 'image', name: file.name });
+            attachments.push({ 
+              type: 'image', 
+              name: file.name, 
+              url: base64,
+              size: compressedFile.size 
+            });
           } catch (error) {
             console.error('Image conversion error:', error);
             toast.error(`Failed to process image: ${file.name}`);
@@ -509,7 +514,11 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           const extractedText = await uploadDocument(file, conversationId);
           if (extractedText) {
             documentContext += `\n\n[Document: ${file.name}]\n${extractedText}`;
-            attachments.push({ type: 'document', name: file.name });
+            attachments.push({ 
+              type: 'document', 
+              name: file.name,
+              size: file.size 
+            });
           }
         }
       }
@@ -564,11 +573,38 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
 
       // Save user message to database (only for authenticated users with conversation)
       if (!isAnonymous && currentConvId) {
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        
         await supabase.from("messages").insert({
           conversation_id: currentConvId,
           role: "user",
           content: currentInput,
         });
+
+        // Save file metadata to uploaded_files table
+        if (attachments.length > 0 && authSession) {
+          try {
+            const fileRecords = await Promise.all(
+              attachments.map(async (att) => ({
+                conversation_id: currentConvId,
+                user_id: authSession.user.id,
+                file_name: att.name,
+                file_type: att.type === 'image' ? 'image/jpeg' : 'application/pdf',
+                file_size: att.size,
+                metadata: {
+                  thumbnail: att.type === 'image' && att.url 
+                    ? await createThumbnail(att.url) 
+                    : null,
+                  isImage: att.type === 'image'
+                }
+              }))
+            );
+            
+            await supabase.from('uploaded_files').insert(fileRecords);
+          } catch (error) {
+            console.error('Error saving file metadata:', error);
+          }
+        }
       }
 
       // Call the chat edge function
