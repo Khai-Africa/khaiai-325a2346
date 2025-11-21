@@ -28,6 +28,13 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
     mobile: '375px',
   };
 
+  const getDeviceWidth = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return '100%';
+    }
+    return deviceSizes[deviceMode];
+  };
+
   useEffect(() => {
     if (autoRefresh) {
       updatePreview();
@@ -338,7 +345,7 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
 
       {/* Preview Content */}
       <div className={cn("flex-1 flex flex-col overflow-hidden", showConsole ? "h-[60%]" : "h-full")}>
-        <div className="flex-1 relative bg-white overflow-auto flex justify-center">
+        <div className="flex-1 relative bg-white overflow-auto flex justify-center items-start">
           {error ? (
             <div className="flex items-center justify-center h-full p-4">
               <div className="text-center">
@@ -348,8 +355,12 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
             </div>
           ) : previewContent ? (
             <div 
-              className="h-full transition-all duration-300 ease-in-out"
-              style={{ width: deviceSizes[deviceMode], maxWidth: '100%' }}
+              className="h-full transition-all duration-300 ease-in-out overflow-auto"
+              style={{ 
+                width: getDeviceWidth(), 
+                maxWidth: '100%',
+                minHeight: '100%'
+              }}
             >
               <iframe
                 ref={iframeRef}

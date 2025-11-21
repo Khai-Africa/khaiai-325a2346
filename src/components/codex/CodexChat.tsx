@@ -33,11 +33,19 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll to bottom marker smoothly
-    scrollBottomRef.current?.scrollIntoView({ 
-      behavior: "smooth",
-      block: "end"
-    });
+    // Smart auto-scroll: only scroll if user is near bottom
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+      const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
+      
+      // Only auto-scroll if near bottom or first message
+      if (isNearBottom || messages.length <= 1) {
+        scrollBottomRef.current?.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end"
+        });
+      }
+    }
 
     // Auto-preview the latest AI message with code
     if (messages.length > 0 && onCodeGenerated) {
@@ -65,6 +73,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
       behavior: "smooth",
       block: "end"
     });
+    setShowScrollButton(false);
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -134,7 +143,11 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 p-3 sm:p-4 md:p-5" onScrollCapture={handleScroll}>
+          <ScrollArea 
+            ref={scrollAreaRef}
+            className="flex-1 h-[calc(100%-120px)] p-3 sm:p-4 md:p-5" 
+            onScrollCapture={handleScroll}
+          >
             {messages.length === 0 ? (
               <div className="space-y-4 sm:space-y-6">
                 <div className="text-center space-y-2 sm:space-y-3 py-6 sm:py-8">
@@ -271,7 +284,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
             <Button
               onClick={scrollToBottom}
               size="icon"
-              className="fixed bottom-24 right-6 sm:right-8 h-10 w-10 sm:h-12 sm:w-12 rounded-full shadow-lg z-20 animate-in fade-in slide-in-from-bottom-2"
+              className="fixed bottom-[140px] right-4 sm:bottom-24 sm:right-8 h-10 w-10 sm:h-12 sm:w-12 rounded-full shadow-lg z-20 animate-in fade-in slide-in-from-bottom-2 bg-primary hover:bg-primary/90"
               variant="default"
             >
               <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5" />
