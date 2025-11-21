@@ -12,6 +12,7 @@ import { TemplateGallery } from "./TemplateGallery";
 interface CodexChatProps {
   projectId: string | null;
   onFilesCreated?: () => void;
+  onCodeGenerated?: (code: string, language: string) => void;
 }
 
 const quickActions = [
@@ -21,7 +22,7 @@ const quickActions = [
   { label: "Contact Form", icon: <Send className="w-3 h-3" />, prompt: "Create a contact form with validation" },
 ];
 
-export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
+export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexChatProps) => {
   const [input, setInput] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
   const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
@@ -35,7 +36,21 @@ export const CodexChat = ({ projectId, onFilesCreated }: CodexChatProps) => {
         }
       });
     }
-  }, [messages, streaming]);
+
+    // Auto-preview the latest AI message with code
+    if (messages.length > 0 && onCodeGenerated) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'assistant') {
+        const segments = parseMessageContent(lastMessage.content);
+        const codeSegment = segments.find(s => s.type === 'code' && 
+          (s.language === 'html' || s.language === 'javascript' || s.language === 'js' || 
+           s.language === 'jsx' || s.language === 'tsx' || s.language === 'css' || s.language === 'react'));
+        if (codeSegment) {
+          onCodeGenerated(codeSegment.content, codeSegment.language || 'html');
+        }
+      }
+    }
+  }, [messages, streaming, onCodeGenerated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

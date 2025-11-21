@@ -28,6 +28,7 @@ export default function Codex() {
   const { files, uploadFile, updateFile, deleteFile, refetch: refetchFiles } = useCodexFiles(activeProject?.id || null);
   
   const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [previewCode, setPreviewCode] = useState({ code: "", language: "html" });
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -405,12 +406,16 @@ export default function Codex() {
             <TabsContent value="chat" className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)] mt-3 md:mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 h-full">
                 <div className="border border-border rounded-lg h-full">
-                  <CodexChat projectId={activeProject?.id || null} onFilesCreated={refetchFiles} />
+                  <CodexChat 
+                    projectId={activeProject?.id || null} 
+                    onFilesCreated={refetchFiles}
+                    onCodeGenerated={(code, language) => setPreviewCode({ code, language })}
+                  />
                 </div>
                 <div className="h-full">
                   <CodePreview 
-                    code={selectedFile?.file_content || ""} 
-                    language={selectedFile?.file_type || "html"} 
+                    code={previewCode.code || selectedFile?.file_content || ""} 
+                    language={previewCode.language || selectedFile?.file_type || "html"} 
                   />
                 </div>
               </div>
