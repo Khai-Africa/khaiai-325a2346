@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap } from "lucide-react";
+import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useCodexChat } from "@/hooks/useCodexChat";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
@@ -26,16 +27,14 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
   const [input, setInput] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
   const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollBottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      });
-    }
+    // Scroll to bottom marker smoothly
+    scrollBottomRef.current?.scrollIntoView({ 
+      behavior: "smooth",
+      block: "end"
+    });
 
     // Auto-preview the latest AI message with code
     if (messages.length > 0 && onCodeGenerated) {
@@ -76,161 +75,185 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
     setInput(prompt);
   };
 
-  if (!projectId) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p>Create or select a project to start chatting</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-3 md:p-4 border-b">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-          <h3 className="font-semibold text-sm md:text-base">AI Assistant</h3>
+    <div className="flex flex-col h-full bg-background">
+      {projectId === null ? (
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <Code className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground" />
+            <div className="space-y-1 sm:space-y-2">
+              <h3 className="text-base sm:text-lg font-semibold">No Project Selected</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
+                Select or create a project to start chatting with the AI assistant
+              </p>
+            </div>
+          </div>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearChat}
-            disabled={loading}
-          >
-            <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-          </Button>
-        )}
-      </div>
+      ) : (
+        <>
+          <div className="sticky top-0 z-10 flex items-center justify-between p-3 sm:p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <div>
+                <h3 className="text-sm sm:text-base font-semibold">AI Assistant</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Powered by Gemini 3.0 Pro</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearChat}
+              className="h-7 sm:h-8 text-xs"
+            >
+              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline ml-1 sm:ml-2">Clear</span>
+            </Button>
+          </div>
 
-      <ScrollArea className="flex-1 p-2 sm:p-3 md:p-4 lg:p-6" ref={scrollRef}>
-        <div className="space-y-2 sm:space-y-3 md:space-y-4 max-w-4xl mx-auto">
-          {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8 md:py-12 lg:py-16 px-4">
-              <MessageSquare className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 md:mb-6 opacity-50" />
-              <p className="text-sm md:text-base lg:text-lg font-medium mb-2">Ask me anything about your code!</p>
-              <p className="text-xs md:text-sm opacity-70 mb-6">I have context of your project files</p>
-              
-              {/* Quick Actions */}
-              <div className="max-w-2xl mx-auto space-y-4">
-                <div className="flex items-center gap-2 justify-center mb-3">
-                  <Sparkles className="w-4 h-4" />
-                  <p className="text-sm font-medium">Quick Start</p>
+          <ScrollArea className="flex-1 p-3 sm:p-4 md:p-5">
+            {messages.length === 0 ? (
+              <div className="space-y-4 sm:space-y-6">
+                <div className="text-center space-y-2 sm:space-y-3 py-6 sm:py-8">
+                  <h4 className="text-sm sm:text-base font-medium">Quick Actions</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Get started with these common requests</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {quickActions.map((action) => (
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {quickActions.map((action, index) => (
                     <Button
-                      key={action.label}
+                      key={index}
                       variant="outline"
-                      size="sm"
+                      className="h-auto p-3 sm:p-4 justify-start text-left hover:bg-accent"
                       onClick={() => handleQuickAction(action.prompt)}
-                      className="justify-start gap-2 h-auto py-3"
                     >
-                      {action.icon}
-                      <span className="text-xs">{action.label}</span>
+                      <div className="flex items-start gap-2 sm:gap-3 w-full">
+                        <div className="mt-0.5 text-primary">{action.icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs sm:text-sm font-medium truncate">{action.label}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">
+                            {action.prompt}
+                          </div>
+                        </div>
+                      </div>
                     </Button>
                   ))}
                 </div>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setShowTemplates(true)}
-                  className="w-full gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Browse Template Gallery
-                </Button>
-              </div>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-2 sm:gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-lg shadow-sm",
-                    "w-full sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%]",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground p-3 sm:p-4"
-                      : "bg-card border border-border"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <div className={cn(
-                      "w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-medium",
-                      message.role === "user" 
-                        ? "bg-primary-foreground/20 text-primary-foreground" 
-                        : "bg-primary/10 text-primary"
-                    )}>
-                      {message.role === "user" ? "U" : "AI"}
-                    </div>
-                    <span className="text-xs sm:text-sm font-medium opacity-70">
-                      {message.role === "user" ? "You" : "AI Assistant"}
-                    </span>
-                  </div>
-                  {message.role === "user" ? (
-                    <div className="text-sm sm:text-base whitespace-pre-wrap break-words px-1 leading-relaxed">
-                      {message.content}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {parseMessageContent(message.content).map((segment, idx) => (
-                        <div key={idx}>
-                          {segment.type === "text" ? (
-                            <p className="text-sm sm:text-base whitespace-pre-wrap break-words px-1 leading-relaxed">
-                              {segment.content}
-                            </p>
-                          ) : (
-                            <CodeBlock code={segment.content} language={segment.language} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+
+                <div className="text-center pt-3 sm:pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowTemplates(true)}
+                    className="gap-1 sm:gap-2 text-xs sm:text-sm"
+                  >
+                    <LayoutTemplate className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Browse Templates
+                  </Button>
                 </div>
               </div>
-            ))
-          )}
-          {streaming && (
-            <div className="flex justify-start animate-in fade-in duration-300">
-              <div className="bg-card border border-border rounded-lg p-3 sm:p-4 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                <span className="text-xs sm:text-sm text-muted-foreground">AI is thinking...</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      <form onSubmit={handleSubmit} className="p-2 sm:p-3 md:p-4 border-t bg-background">
-        <div className="flex gap-2 max-w-4xl mx-auto">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about your code..."
-            className="min-h-[60px] sm:min-h-[70px] md:min-h-[80px] max-h-[120px] md:max-h-[150px] resize-none text-sm sm:text-base"
-            disabled={loading}
-          />
-          <Button
-            type="submit"
-            disabled={!input.trim() || loading || !projectId}
-            size="icon"
-            className="self-end h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 flex-shrink-0"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
             ) : (
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              <div className="space-y-4 sm:space-y-5 md:space-y-6">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-2 sm:gap-3",
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    )}
+                  >
+                    {message.role === "assistant" && (
+                      <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div
+                      className={cn(
+                        "rounded-lg shadow-sm w-full max-w-full sm:max-w-[95%] md:max-w-[90%] lg:max-w-[85%]",
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      )}
+                    >
+                      <div className="p-3 sm:p-4 md:p-5">
+                        {message.role === "user" ? (
+                          <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed sm:leading-loose">{message.content}</p>
+                        ) : (
+                          <div className="space-y-2 sm:space-y-3">
+                            {parseMessageContent(message.content).map((segment, index) => {
+                              if (segment.type === "text") {
+                                return (
+                                  <p key={index} className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed sm:leading-loose">
+                                    {segment.content}
+                                  </p>
+                                );
+                              } else {
+                                return (
+                                  <CodeBlock
+                                    key={index}
+                                    code={segment.content}
+                                    language={segment.language}
+                                  />
+                                );
+                              }
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {message.role === "user" && (
+                      <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
+                        <AvatarFallback>U</AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                ))}
+                
+                {streaming && (
+                  <div className="flex gap-2 sm:gap-3">
+                    <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-muted rounded-lg p-3 sm:p-4">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce" />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Bottom scroll marker */}
+                <div ref={scrollBottomRef} className="h-1" />
+              </div>
             )}
-          </Button>
-        </div>
-      </form>
+          </ScrollArea>
+
+          <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-5 border-t bg-muted/30">
+            <div className="flex gap-2 sm:gap-3">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Describe what you want to build..."
+                className="min-h-[50px] sm:min-h-[60px] md:min-h-[70px] resize-none text-xs sm:text-sm md:text-base"
+                disabled={loading || streaming}
+              />
+              <Button 
+                type="submit" 
+                size="icon" 
+                disabled={!input.trim() || loading || streaming}
+                className="h-[50px] w-[50px] sm:h-[60px] sm:w-[60px] flex-shrink-0"
+              >
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Button>
+            </div>
+          </form>
+        </>
+      )}
 
       <TemplateGallery 
         open={showTemplates}
