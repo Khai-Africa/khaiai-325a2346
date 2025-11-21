@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Crown, Github } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export default function Codex() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function Codex() {
   const [showGitHubDialog, setShowGitHubDialog] = useState(false);
   const [gitHubRepoUrl, setGitHubRepoUrl] = useState<string>("");
   const [isGitHubConnected, setIsGitHubConnected] = useState(false);
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
 
   // Redirect if not logged in (wrapped in useEffect)
   useEffect(() => {
@@ -422,22 +424,48 @@ export default function Codex() {
             </TabsContent>
 
             <TabsContent value="editor" className="flex-1 mt-3 md:mt-4">
-              <div className="flex flex-col lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-auto lg:h-[calc(100vh-250px)]">
-                <div className="lg:col-span-3 h-48 lg:h-full">
+              {/* Desktop Layout */}
+              <div className="hidden lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-[calc(100vh-250px)]">
+                <div className="lg:col-span-3 h-full">
                   <FileTree
                     files={files}
                     selectedFile={selectedFile}
                     onFileSelect={setSelectedFile}
                     onFileDelete={deleteFile}
+                    onFileDownload={handleDownload}
                   />
                 </div>
-                <div className="lg:col-span-9 min-h-[400px] lg:h-full">
+                <div className="lg:col-span-9 h-full">
                   <CodeEditor
                     file={selectedFile}
                     onSave={updateFile}
                     onDownload={handleDownload}
                   />
                 </div>
+              </div>
+
+              {/* Mobile Layout */}
+              <div className="lg:hidden">
+                <FileTree
+                  files={files}
+                  selectedFile={selectedFile}
+                  onFileSelect={(file) => {
+                    setSelectedFile(file);
+                    setMobileEditorOpen(true);
+                  }}
+                  onFileDelete={deleteFile}
+                  onFileDownload={handleDownload}
+                />
+                
+                <Sheet open={mobileEditorOpen} onOpenChange={setMobileEditorOpen}>
+                  <SheetContent side="bottom" className="h-[85vh] p-0">
+                    <CodeEditor
+                      file={selectedFile}
+                      onSave={updateFile}
+                      onDownload={handleDownload}
+                    />
+                  </SheetContent>
+                </Sheet>
               </div>
             </TabsContent>
 
