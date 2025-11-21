@@ -8,6 +8,7 @@ import { DownloadCounter } from "@/components/codex/DownloadCounter";
 import { DownloadPaymentDialog } from "@/components/codex/DownloadPaymentDialog";
 import { GitHubConnectDialog } from "@/components/codex/GitHubConnectDialog";
 import { CodexChat } from "@/components/codex/CodexChat";
+import { CodePreview } from "@/components/codex/CodePreview";
 import { useCodexUsage } from "@/hooks/useCodexUsage";
 import { useCodexProjects } from "@/hooks/useCodexProjects";
 import { useCodexFiles } from "@/hooks/useCodexFiles";
@@ -394,12 +395,26 @@ export default function Codex() {
             />
           </div>
         ) : (
-          <Tabs defaultValue="editor" className="flex-1">
+          <Tabs defaultValue="chat" className="flex-1">
             <TabsList className="w-full grid grid-cols-3 h-auto">
+              <TabsTrigger value="chat" className="text-xs md:text-sm">Chat + Preview</TabsTrigger>
               <TabsTrigger value="editor" className="text-xs md:text-sm">Editor</TabsTrigger>
-              <TabsTrigger value="chat" className="text-xs md:text-sm">Chat</TabsTrigger>
               <TabsTrigger value="tasks" className="text-xs md:text-sm">Tasks</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="chat" className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)] mt-3 md:mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 h-full">
+                <div className="border border-border rounded-lg h-full">
+                  <CodexChat projectId={activeProject?.id || null} onFilesCreated={refetchFiles} />
+                </div>
+                <div className="h-full">
+                  <CodePreview 
+                    code={selectedFile?.file_content || ""} 
+                    language={selectedFile?.file_type || "html"} 
+                  />
+                </div>
+              </div>
+            </TabsContent>
 
             <TabsContent value="editor" className="flex-1 mt-3 md:mt-4">
               <div className="flex flex-col lg:grid lg:grid-cols-12 gap-3 md:gap-4 h-auto lg:h-[calc(100vh-250px)]">
@@ -418,12 +433,6 @@ export default function Codex() {
                     onDownload={handleDownload}
                   />
                 </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="chat" className="h-[calc(100vh-220px)] md:h-[calc(100vh-250px)] mt-3 md:mt-4">
-              <div className="border border-border rounded-lg h-full">
-                <CodexChat projectId={activeProject?.id || null} onFilesCreated={refetchFiles} />
               </div>
             </TabsContent>
 

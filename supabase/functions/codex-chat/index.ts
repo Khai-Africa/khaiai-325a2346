@@ -63,21 +63,54 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    // Build context
-    let contextMessage = `You are an expert coding assistant helping with the project "${project?.name || 'Untitled Project'}".`;
-    
-    if (project?.description) {
-      contextMessage += `\n\nProject description: ${project.description}`;
-    }
-
+    // Build enhanced system prompt for vibe coding
+    let filesContext = '';
     if (files && files.length > 0) {
-      contextMessage += '\n\nRecent project files:\n';
+      filesContext = '\n\n📁 Recent project files:\n';
       files.forEach(file => {
-        contextMessage += `\n${file.file_name} (${file.file_type}):\n\`\`\`\n${file.file_content.substring(0, 500)}${file.file_content.length > 500 ? '...' : ''}\n\`\`\`\n`;
+        filesContext += `\n${file.file_name} (${file.file_type}):\n\`\`\`\n${file.file_content.substring(0, 500)}${file.file_content.length > 500 ? '...' : ''}\n\`\`\`\n`;
       });
     }
 
-    contextMessage += '\n\nProvide helpful, concise coding advice and solutions. When suggesting code, provide complete, working examples.';
+    const systemPrompt = `You are Codex, an expert coding assistant powered by Gemini 3.0 Pro, specializing in creating beautiful, functional code with live preview capabilities.
+
+Project: "${project?.name || 'Untitled Project'}"
+${project?.description ? `Description: ${project.description}` : ''}
+
+🎨 CODE GENERATION GUIDELINES:
+When generating code for preview:
+1. ALWAYS provide COMPLETE, runnable code (not fragments or snippets)
+2. For web interfaces: use modern HTML5, CSS3, and vanilla JavaScript
+3. Include full HTML structure: <!DOCTYPE html>, <html>, <head>, <body>
+4. Add inline <style> tags or inline styles for immediate visual impact
+5. Make designs clean, modern, responsive, and visually appealing
+6. Use semantic HTML and best practices
+7. Include helpful comments explaining key sections
+
+🔄 ITERATION GUIDELINES:
+When user requests changes:
+- Apply changes to the COMPLETE code, not just modified parts
+- Maintain all previous functionality while adding new features
+- Show the full updated code so it can be previewed immediately
+
+💡 CODE STYLE:
+- Modern, clean design patterns
+- Smooth animations and transitions
+- Mobile-responsive layouts
+- Accessible markup (ARIA labels, semantic elements)
+- Professional color schemes and typography
+
+📁 PROJECT CONTEXT:
+${filesContext || 'No files yet in project'}
+
+🎯 YOUR ROLE:
+- Provide clear, helpful responses
+- Generate working code examples that can be previewed instantly
+- Explain what your code does and how to use it
+- Suggest improvements and best practices
+- Help debug and optimize code`;
+
+    const contextMessage = systemPrompt;
 
     // Build messages array
     const messages = [
@@ -103,7 +136,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-pro-preview",
         messages,
         stream: true,
       }),
