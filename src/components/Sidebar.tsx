@@ -11,11 +11,23 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionBadge } from "./SubscriptionBadge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
+import { ConversationThumbnail } from "./ConversationThumbnail";
+
+interface UploadedFile {
+  id: string;
+  file_name: string;
+  file_type: string;
+  metadata: {
+    thumbnail?: string;
+    isImage?: boolean;
+  } | null;
+}
 
 interface Conversation {
   id: string;
   title: string;
   updated_at: string;
+  uploaded_files?: UploadedFile[];
 }
 
 interface SidebarProps {
@@ -76,7 +88,16 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
 
       const { data, error } = await supabase
         .from("conversations")
-        .select("*")
+        .select(`
+          *,
+          uploaded_files (
+            id,
+            file_name,
+            file_type,
+            metadata,
+            created_at
+          )
+        `)
         .eq("user_id", session.session.user.id)
         .order("updated_at", { ascending: false });
 
@@ -215,7 +236,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
                     <Button
                       key={conv.id}
                       variant="ghost"
-                      className={`w-full justify-start text-sm hover:bg-secondary group ${
+                      className={`w-full justify-start text-sm hover:bg-secondary group flex-col items-start h-auto py-2 ${
                         currentConversationId === conv.id ? "bg-secondary" : ""
                       }`}
                       onClick={() => {
@@ -223,12 +244,19 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
                         onClose?.();
                       }}
                     >
-                      <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="flex-1 truncate text-left">{conv.title}</span>
-                      <Trash2
-                        className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
-                        onClick={(e) => handleDelete(conv.id, e)}
-                      />
+                      <div className="flex items-center w-full">
+                        <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="flex-1 truncate text-left">{conv.title}</span>
+                        <Trash2
+                          className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
+                          onClick={(e) => handleDelete(conv.id, e)}
+                        />
+                      </div>
+                      {conv.uploaded_files && conv.uploaded_files.length > 0 && (
+                        <div className="ml-6 mt-1">
+                          <ConversationThumbnail files={conv.uploaded_files} maxDisplay={2} compact />
+                        </div>
+                      )}
                     </Button>
                   ))}
                 </div>
