@@ -4,11 +4,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.0';
 import Stripe from 'https://esm.sh/stripe@18.5.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!;
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,31 @@ interface ChatRequest {
   messages: Message[];
   conversationId?: string;
   mode?: 'chat' | 'study' | 'search' | 'thinking' | 'deep-research' | 'canvas';
+}
+
+// Convert OpenAI message format to Gemini format
+function convertToGeminiFormat(messages: Message[], systemPrompt: string) {
+  const geminiContents = [];
+  
+  // Add system prompt as first user message (Gemini doesn't have system role)
+  geminiContents.push({
+    role: 'user',
+    parts: [{ text: systemPrompt }]
+  });
+  geminiContents.push({
+    role: 'model',
+    parts: [{ text: 'I understand. I am Khai, ready to assist you.' }]
+  });
+  
+  // Convert remaining messages
+  for (const msg of messages) {
+    geminiContents.push({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    });
+  }
+  
+  return geminiContents;
 }
 
 serve(async (req) => {
@@ -193,71 +219,121 @@ serve(async (req) => {
       systemPrompt += ' Help users with visual and creative tasks. Provide detailed descriptions for visual concepts, assist with design thinking, and guide creative processes.';
     }
 
-    // Call OpenAI API
-    console.log('Calling OpenAI API...');
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
+    // Try Gemini 3.0 first
+    let aiMessage = '';
+    let provider = 'gemini';
+    
+    try {
+      console.log('Attempting Gemini 3.0 API call...');
+      const geminiContents = convertToGeminiFormat(validated.messages, systemPrompt);
+      
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: geminiContents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2000,
+              topP: 0.95,
+              topK: 40
+            }
+          })
+        }
+      );
+      
+      if (geminiResponse.ok) {
+        const geminiData = await geminiResponse.json();
+        aiMessage = geminiData.candidates?.[0]?.content?.parts?.[0]?.text 
+          || 'I apologize, but I was unable to generate a response.';
+        
+        console.log('✓ Gemini 3.0 response generated successfully');
+      } else {
+        const errorText = await geminiResponse.text();
+        console.warn(`Gemini API failed (${geminiResponse.status}), falling back to OpenAI:`, errorText);
+        throw new Error('Gemini failed, fallback to OpenAI');
+      }
+    } catch (geminiError) {
+      console.warn('Gemini API error, falling back to OpenAI:', geminiError);
+      
+      // Fallback to OpenAI
+      try {
+        console.log('Using OpenAI fallback...');
+        provider = 'openai';
+        
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
           },
-          ...messages
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt
+              },
+              ...validated.messages
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+          }),
+        });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('OpenAI API error:', aiResponse.status, errorText);
-      
-      // Handle specific error codes
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Rate limit exceeded. Please try again in a moment.',
-            errorCode: 'RATE_LIMIT'
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 429 
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error('OpenAI API error:', aiResponse.status, errorText);
+          
+          // Handle specific error codes
+          if (aiResponse.status === 429) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Rate limit exceeded. Please try again in a moment.',
+                errorCode: 'RATE_LIMIT'
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 429 
+              }
+            );
           }
-        );
-      }
-      
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Message limit reached. Please upgrade to continue.',
-            errorCode: 'PAYMENT_REQUIRED'
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 402 
+          
+          if (aiResponse.status === 402) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Message limit reached. Please upgrade to continue.',
+                errorCode: 'PAYMENT_REQUIRED'
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 402 
+              }
+            );
           }
-        );
+          
+          throw new Error(`OpenAI API returned ${aiResponse.status}: ${errorText}`);
+        }
+
+        const data = await aiResponse.json();
+        aiMessage = data.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
+        
+        console.log('✓ OpenAI fallback response generated successfully');
+      } catch (openaiError) {
+        console.error('Both Gemini and OpenAI failed:', openaiError);
+        throw new Error('All AI providers failed. Please try again later.');
       }
-      
-      throw new Error(`OpenAI API returned ${aiResponse.status}: ${errorText}`);
     }
 
-    const data = await aiResponse.json();
-    const aiMessage = data.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
-
-    console.log('AI response generated successfully');
+    console.log(`AI response generated successfully via ${provider}`);
 
     return new Response(
       JSON.stringify({ 
         message: aiMessage,
-        conversationId: conversationId
+        conversationId: conversationId,
+        provider: provider
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
