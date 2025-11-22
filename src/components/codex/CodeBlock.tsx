@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronUp, Download, Maximize2, MoreHorizontal } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronUp, Download, Maximize2, MoreHorizontal, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface CodeBlockProps {
   code: string;
@@ -20,15 +21,51 @@ interface CodeBlockProps {
 
 export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
   const [copied, setCopied] = useState(false);
-  const lineCount = code.split('\n').length;
+  const [formattedCode, setFormattedCode] = useState(code);
+  const [isFormatting, setIsFormatting] = useState(false);
+  const lineCount = formattedCode.split('\n').length;
   const shouldCollapse = lineCount > 10;
   const [isOpen, setIsOpen] = useState(!shouldCollapse);
   
-  const previewLines = code.split('\n').slice(0, 5).join('\n');
+  const previewLines = formattedCode.split('\n').slice(0, 5).join('\n');
+
+  const handleFormat = () => {
+    setIsFormatting(true);
+    try {
+      // Basic formatting: normalize indentation
+      const lines = formattedCode.split('\n');
+      let indentLevel = 0;
+      const formatted = lines.map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        
+        // Decrease indent for closing brackets
+        if (trimmed.startsWith('}') || trimmed.startsWith(']') || trimmed.startsWith(')')) {
+          indentLevel = Math.max(0, indentLevel - 1);
+        }
+        
+        const indented = '  '.repeat(indentLevel) + trimmed;
+        
+        // Increase indent for opening brackets
+        if (trimmed.endsWith('{') || trimmed.endsWith('[') || trimmed.endsWith('(')) {
+          indentLevel++;
+        }
+        
+        return indented;
+      }).join('\n');
+      
+      setFormattedCode(formatted);
+      toast.success('Code formatted');
+    } catch (error) {
+      toast.error('Failed to format code');
+    } finally {
+      setIsFormatting(false);
+    }
+  };
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(code);
+      await navigator.clipboard.writeText(formattedCode);
       setCopied(true);
       toast.success("Code copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
@@ -47,7 +84,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
       : language === 'python' ? 'py'
       : 'txt';
     
-    const blob = new Blob([code], { type: 'text/plain' });
+    const blob = new Blob([formattedCode], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -74,7 +111,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
         </button>
       </div>
       <div class="flex-1 overflow-auto p-4">
-        <pre class="text-sm"><code>${code}</code></pre>
+        <pre class="text-sm"><code>${formattedCode}</code></pre>
       </div>
     `;
     document.body.appendChild(fullscreenDiv);
@@ -115,6 +152,17 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
                   <span className="hidden sm:inline">Copy</span>
                 </>
               )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFormat}
+              disabled={isFormatting}
+              className="h-7 sm:h-8 gap-1 text-xs"
+              title="Format code"
+            >
+              <Wand2 className={cn("h-3 w-3 sm:h-4 sm:w-4", isFormatting && "animate-spin")} />
+              <span className="hidden sm:inline">Format</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -158,7 +206,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
             showLineNumbers
             wrapLines
           >
-            {code}
+            {formattedCode}
           </SyntaxHighlighter>
         </div>
       </div>
@@ -214,6 +262,17 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
                 <span className="hidden sm:inline">Copy</span>
               </>
             )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleFormat}
+            disabled={isFormatting}
+            className="h-7 sm:h-8 gap-1 text-xs"
+            title="Format code"
+          >
+            <Wand2 className={cn("h-3 w-3 sm:h-4 sm:w-4", isFormatting && "animate-spin")} />
+            <span className="hidden sm:inline">Format</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -284,7 +343,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
             showLineNumbers
             wrapLines
           >
-            {code}
+            {formattedCode}
           </SyntaxHighlighter>
         </div>
       </CollapsibleContent>
