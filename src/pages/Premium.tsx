@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, ArrowLeft, Sparkles, Zap, Crown, Settings, Globe } from "lucide-react";
+import { Check, ArrowLeft, Sparkles, Zap, Crown, Settings, Globe, Code2, FolderGit2, Download, GitBranch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -406,6 +406,138 @@ const Premium = () => {
             })}
           </div>
         )}
+      </div>
+
+      {/* Codex Teaser Section */}
+      <div className="container mx-auto px-4 py-16 border-t border-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+              <Crown className="w-4 h-4" />
+              <span className="text-sm font-medium">Premium Exclusive</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              Unlock <span className="bg-gradient-primary bg-clip-text text-transparent">Coda House</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Your AI-powered coding companion with intelligent code generation, live preview, and seamless project management
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Feature Grid */}
+            <Card className="p-8 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+              <Code2 className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-3">Smart Code Generation</h3>
+              <p className="text-muted-foreground mb-4">
+                Generate HTML, CSS, JavaScript, and React components with AI-powered intelligence. Auto-organized file tree with smart naming.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Intelligent component detection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Auto file organization</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Syntax highlighting & formatting</span>
+                </li>
+              </ul>
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-secondary/5 to-transparent">
+              <FolderGit2 className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-3">Live Preview & File Management</h3>
+              <p className="text-muted-foreground mb-4">
+                See your code come to life instantly with real-time preview. Organize files with drag-and-drop, version control, and more.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Real-time code preview</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Version history & restore</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Drag-and-drop file organization</span>
+                </li>
+              </ul>
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-accent/5 to-transparent">
+              <Download className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-3">Project Downloads</h3>
+              <p className="text-muted-foreground mb-4">
+                Download your generated code as ready-to-use project files. Premium members get unlimited downloads.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Unlimited downloads</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Complete project structure</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Production-ready code</span>
+                </li>
+              </ul>
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+              <GitBranch className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-3">GitHub Integration</h3>
+              <p className="text-muted-foreground mb-4">
+                Seamlessly sync your projects with GitHub repositories. Push changes and collaborate with your team.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Direct GitHub sync</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Branch management</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>Team collaboration</span>
+                </li>
+              </ul>
+            </Card>
+          </div>
+
+          {!isPremium && (
+            <div className="text-center">
+              <Card className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 border-primary/30 max-w-2xl mx-auto">
+                <Crown className="w-16 h-16 text-primary mx-auto mb-4" />
+                <h3 className="text-2xl font-bold mb-3">Ready to Start Coding?</h3>
+                <p className="text-muted-foreground mb-6">
+                  Upgrade to Premium and unlock Coda House with unlimited code generation, downloads, and GitHub integration
+                </p>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-primary hover:opacity-90 text-white"
+                  onClick={() => {
+                    const premiumSection = document.querySelector('.container');
+                    premiumSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  <Crown className="w-5 h-5 mr-2" />
+                  Upgrade to Premium
+                </Button>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Features Section */}
