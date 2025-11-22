@@ -229,6 +229,7 @@ export const FileTreeSidebar = ({
                   onFileSelect={onFileSelect}
                   onFileDelete={onFileDelete}
                   onFileDownload={onFileDownload}
+                  onFileUpdate={onVersionRestore}
                 />
               )}
             </div>
