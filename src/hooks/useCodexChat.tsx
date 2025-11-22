@@ -17,6 +17,7 @@ export const useCodexChat = (projectId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
+  const [activityStatus, setActivityStatus] = useState<string | null>(null);
 
   const fetchMessages = useCallback(async () => {
     if (!user || !projectId) return;
@@ -114,6 +115,13 @@ export const useCodexChat = (projectId: string | null) => {
           try {
             const parsed = JSON.parse(jsonStr);
             
+            // Check for status event
+            if (parsed.type === 'status' && parsed.message) {
+              setActivityStatus(parsed.message);
+              setTimeout(() => setActivityStatus(null), 3000);
+              continue;
+            }
+            
             // Check for files_created event
             if (parsed.type === 'files_created' && parsed.files) {
               const fileNames = parsed.files.map((f: any) => f.fileName).join(', ');
@@ -199,6 +207,7 @@ export const useCodexChat = (projectId: string | null) => {
     messages,
     loading,
     streaming,
+    activityStatus,
     sendMessage,
     clearChat,
     refetch: fetchMessages,

@@ -51,7 +51,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
   const [input, setInput] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const { messages, loading, streaming, sendMessage, clearChat } = useCodexChat(projectId);
+  const { messages, loading, streaming, activityStatus, sendMessage, clearChat } = useCodexChat(projectId);
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -283,6 +283,16 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
               )}
             </div>
           </ScrollArea>
+
+          {/* AI Activity Status */}
+          {activityStatus && (
+            <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2">
+              <div className="bg-card border border-border rounded-full px-6 py-3 shadow-lg flex items-center gap-3">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-sm font-medium">{activityStatus}</span>
+              </div>
+            </div>
+          )}
 
           {/* Floating scroll to bottom button */}
           {showScrollButton && (

@@ -126,6 +126,57 @@ export type Database = {
           },
         ]
       }
+      codex_file_versions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          file_content: string
+          file_id: string | null
+          file_name: string
+          id: string
+          project_id: string | null
+          user_id: string | null
+          version_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          file_content: string
+          file_id?: string | null
+          file_name: string
+          id?: string
+          project_id?: string | null
+          user_id?: string | null
+          version_number: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          file_content?: string
+          file_id?: string | null
+          file_name?: string
+          id?: string
+          project_id?: string | null
+          user_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codex_file_versions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "codex_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "codex_file_versions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "codex_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codex_files: {
         Row: {
           created_at: string
