@@ -1,17 +1,22 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate, ArrowDown, ArrowUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ArrowUp, LayoutTemplate, Loader2, ChevronDown, Paperclip, Image as ImageIcon, FileText, Code, Trash2, Sparkles, ArrowDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useCodexChat } from "@/hooks/useCodexChat";
-import { cn } from "@/lib/utils";
+import { useCodexChat, FileAttachment } from "@/hooks/useCodexChat";
 import { CodeBlock } from "./CodeBlock";
-import { parseMessageContent } from "@/lib/messageParser";
 import { TemplateGallery } from "./TemplateGallery";
-import { formatDistanceToNow } from 'date-fns';
+import { format } from "date-fns";
 import MessageActions from "@/components/MessageActions";
 import { TypewriterPlaceholder } from "@/components/TypewriterPlaceholder";
+import { FileChip } from "./FileChip";
+import { ImageLightbox } from "./ImageLightbox";
+import imageCompression from 'browser-image-compression';
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { parseMessageContent } from "@/lib/messageParser";
+import { cn } from "@/lib/utils";
 import logo from "@/assets/kai-ai-logo.png";
 
 interface CodexChatProps {
@@ -51,9 +56,14 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
   const [input, setInput] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const { messages, loading, streaming, activityStatus, sendMessage, clearChat } = useCodexChat(projectId);
-  const scrollBottomRef = useRef<HTMLDivElement>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollBottomRef = useRef<HTMLDivElement>(null);
+  const { messages, loading, streaming, activityStatus, sendMessage, clearChat, refetch } = useCodexChat(projectId);
 
   useEffect(() => {
     // Smart auto-scroll: only scroll if user is near bottom
@@ -100,20 +110,110 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
   };
 
   const formatTimestamp = (timestamp: string) => {
+    return format(new Date(timestamp), 'h:mm a');
+  };
+
+  const compressImage = async (file: File): Promise<string> => {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+    
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch {
-      return '';
+      const compressedFile = await imageCompression(file, options);
+      return await fileToBase64(compressedFile);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return await fileToBase64(file);
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const processDocument = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data, error } = await supabase.functions.invoke('process-file', {
+        body: formData,
+      });
+
+      if (error) throw error;
+      return data?.extractedText || null;
+    } catch (error) {
+      console.error('Error processing document:', error);
+      toast.error('Failed to process document');
+      return null;
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    const oversizedFiles = files.filter(f => f.size > 20 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      toast.error("Some files exceed 20MB limit");
+      return;
+    }
+
+    if (selectedFiles.length + files.length > 10) {
+      toast.error("Maximum 10 files allowed");
+      return;
+    }
+
+    setSelectedFiles(prev => [...prev, ...files]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading || !projectId) return;
+    if ((!input.trim() && selectedFiles.length === 0) || loading) return;
 
-    const message = input.trim();
+    const message = input.trim() || "Please analyze these files";
+    
+    // Process files
+    const fileAttachments: FileAttachment[] = [];
+    
+    for (const file of selectedFiles) {
+      const isImage = file.type.startsWith('image/');
+      
+      if (isImage) {
+        const base64 = await compressImage(file);
+        fileAttachments.push({
+          type: 'image',
+          content: base64,
+          name: file.name,
+          size: file.size,
+          mimeType: file.type,
+        });
+      } else {
+        const extractedText = await processDocument(file);
+        if (extractedText) {
+          fileAttachments.push({
+            type: 'document',
+            content: extractedText,
+            name: file.name,
+            size: file.size,
+            mimeType: file.type,
+          });
+        }
+      }
+    }
+    
     setInput("");
-    await sendMessage(message, onFilesCreated);
+    setSelectedFiles([]);
+    await sendMessage(message, fileAttachments, onFilesCreated);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -197,89 +297,116 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                   </div>
                 </div>
               ) : (
-              <div className="space-y-8">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex gap-3 sm:gap-4 animate-fade-in",
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    {message.role === "assistant" && (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0 mt-1">
-                        <img src={logo} alt="AI" className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
-                    )}
+                <div className="space-y-8">
+                  {messages.map((message) => (
                     <div
+                      key={message.id}
                       className={cn(
-                        "rounded-3xl px-4 sm:px-5 py-2.5 sm:py-3",
-                        message.role === "user"
-                          ? "bg-card border border-border max-w-[85%]"
-                          : "max-w-full"
+                        "flex gap-3 sm:gap-4 animate-fade-in",
+                        message.role === "user" ? "justify-end" : "justify-start"
                       )}
                     >
-                      {message.created_at && (
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className="text-[10px] sm:text-xs text-muted-foreground">
-                            {formatTimestamp(message.created_at)}
-                          </span>
+                      {message.role === "assistant" && (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0 mt-1">
+                          <img src={logo} alt="AI" className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                       )}
-                      {message.role === "user" ? (
-                        <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
-                      ) : (
-                        <>
-                          <div className="space-y-2 sm:space-y-3">
-                            {parseMessageContent(message.content).map((segment, index) => {
-                              if (segment.type === "text") {
-                                return (
-                                  <p key={index} className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">
-                                    {segment.content}
-                                  </p>
-                                );
-                              } else {
-                                return (
-                                  <CodeBlock
-                                    key={index}
-                                    code={segment.content}
-                                    language={segment.language}
-                                  />
-                                );
-                              }
-                            })}
+                      <div
+                        className={cn(
+                          "rounded-3xl px-4 sm:px-5 py-2.5 sm:py-3",
+                          message.role === "user"
+                            ? "bg-card border border-border max-w-[85%]"
+                            : "max-w-full"
+                        )}
+                      >
+                        {message.created_at && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span className="text-[10px] sm:text-xs text-muted-foreground">
+                              {formatTimestamp(message.created_at)}
+                            </span>
                           </div>
-                          <MessageActions 
-                            content={message.content}
-                            conversationId={projectId}
-                          />
-                        </>
+                        )}
+                        {message.role === "user" ? (
+                          <div className="space-y-3">
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="space-y-2">
+                                {message.attachments.map((attachment, idx) => (
+                                  attachment.type === 'image' && attachment.content ? (
+                                    <img 
+                                      key={idx}
+                                      src={attachment.content} 
+                                      alt={attachment.name}
+                                      className="rounded-lg max-w-md cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={() => setLightboxImage({ url: attachment.content!, name: attachment.name })}
+                                    />
+                                  ) : (
+                                    <div key={idx} className="flex items-center gap-2 bg-secondary/50 rounded-lg p-3 max-w-md">
+                                      <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-medium truncate block">{attachment.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {(attachment.size / 1024).toFixed(1)} KB
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                            )}
+                            <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="space-y-2 sm:space-y-3">
+                              {parseMessageContent(message.content).map((segment, index) => {
+                                if (segment.type === "text") {
+                                  return (
+                                    <p key={index} className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">
+                                      {segment.content}
+                                    </p>
+                                  );
+                                } else {
+                                  return (
+                                    <CodeBlock
+                                      key={index}
+                                      code={segment.content}
+                                      language={segment.language}
+                                    />
+                                  );
+                                }
+                              })}
+                            </div>
+                            <MessageActions 
+                              content={message.content}
+                              conversationId={projectId}
+                            />
+                          </>
+                        )}
+                      </div>
+                      {message.role === "user" && (
+                        <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
                       )}
                     </div>
-                    {message.role === "user" && (
-                      <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
-                        <AvatarFallback>U</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-                
-                {streaming && (
-                  <div className="flex gap-3 sm:gap-4 animate-fade-in">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  ))}
+                  
+                  {streaming && (
+                    <div className="flex gap-3 sm:gap-4 animate-fade-in">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      </div>
+                      <div className="flex gap-1 items-center">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      </div>
                     </div>
-                    <div className="flex gap-1 items-center">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.1s]"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Bottom scroll marker */}
-                <div ref={scrollBottomRef} className="h-1" />
-              </div>
+                  )}
+                  
+                  {/* Bottom scroll marker */}
+                  <div ref={scrollBottomRef} className="h-1" />
+                </div>
               )}
             </div>
           </ScrollArea>
@@ -311,6 +438,26 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
               <form onSubmit={handleSubmit}>
                 <div className="relative bg-card rounded-[28px] shadow-lg border border-border/50">
                   <div className="flex items-end gap-2 sm:gap-3 p-3 sm:p-4">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx,.txt,.md,.json,.csv"
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={loading}
+                    >
+                      <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                    
                     <Button
                       type="button"
                       variant="ghost"
@@ -322,7 +469,20 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                     </Button>
                     
                     <div className="flex-1 relative">
+                      {selectedFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {selectedFiles.map((file, idx) => (
+                            <FileChip 
+                              key={idx} 
+                              file={file} 
+                              onRemove={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} 
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
                       <Textarea
+                        ref={textareaRef}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -331,7 +491,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                         rows={1}
                         disabled={loading || streaming}
                       />
-                      {!input && (
+                      {!input && selectedFiles.length === 0 && (
                         <div className="absolute left-0 top-0 pointer-events-none text-muted-foreground">
                           <TypewriterPlaceholder />
                         </div>
@@ -342,7 +502,7 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                       type="submit"
                       size="icon"
                       className="rounded-full h-9 w-9 sm:h-10 sm:w-10 bg-muted hover:bg-accent flex-shrink-0"
-                      disabled={!input.trim() || loading || streaming}
+                      disabled={!input.trim() && selectedFiles.length === 0 || loading || streaming}
                     >
                       <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
@@ -354,11 +514,19 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
         </>
       )}
 
-      <TemplateGallery 
+      <TemplateGallery
         open={showTemplates}
         onClose={() => setShowTemplates(false)}
         onSelectTemplate={handleTemplateSelect}
       />
+      
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage.url}
+          imageName={lightboxImage.name}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
     </div>
   );
 };

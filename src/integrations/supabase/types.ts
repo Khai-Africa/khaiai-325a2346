@@ -43,6 +43,7 @@ export type Database = {
       }
       codex_chat_messages: {
         Row: {
+          attachments: Json | null
           content: string
           created_at: string | null
           id: string
@@ -52,6 +53,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachments?: Json | null
           content: string
           created_at?: string | null
           id?: string
@@ -61,6 +63,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachments?: Json | null
           content?: string
           created_at?: string | null
           id?: string

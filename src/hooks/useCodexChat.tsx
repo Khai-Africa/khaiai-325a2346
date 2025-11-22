@@ -3,6 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 
+interface FileAttachment {
+  type: 'image' | 'document';
+  url?: string;
+  content?: string;
+  name: string;
+  size: number;
+  mimeType: string;
+}
+
 interface ChatMessage {
   id: string;
   project_id: string;
@@ -10,6 +19,7 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   created_at: string;
+  attachments?: FileAttachment[];
 }
 
 export const useCodexChat = (projectId: string | null) => {
@@ -30,7 +40,14 @@ export const useCodexChat = (projectId: string | null) => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages((data || []) as ChatMessage[]);
+      
+      // Transform attachments from Json to FileAttachment[]
+      const transformedData = (data || []).map(msg => ({
+        ...msg,
+        attachments: msg.attachments ? (msg.attachments as any) as FileAttachment[] : undefined
+      }));
+      
+      setMessages(transformedData as ChatMessage[]);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast.error('Failed to load chat history');
@@ -41,7 +58,7 @@ export const useCodexChat = (projectId: string | null) => {
     fetchMessages();
   }, [fetchMessages]);
 
-  const sendMessage = async (content: string, onFilesCreated?: () => void) => {
+  const sendMessage = async (content: string, files: FileAttachment[] = [], onFilesCreated?: () => void) => {
     if (!user || !projectId || !session) return;
 
     setLoading(true);
@@ -56,16 +73,18 @@ export const useCodexChat = (projectId: string | null) => {
         role: 'user',
         content,
         created_at: new Date().toISOString(),
+        attachments: files.length > 0 ? files : undefined,
       };
       
       // Save user message to database first
-      await supabase
+      const { error: insertError } = await supabase
         .from('codex_chat_messages')
         .insert({
           project_id: projectId,
           user_id: user.id,
           role: 'user',
           content,
+          attachments: files.length > 0 ? files as any : [],
         });
       
       setMessages(prev => [...prev, userMessage]);
@@ -78,7 +97,11 @@ export const useCodexChat = (projectId: string | null) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: content, projectId }),
+        body: JSON.stringify({ 
+          message: content, 
+          projectId,
+          files: files.length > 0 ? files : undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -213,3 +236,5 @@ export const useCodexChat = (projectId: string | null) => {
     refetch: fetchMessages,
   };
 };
+
+export type { FileAttachment, ChatMessage };
