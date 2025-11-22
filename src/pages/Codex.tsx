@@ -387,9 +387,9 @@ export default function Codex() {
             </div>
 
             {/* Chat + Preview - Fully Responsive */}
-            <div className="flex-1 min-w-0 flex flex-col lg:grid lg:grid-cols-2 gap-2 md:gap-3 overflow-hidden">
-              {/* Chat Section - Responsive Height */}
-              <div className="h-[45vh] sm:h-[48vh] lg:h-full border border-border rounded-lg overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 min-w-0 flex flex-col lg:grid lg:grid-cols-2 gap-2 md:gap-3">
+              {/* Chat Section - Responsive */}
+              <div className="h-[45vh] sm:h-[48vh] lg:h-auto border border-border rounded-lg overflow-hidden">
                 <CodexChat
                   projectId={activeProject?.id || null}
                   onFilesCreated={refetchFiles}
@@ -397,8 +397,8 @@ export default function Codex() {
                 />
               </div>
               
-              {/* Preview Section - Responsive Height */}
-              <div className="h-[45vh] sm:h-[48vh] lg:h-full border border-border rounded-lg overflow-hidden flex flex-col min-h-0">
+              {/* Preview Section - Responsive */}
+              <div className="h-[45vh] sm:h-[48vh] lg:h-auto border border-border rounded-lg overflow-hidden">
                 <CodePreview
                   code={previewCode.code || selectedFile?.file_content || ""}
                   language={previewCode.language || selectedFile?.file_type || "html"}
