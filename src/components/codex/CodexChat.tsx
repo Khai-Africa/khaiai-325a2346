@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate, ArrowDown } from "lucide-react";
+import { MessageSquare, Send, Trash2, Loader2, Sparkles, Zap, Code, LayoutTemplate, ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,6 +10,9 @@ import { CodeBlock } from "./CodeBlock";
 import { parseMessageContent } from "@/lib/messageParser";
 import { TemplateGallery } from "./TemplateGallery";
 import { formatDistanceToNow } from 'date-fns';
+import MessageActions from "@/components/MessageActions";
+import { TypewriterPlaceholder } from "@/components/TypewriterPlaceholder";
+import logo from "@/assets/kai-ai-logo.png";
 
 interface CodexChatProps {
   projectId: string | null;
@@ -18,10 +21,30 @@ interface CodexChatProps {
 }
 
 const quickActions = [
-  { label: "Landing Page", icon: <Sparkles className="w-3 h-3" />, prompt: "Create a modern landing page with hero section" },
-  { label: "Button", icon: <Zap className="w-3 h-3" />, prompt: "Create a beautiful button component with variants" },
-  { label: "Navigation", icon: <MessageSquare className="w-3 h-3" />, prompt: "Create a responsive navigation menu" },
-  { label: "Contact Form", icon: <Send className="w-3 h-3" />, prompt: "Create a contact form with validation" },
+  { 
+    label: "Landing Page", 
+    icon: "🚀", 
+    description: "Modern hero section with CTA",
+    prompt: "Create a modern landing page with hero section" 
+  },
+  { 
+    label: "Button Component", 
+    icon: "⚡", 
+    description: "Reusable with variants",
+    prompt: "Create a beautiful button component with variants" 
+  },
+  { 
+    label: "Navigation Menu", 
+    icon: "🧭", 
+    description: "Responsive navbar",
+    prompt: "Create a responsive navigation menu" 
+  },
+  { 
+    label: "Contact Form", 
+    icon: "📧", 
+    description: "With validation",
+    prompt: "Create a contact form with validation" 
+  },
 ];
 
 export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexChatProps) => {
@@ -126,7 +149,9 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
         <>
           <div className="sticky top-0 z-10 flex items-center justify-between p-3 sm:p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <div className="flex items-center gap-2 sm:gap-3">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                <img src={logo} alt="AI" className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
               <div>
                 <h3 className="text-sm sm:text-base font-semibold">AI Assistant</h3>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Powered by Gemini 3.0 Pro</p>
@@ -148,89 +173,68 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
             className="flex-1 h-[calc(100%-120px)] p-3 sm:p-4 md:p-5" 
             onScrollCapture={handleScroll}
           >
-            {messages.length === 0 ? (
-              <div className="space-y-4 sm:space-y-6">
-                <div className="text-center space-y-2 sm:space-y-3 py-6 sm:py-8">
-                  <h4 className="text-sm sm:text-base font-medium">Quick Actions</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Get started with these common requests</p>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                  {quickActions.map((action, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className="h-auto p-3 sm:p-4 justify-start text-left hover:bg-accent"
-                      onClick={() => handleQuickAction(action.prompt)}
-                    >
-                      <div className="flex items-start gap-2 sm:gap-3 w-full">
-                        <div className="mt-0.5 text-primary">{action.icon}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs sm:text-sm font-medium truncate">{action.label}</div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">
-                            {action.prompt}
-                          </div>
+            <div className="max-w-3xl mx-auto">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium mb-8 sm:mb-12 text-center">
+                    What would you like to build?
+                  </h1>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl w-full">
+                    {quickActions.map((action) => (
+                      <Button
+                        key={action.label}
+                        variant="outline"
+                        className="h-auto p-3 sm:p-4 justify-start hover:bg-accent text-left flex flex-col items-start gap-2 rounded-2xl"
+                        onClick={() => handleQuickAction(action.prompt)}
+                      >
+                        <span className="text-2xl sm:text-3xl">{action.icon}</span>
+                        <div>
+                          <div className="font-medium text-sm sm:text-base">{action.label}</div>
+                          <div className="text-xs sm:text-sm text-muted-foreground">{action.description}</div>
                         </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-
-                <div className="text-center pt-3 sm:pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowTemplates(true)}
-                    className="gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <LayoutTemplate className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Browse Templates
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 sm:space-y-5 md:space-y-6">
+              ) : (
+              <div className="space-y-8">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
-                      "flex gap-2 sm:gap-3",
+                      "flex gap-3 sm:gap-4 animate-fade-in",
                       message.role === "user" ? "justify-end" : "justify-start"
                     )}
                   >
                     {message.role === "assistant" && (
-                      <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0 mt-1">
+                        <img src={logo} alt="AI" className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </div>
                     )}
                     <div
                       className={cn(
-                        "rounded-lg shadow-sm w-full max-w-full sm:max-w-[95%] md:max-w-[90%] lg:max-w-[85%]",
+                        "rounded-3xl px-4 sm:px-5 py-2.5 sm:py-3",
                         message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
+                          ? "bg-card border border-border max-w-[85%]"
+                          : "max-w-full"
                       )}
                     >
-                      <div className="p-3 sm:p-4 md:p-5">
-                        {message.created_at && (
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <span className={cn(
-                              "text-[10px] sm:text-xs opacity-70",
-                              message.role === "user" ? "text-primary-foreground" : "text-muted-foreground"
-                            )}>
-                              {formatTimestamp(message.created_at)}
-                            </span>
-                          </div>
-                        )}
-                        {message.role === "user" ? (
-                          <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed sm:leading-loose">{message.content}</p>
-                        ) : (
+                      {message.created_at && (
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="text-[10px] sm:text-xs text-muted-foreground">
+                            {formatTimestamp(message.created_at)}
+                          </span>
+                        </div>
+                      )}
+                      {message.role === "user" ? (
+                        <p className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                      ) : (
+                        <>
                           <div className="space-y-2 sm:space-y-3">
                             {parseMessageContent(message.content).map((segment, index) => {
                               if (segment.type === "text") {
                                 return (
-                                  <p key={index} className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed sm:leading-loose">
+                                  <p key={index} className="text-xs sm:text-sm md:text-base whitespace-pre-wrap break-words leading-relaxed">
                                     {segment.content}
                                   </p>
                                 );
@@ -245,8 +249,12 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                               }
                             })}
                           </div>
-                        )}
-                      </div>
+                          <MessageActions 
+                            content={message.content}
+                            conversationId={projectId}
+                          />
+                        </>
+                      )}
                     </div>
                     {message.role === "user" && (
                       <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
@@ -257,18 +265,14 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                 ))}
                 
                 {streaming && (
-                  <div className="flex gap-2 sm:gap-3">
-                    <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 mt-1">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-muted rounded-lg p-3 sm:p-4">
-                      <div className="flex gap-1">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce" />
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
-                      </div>
+                  <div className="flex gap-3 sm:gap-4 animate-fade-in">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="flex gap-1 items-center">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.2s]"></div>
                     </div>
                   </div>
                 )}
@@ -276,7 +280,8 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
                 {/* Bottom scroll marker */}
                 <div ref={scrollBottomRef} className="h-1" />
               </div>
-            )}
+              )}
+            </div>
           </ScrollArea>
 
           {/* Floating scroll to bottom button */}
@@ -291,26 +296,51 @@ export const CodexChat = ({ projectId, onFilesCreated, onCodeGenerated }: CodexC
             </Button>
           )}
 
-          <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-5 border-t bg-muted/30">
-            <div className="flex gap-2 sm:gap-3">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Describe what you want to build..."
-                className="min-h-[50px] sm:min-h-[60px] md:min-h-[70px] resize-none text-xs sm:text-sm md:text-base"
-                disabled={loading || streaming}
-              />
-              <Button 
-                type="submit" 
-                size="icon" 
-                disabled={!input.trim() || loading || streaming}
-                className="h-[50px] w-[50px] sm:h-[60px] sm:w-[60px] flex-shrink-0"
-              >
-                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
+          <div className="p-3 sm:p-4">
+            <div className="max-w-3xl mx-auto">
+              <form onSubmit={handleSubmit}>
+                <div className="relative bg-card rounded-[28px] shadow-lg border border-border/50">
+                  <div className="flex items-end gap-2 sm:gap-3 p-3 sm:p-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
+                      onClick={() => setShowTemplates(true)}
+                    >
+                      <LayoutTemplate className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                    
+                    <div className="flex-1 relative">
+                      <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder=""
+                        className="bg-transparent border-0 focus-visible:ring-0 resize-none min-h-[24px] max-h-[200px] text-sm sm:text-base p-0 shadow-none"
+                        rows={1}
+                        disabled={loading || streaming}
+                      />
+                      {!input && (
+                        <div className="absolute left-0 top-0 pointer-events-none text-muted-foreground">
+                          <TypewriterPlaceholder />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="rounded-full h-9 w-9 sm:h-10 sm:w-10 bg-muted hover:bg-accent flex-shrink-0"
+                      disabled={!input.trim() || loading || streaming}
+                    >
+                      <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </div>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </>
       )}
 
