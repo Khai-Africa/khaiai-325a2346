@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, projectId } = await req.json();
+    const { message, projectId, files: attachedFiles } = await req.json();
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -44,7 +44,7 @@ serve(async (req) => {
       .single();
 
     // Get recent files for context
-    const { data: files } = await supabase
+    const { data: projectFiles } = await supabase
       .from('codex_files')
       .select('file_name, file_type, file_content')
       .eq('project_id', projectId)
@@ -64,15 +64,17 @@ serve(async (req) => {
     }
 
     // Build enhanced system prompt for vibe coding
-    let filesContext = '';
-    if (files && files.length > 0) {
-      filesContext = '\n\n📁 Recent project files:\n';
-      files.forEach(file => {
-        filesContext += `\n${file.file_name} (${file.file_type}):\n\`\`\`\n${file.file_content.substring(0, 500)}${file.file_content.length > 500 ? '...' : ''}\n\`\`\`\n`;
+    let projectFilesContext = '';
+    if (projectFiles && projectFiles.length > 0) {
+      projectFilesContext = '\n\n📁 Recent project files:\n';
+      projectFiles.forEach((file: any) => {
+        projectFilesContext += `\n${file.file_name} (${file.file_type}):\n\`\`\`\n${file.file_content.substring(0, 500)}${file.file_content.length > 500 ? '...' : ''}\n\`\`\`\n`;
       });
     }
 
     const systemPrompt = `You are Codex, an expert coding assistant powered by Gemini 3.0 Pro, specializing in creating beautiful, functional code with live preview capabilities.
+
+You can see images and read document contents shared by users. Use this visual and textual context to understand their requirements better and generate matching code.
 
 Project: "${project?.name || 'Untitled Project'}"
 ${project?.description ? `Description: ${project.description}` : ''}
@@ -101,7 +103,7 @@ When user requests changes:
 - Professional color schemes and typography
 
 📁 PROJECT CONTEXT:
-${filesContext || 'No files yet in project'}
+${projectFilesContext || 'No files yet in project'}
 
 🎯 YOUR ROLE:
 - Provide clear, helpful responses
@@ -112,12 +114,34 @@ ${filesContext || 'No files yet in project'}
 
     const contextMessage = systemPrompt;
 
-    // Build messages array
+    // Build messages array with multimodal support
     const messages = [
       { role: 'system', content: contextMessage },
-      ...(history || []).map(msg => ({ role: msg.role, content: msg.content })),
-      { role: 'user', content: message }
+      ...(history || []).map((msg: any) => ({ role: msg.role, content: msg.content })),
     ];
+
+    // Add user message with files if present
+    if (attachedFiles && attachedFiles.length > 0) {
+      const userContent: any[] = [{ type: 'text', text: message }];
+      
+      for (const file of attachedFiles) {
+        if (file.type === 'image' && file.content) {
+          userContent.push({
+            type: 'image_url',
+            image_url: { url: file.content }
+          });
+        } else if (file.type === 'document' && file.content) {
+          userContent.push({
+            type: 'text',
+            text: `\n\n[Document: ${file.name}]\n${file.content}`
+          });
+        }
+      }
+      
+      messages.push({ role: 'user', content: userContent });
+    } else {
+      messages.push({ role: 'user', content: message });
+    }
 
     // Save user message
     await supabase
