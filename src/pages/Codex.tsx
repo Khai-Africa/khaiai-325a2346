@@ -11,6 +11,7 @@ import { useCodexUsage } from "@/hooks/useCodexUsage";
 import { useCodexProjects } from "@/hooks/useCodexProjects";
 import { useCodexFiles } from "@/hooks/useCodexFiles";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 export default function Codex() {
   const navigate = useNavigate();
   const { user, session, loading: authLoading } = useAuth();
+  const { isPremium: isSubscriptionPremium, loading: subscriptionLoading } = useSubscription();
   const { isPremium, canDownload, freeDownloadsRemaining, refetch: refetchUsage } = useCodexUsage();
   const { projects, activeProject, createProject, setActiveProject } = useCodexProjects();
   const { files, uploadFile, updateFile, deleteFile, refetch: refetchFiles } = useCodexFiles(activeProject?.id || null);
@@ -43,6 +45,14 @@ export default function Codex() {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Redirect if not premium
+  useEffect(() => {
+    if (!authLoading && !subscriptionLoading && user && !isSubscriptionPremium) {
+      toast.error('Premium subscription required to access Codex');
+      navigate('/premium');
+    }
+  }, [user, authLoading, subscriptionLoading, isSubscriptionPremium, navigate]);
 
   // Handle payment success
   useEffect(() => {
@@ -117,8 +127,8 @@ export default function Codex() {
     }
   };
 
-  // Show loading while checking auth
-  if (authLoading) {
+  // Show loading while checking auth and subscription
+  if (authLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -126,8 +136,8 @@ export default function Codex() {
     );
   }
 
-  // Don't render if not authenticated
-  if (!user) {
+  // Don't render if not authenticated or not premium
+  if (!user || !isSubscriptionPremium) {
     return null;
   }
 
