@@ -261,42 +261,42 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
       isFullscreen && "fixed inset-0 z-50"
     )}>
       {/* Preview Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b border-border bg-secondary/30">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-2 sm:p-3 border-b border-border bg-secondary/30">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">
             Live Preview {language && `(${language})`}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {/* Device Mode Buttons */}
-          <div className="flex items-center gap-0.5 mr-2">
+          <div className="hidden sm:flex items-center gap-0.5 mr-1 sm:mr-2">
             <Button
               variant={deviceMode === 'desktop' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setDeviceMode('desktop')}
-              className="h-7 w-7"
+              className="h-6 w-6 sm:h-7 sm:w-7"
               title="Desktop view"
             >
-              <Monitor className="w-3 h-3" />
+              <Monitor className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </Button>
             <Button
               variant={deviceMode === 'tablet' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setDeviceMode('tablet')}
-              className="h-7 w-7"
+              className="h-6 w-6 sm:h-7 sm:w-7"
               title="Tablet view (768px)"
             >
-              <Tablet className="w-3 h-3" />
+              <Tablet className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </Button>
             <Button
               variant={deviceMode === 'mobile' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setDeviceMode('mobile')}
-              className="h-7 w-7"
+              className="h-6 w-6 sm:h-7 sm:w-7"
               title="Mobile view (375px)"
             >
-              <Smartphone className="w-3 h-3" />
+              <Smartphone className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </Button>
           </div>
 
@@ -304,41 +304,41 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
             variant="ghost"
             size="sm"
             onClick={() => setShowConsole(!showConsole)}
-            className={cn("h-7 w-7", showConsole && "bg-accent")}
+            className={cn("h-6 w-6 sm:h-7 sm:w-7", showConsole && "bg-accent")}
             title="Toggle console"
           >
-            <Terminal className="w-3 h-3" />
+            <Terminal className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={updatePreview}
-            className="h-7 w-7"
+            className="h-6 w-6 sm:h-7 sm:w-7"
             title="Refresh preview"
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="h-7 w-7"
+            className="h-6 w-6 sm:h-7 sm:w-7"
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? (
-              <Minimize2 className="w-3 h-3" />
+              <Minimize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             ) : (
-              <Maximize2 className="w-3 h-3" />
+              <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsVisible(false)}
-            className="h-7 w-7"
+            className="h-6 w-6 sm:h-7 sm:w-7"
             title="Hide preview"
           >
-            <EyeOff className="w-3 h-3" />
+            <EyeOff className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           </Button>
         </div>
       </div>
@@ -347,10 +347,10 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
       <div className={cn("flex-1 flex flex-col overflow-hidden", showConsole ? "h-[60%]" : "h-full")}>
         <div className="flex-1 relative bg-white overflow-auto flex justify-center items-start">
           {error ? (
-            <div className="flex items-center justify-center h-full p-4">
+            <div className="flex items-center justify-center h-full p-3 sm:p-4">
               <div className="text-center">
-                <p className="text-sm text-destructive mb-2">Preview Error</p>
-                <p className="text-xs text-muted-foreground">{error}</p>
+                <p className="text-xs sm:text-sm text-destructive mb-2">Preview Error</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{error}</p>
               </div>
             </div>
           ) : previewContent ? (
@@ -372,7 +372,7 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="text-sm">No preview available</p>
+              <p className="text-xs sm:text-sm">No preview available</p>
             </div>
           )}
         </div>
@@ -381,30 +381,30 @@ export const CodePreview = ({ code, language, autoRefresh = true }: CodePreviewP
       {/* Console Output */}
       {showConsole && (
         <div className="h-[40%] border-t border-border bg-secondary/20">
-          <div className="flex items-center justify-between p-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Terminal className="w-3 h-3" />
-              <span className="text-xs font-medium">Console Output</span>
+          <div className="flex items-center justify-between p-1.5 sm:p-2 border-b border-border">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Terminal className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="text-[10px] sm:text-xs font-medium">Console Output</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setConsoleLogs([])}
-              className="h-6 text-xs"
+              className="h-5 sm:h-6 text-[10px] sm:text-xs"
             >
               Clear
             </Button>
           </div>
-          <ScrollArea className="h-[calc(100%-40px)] p-2">
+          <ScrollArea className="h-[calc(100%-32px)] sm:h-[calc(100%-40px)] p-1.5 sm:p-2">
             {consoleLogs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No console output yet...</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">No console output yet...</p>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-0.5 sm:space-y-1">
                 {consoleLogs.map((log, idx) => (
                   <div 
                     key={idx} 
                     className={cn(
-                      "text-xs font-mono whitespace-pre-wrap break-all",
+                      "text-[10px] sm:text-xs font-mono whitespace-pre-wrap break-all",
                       log.startsWith('[error]') && "text-destructive",
                       log.startsWith('[warn]') && "text-yellow-600",
                       log.startsWith('[log]') && "text-foreground"

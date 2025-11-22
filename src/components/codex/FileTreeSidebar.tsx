@@ -3,9 +3,17 @@ import { FileTree } from "./FileTree";
 import { VersionHistory } from "./VersionHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, X, Upload, FolderPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface FileTreeSidebarProps {
   files: any[];
@@ -33,6 +41,8 @@ export const FileTreeSidebar = ({
   onClose,
 }: FileTreeSidebarProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -67,6 +77,34 @@ export const FileTreeSidebar = ({
         toast.success(`${droppedFiles.length} file(s) uploaded`);
       }
     }
+  };
+
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) {
+      toast.error("Folder name cannot be empty");
+      return;
+    }
+
+    // Create a placeholder file in the new folder
+    const placeholderContent = `# ${newFolderName}\n\nThis folder was created on ${new Date().toLocaleString()}`;
+    const blob = new Blob([placeholderContent], { type: 'text/markdown' });
+    const file = new File([blob], '.gitkeep', { type: 'text/markdown' });
+    
+    // Set the folder path as a property on the file
+    Object.defineProperty(file, 'webkitRelativePath', {
+      value: `${newFolderName}/.gitkeep`,
+      writable: false
+    });
+
+    if (onFileUpload) {
+      const fileList = new DataTransfer();
+      fileList.items.add(file);
+      onFileUpload(fileList.files);
+      toast.success(`Folder "${newFolderName}" created`);
+    }
+
+    setNewFolderName("");
+    setIsCreatingFolder(false);
   };
 
   return (
@@ -106,11 +144,39 @@ export const FileTreeSidebar = ({
                     className="hidden"
                     id="sidebar-file-upload"
                   />
+                  <Dialog open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        title="Create folder"
+                      >
+                        <FolderPlus className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Create New Folder</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Folder name"
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+                          className="flex-1"
+                        />
+                        <Button onClick={handleCreateFolder}>Create</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => document.getElementById('sidebar-file-upload')?.click()}
                     className="h-7 w-7 p-0"
+                    title="Upload files"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -130,20 +196,30 @@ export const FileTreeSidebar = ({
           </div>
 
           {/* File Tree */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="p-2">
               {files.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="text-center py-8 px-4">
                   <p className="text-sm text-muted-foreground mb-3">No files yet</p>
                   {onFileUpload && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => document.getElementById('sidebar-file-upload')?.click()}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Upload Files
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => document.getElementById('sidebar-file-upload')?.click()}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsCreatingFolder(true)}
+                      >
+                        <FolderPlus className="w-4 h-4 mr-2" />
+                        Create Folder
+                      </Button>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -159,7 +235,7 @@ export const FileTreeSidebar = ({
           </ScrollArea>
 
           {/* Version History */}
-          <div className="border-t">
+          <div className="border-t flex-shrink-0">
             <VersionHistory
               fileId={selectedFile?.id || null}
               projectId={projectId}
