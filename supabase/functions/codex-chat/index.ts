@@ -177,6 +177,10 @@ ${filesContext || 'No files yet in project'}
         }
 
         try {
+          // Send initial status
+          const statusEvent = `data: ${JSON.stringify({ type: 'status', message: 'Analyzing your request...' })}\n\n`;
+          controller.enqueue(encoder.encode(statusEvent));
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -222,6 +226,12 @@ ${filesContext || 'No files yet in project'}
             const matches = [...fullContent.matchAll(codeBlockRegex)];
             const createdFiles = [];
 
+            if (matches.length > 0) {
+              // Send status for code generation
+              const genStatusEvent = `data: ${JSON.stringify({ type: 'status', message: 'Generating code...' })}\n\n`;
+              controller.enqueue(encoder.encode(genStatusEvent));
+            }
+
             for (const match of matches) {
               const language = match[1] || 'txt';
               const code = match[2].trim();
@@ -230,6 +240,10 @@ ${filesContext || 'No files yet in project'}
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
                 const extension = getFileExtension(language);
                 const fileName = `chat_generated_${timestamp}${extension}`;
+
+                // Send status for saving file
+                const saveStatusEvent = `data: ${JSON.stringify({ type: 'status', message: `Saving file: ${fileName}...` })}\n\n`;
+                controller.enqueue(encoder.encode(saveStatusEvent));
 
                 const { data: fileData, error: fileError } = await supabase
                   .from('codex_files')
@@ -248,6 +262,19 @@ ${filesContext || 'No files yet in project'}
 
                 if (!fileError && fileData) {
                   createdFiles.push({ fileName, fileId: fileData.id });
+
+                  // Create initial version
+                  await supabase
+                    .from('codex_file_versions')
+                    .insert({
+                      file_id: fileData.id,
+                      user_id: user.id,
+                      project_id: projectId,
+                      version_number: 1,
+                      file_content: code,
+                      file_name: fileName,
+                      description: 'Initial version from AI',
+                    });
                 }
               }
             }
