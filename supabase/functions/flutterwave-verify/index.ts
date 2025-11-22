@@ -44,11 +44,45 @@ serve(async (req) => {
       throw new Error("Reference or transaction ID is required");
     }
 
+    // First, check if transaction exists in our database
+    const { data: localTx, error: localError } = await supabaseClient
+      .from("payment_transactions")
+      .select("*")
+      .eq("reference", reference || transactionId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (localError || !localTx) {
+      logStep("Transaction not found in database", { reference, transactionId });
+      throw new Error("Transaction not found. Please try upgrading again.");
+    }
+
+    logStep("Local transaction found", { status: localTx.status });
+
+    // If already completed, return success
+    if (localTx.status === "completed") {
+      logStep("Transaction already completed");
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          status: "successful",
+          amount: localTx.amount,
+          currency: localTx.currency,
+          reference: localTx.reference,
+          alreadyCompleted: true
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     const verifyUrl = transactionId 
       ? `https://api.flutterwave.com/v3/transactions/${transactionId}/verify`
       : `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${reference}`;
 
-    logStep("Verifying transaction", { reference, transactionId });
+    logStep("Verifying transaction with Flutterwave", { reference, transactionId });
 
     const verifyResponse = await fetch(verifyUrl, {
       headers: {
@@ -59,7 +93,20 @@ serve(async (req) => {
     const verifyData = await verifyResponse.json();
     
     if (verifyData.status !== "success") {
-      logStep("Verification failed", verifyData);
+      logStep("Flutterwave verification failed", verifyData);
+      
+      // Check if it's because payment wasn't completed
+      if (verifyData.message?.includes("No transaction was found")) {
+        // Mark as failed in our database
+        await supabaseClient
+          .from("payment_transactions")
+          .update({ status: "failed" })
+          .eq("reference", reference || transactionId)
+          .eq("user_id", user.id);
+        
+        throw new Error("Payment was not completed. Please try again and complete the payment on the Flutterwave page.");
+      }
+      
       throw new Error(verifyData.message || "Payment verification failed");
     }
 

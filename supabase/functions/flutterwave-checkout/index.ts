@@ -78,6 +78,7 @@ serve(async (req) => {
         amount: amount,
         currency: currency,
         redirect_url: `${origin}/premium?payment=success&ref=${txRef}`,
+        cancel_url: `${origin}/premium?payment=canceled&ref=${txRef}`,
         customer: {
           email: user.email,
           name: user.user_metadata?.full_name || user.email.split("@")[0],

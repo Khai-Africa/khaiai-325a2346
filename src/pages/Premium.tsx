@@ -59,8 +59,8 @@ const Premium = () => {
     const canceled = searchParams.get("canceled");
     
     // Check for cancellation first to avoid verification attempts
-    if (canceled) {
-      toast.info("Checkout canceled.");
+    if (canceled || payment === "canceled") {
+      toast.info("Payment canceled. No charges were made.");
       setSelectedPlan(null);
       window.history.replaceState({}, "", "/premium");
       return;
@@ -83,6 +83,8 @@ const Premium = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
+      toast.loading("Verifying payment...");
+
       const { data, error } = await supabase.functions.invoke("flutterwave-verify", {
         body: { reference },
         headers: {
@@ -96,11 +98,20 @@ const Premium = () => {
         toast.success("Payment verified! Welcome to Premium!");
         refetch();
       } else {
-        toast.error("Payment verification failed. Please contact support.");
+        toast.error("Payment verification failed. Please contact support if you completed the payment.");
       }
     } catch (error: any) {
       console.error("Verification error:", error);
-      toast.error("Failed to verify payment");
+      const errorMessage = error.message || "Failed to verify payment";
+      
+      // Show user-friendly error messages
+      if (errorMessage.includes("not completed")) {
+        toast.error("Payment was not completed. Please try again and complete the payment.");
+      } else if (errorMessage.includes("not found")) {
+        toast.error("Transaction not found. Please try upgrading again.");
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
