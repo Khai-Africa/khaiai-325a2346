@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FileTree } from "./FileTree";
 import { VersionHistory } from "./VersionHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface FileTreeSidebarProps {
   files: any[];
@@ -31,13 +32,65 @@ export const FileTreeSidebar = ({
   isOpen,
   onClose,
 }: FileTreeSidebarProps) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles.length > 0) {
+      if (onFileUpload) {
+        // Check file sizes
+        const oversizedFiles = Array.from(droppedFiles).filter(f => f.size > 20 * 1024 * 1024);
+        if (oversizedFiles.length > 0) {
+          toast.error(`Some files exceed 20MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+          return;
+        }
+        onFileUpload(droppedFiles);
+        toast.success(`${droppedFiles.length} file(s) uploaded`);
+      }
+    }
+  };
+
   return (
     <div
+      ref={dropZoneRef}
       className={cn(
-        "flex flex-col h-full border-r border-border bg-card/50 transition-all duration-300",
+        "flex flex-col h-full border-r border-border bg-card/50 transition-all duration-300 relative",
         isOpen ? "w-64" : "w-0 border-r-0"
       )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Drag overlay */}
+      {isDragging && isOpen && (
+        <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="text-center">
+            <Upload className="w-12 h-12 mx-auto mb-2 text-primary" />
+            <p className="text-sm font-medium">Drop files here</p>
+            <p className="text-xs text-muted-foreground">Max 20MB per file</p>
+          </div>
+        </div>
+      )}
+
       {isOpen && (
         <>
           {/* Header */}

@@ -18,6 +18,7 @@ import { Plus, Github, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 export default function Codex() {
   const navigate = useNavigate();
@@ -320,24 +321,42 @@ export default function Codex() {
             </div>
           </div>
         ) : (
-          <div className="flex h-[calc(100vh-200px)] md:h-[calc(100vh-230px)] gap-3">
+          <div className="flex flex-col lg:flex-row h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] md:h-[calc(100vh-230px)] gap-2 md:gap-3">
             {/* Mobile: Toggle button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden fixed top-20 left-4 z-30 bg-background border border-border shadow-md"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu className="w-4 h-4" />
-            </Button>
+            {!isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden fixed top-20 left-4 z-30 bg-background border border-border shadow-md"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+            )}
+
+            {/* Mobile: Floating Files Button */}
+            {isMobile && (
+              <Button
+                variant="default"
+                size="sm"
+                className="fixed bottom-4 left-4 z-30 shadow-lg rounded-full"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-4 h-4 mr-2" />
+                Files
+              </Button>
+            )}
 
             {/* Mobile: Sidebar Sheet */}
             <Sheet open={sidebarOpen && isMobile} onOpenChange={setSidebarOpen}>
-              <SheetContent side="left" className="w-64 p-0">
+              <SheetContent side="left" className="w-full max-w-sm p-0">
                 <FileTreeSidebar
                   files={files}
                   selectedFile={selectedFile}
-                  onFileSelect={setSelectedFile}
+                  onFileSelect={(file) => {
+                    setSelectedFile(file);
+                    if (isMobile) setSidebarOpen(false);
+                  }}
                   onFileDelete={deleteFile}
                   onFileDownload={handleDownload}
                   onFileUpload={handleFileUpload}
@@ -349,8 +368,11 @@ export default function Codex() {
               </SheetContent>
             </Sheet>
 
-            {/* Desktop: Sidebar */}
-            <div className="hidden lg:block">
+            {/* Tablet/Desktop: Sidebar */}
+            <div className={cn(
+              "hidden lg:flex flex-shrink-0 transition-all duration-300",
+              sidebarOpen ? "w-64" : "w-0"
+            )}>
               <FileTreeSidebar
                 files={files}
                 selectedFile={selectedFile}
@@ -364,16 +386,19 @@ export default function Codex() {
               />
             </div>
 
-            {/* Chat + Preview */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-w-0">
-              <div className="flex-1 min-h-[50vh] lg:min-h-full border border-border rounded-lg overflow-hidden">
+            {/* Chat + Preview - Fully Responsive */}
+            <div className="flex-1 min-w-0 flex flex-col lg:grid lg:grid-cols-2 gap-2 md:gap-3 overflow-hidden">
+              {/* Chat Section - Responsive Height */}
+              <div className="h-[45vh] sm:h-[48vh] lg:h-full border border-border rounded-lg overflow-hidden flex flex-col min-h-0">
                 <CodexChat
                   projectId={activeProject?.id || null}
                   onFilesCreated={refetchFiles}
                   onCodeGenerated={(code, language) => setPreviewCode({ code, language })}
                 />
               </div>
-              <div className="flex-1 min-h-[50vh] lg:min-h-full overflow-hidden">
+              
+              {/* Preview Section - Responsive Height */}
+              <div className="h-[45vh] sm:h-[48vh] lg:h-full border border-border rounded-lg overflow-hidden flex flex-col min-h-0">
                 <CodePreview
                   code={previewCode.code || selectedFile?.file_content || ""}
                   language={previewCode.language || selectedFile?.file_type || "html"}
