@@ -261,13 +261,48 @@ ${projectFilesContext || 'No files yet in project'}
               const code = match[2].trim();
               
               if (code) {
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                const extension = getFileExtension(language);
-                const fileName = `chat_generated_${timestamp}${extension}`;
+                // Determine organized file path based on type
+                const { folderPath, fileName } = determineFilePath(language, code);
+                const fullPath = folderPath ? `/${folderPath}/${fileName}` : `/${fileName}`;
 
                 // Send status for saving file
-                const saveStatusEvent = `data: ${JSON.stringify({ type: 'status', message: `Saving file: ${fileName}...` })}\n\n`;
+                const saveStatusEvent = `data: ${JSON.stringify({ type: 'status', message: `Saving ${fullPath}...` })}\n\n`;
                 controller.enqueue(encoder.encode(saveStatusEvent));
+
+                // Create folder if it doesn't exist (by creating a .gitkeep file)
+                if (folderPath) {
+                  const folderParts = folderPath.split('/');
+                  let currentPath = '';
+                  
+                  for (const part of folderParts) {
+                    currentPath = currentPath ? `${currentPath}/${part}` : part;
+                    const gitkeepPath = `/${currentPath}/.gitkeep`;
+                    
+                    // Check if folder marker exists
+                    const { data: existingFolder } = await supabase
+                      .from('codex_files')
+                      .select('id')
+                      .eq('project_id', projectId)
+                      .eq('file_path', gitkeepPath)
+                      .single();
+                    
+                    // Create folder marker if it doesn't exist
+                    if (!existingFolder) {
+                      await supabase
+                        .from('codex_files')
+                        .insert({
+                          project_id: projectId,
+                          user_id: user.id,
+                          file_name: '.gitkeep',
+                          file_path: gitkeepPath,
+                          file_type: 'folder',
+                          file_content: `# ${part}\n\nFolder created automatically`,
+                          file_size: 0,
+                          is_modified: false,
+                        });
+                    }
+                  }
+                }
 
                 const { data: fileData, error: fileError } = await supabase
                   .from('codex_files')
@@ -275,7 +310,7 @@ ${projectFilesContext || 'No files yet in project'}
                     project_id: projectId,
                     user_id: user.id,
                     file_name: fileName,
-                    file_path: `/${fileName}`,
+                    file_path: fullPath,
                     file_type: language,
                     file_content: code,
                     file_size: code.length,
@@ -285,7 +320,7 @@ ${projectFilesContext || 'No files yet in project'}
                   .single();
 
                 if (!fileError && fileData) {
-                  createdFiles.push({ fileName, fileId: fileData.id });
+                  createdFiles.push({ fileName: fullPath, fileId: fileData.id });
 
                   // Create initial version
                   await supabase
@@ -358,4 +393,105 @@ function getFileExtension(language: string): string {
   };
   
   return extensionMap[language.toLowerCase()] || '.txt';
+}
+
+function determineFilePath(language: string, code: string): { folderPath: string; fileName: string } {
+  const lang = language.toLowerCase();
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  
+  // Detect if it's a component or specific file type from code content
+  const isComponent = /(?:class|function|const|export)\s+\w+.*(?:extends\s+(?:React\.)?Component|:\s*React\.FC)/i.test(code);
+  const isHook = /^use[A-Z]/.test(code.split('\n')[0]) || code.includes('useState') || code.includes('useEffect');
+  const hasExport = code.includes('export');
+  
+  // Determine folder path based on file type
+  let folderPath = '';
+  let filePrefix = 'file';
+  
+  switch (lang) {
+    case 'jsx':
+    case 'tsx':
+    case 'react':
+      if (isComponent) {
+        folderPath = 'src/components';
+        filePrefix = 'Component';
+      } else if (isHook) {
+        folderPath = 'src/hooks';
+        filePrefix = 'use';
+      } else {
+        folderPath = 'src';
+        filePrefix = 'module';
+      }
+      break;
+      
+    case 'javascript':
+    case 'js':
+      if (hasExport) {
+        folderPath = 'src/utils';
+        filePrefix = 'util';
+      } else {
+        folderPath = 'src/scripts';
+        filePrefix = 'script';
+      }
+      break;
+      
+    case 'typescript':
+    case 'ts':
+      if (code.includes('interface') || code.includes('type ')) {
+        folderPath = 'src/types';
+        filePrefix = 'types';
+      } else {
+        folderPath = 'src';
+        filePrefix = 'module';
+      }
+      break;
+      
+    case 'css':
+    case 'scss':
+    case 'sass':
+    case 'less':
+      folderPath = 'src/styles';
+      filePrefix = 'styles';
+      break;
+      
+    case 'html':
+      folderPath = 'public';
+      filePrefix = 'page';
+      break;
+      
+    case 'json':
+      if (code.includes('"scripts"') || code.includes('"dependencies"')) {
+        folderPath = '';
+        return { folderPath: '', fileName: 'package.json' };
+      }
+      folderPath = 'config';
+      filePrefix = 'config';
+      break;
+      
+    case 'python':
+    case 'py':
+      folderPath = 'src';
+      filePrefix = 'module';
+      break;
+      
+    case 'markdown':
+    case 'md':
+      folderPath = 'docs';
+      filePrefix = 'doc';
+      break;
+      
+    case 'sql':
+      folderPath = 'database';
+      filePrefix = 'query';
+      break;
+      
+    default:
+      folderPath = 'misc';
+      filePrefix = 'file';
+  }
+  
+  const extension = getFileExtension(lang);
+  const fileName = `${filePrefix}_${timestamp}${extension}`;
+  
+  return { folderPath, fileName };
 }
