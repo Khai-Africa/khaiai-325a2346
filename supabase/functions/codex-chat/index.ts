@@ -395,43 +395,94 @@ function getFileExtension(language: string): string {
   return extensionMap[language.toLowerCase()] || '.txt';
 }
 
+function extractSmartFileName(code: string, language: string): string | null {
+  const lang = language.toLowerCase();
+  
+  // Try to extract component/class/function name from code
+  
+  // React Components (class or functional)
+  const reactComponentMatch = code.match(/(?:export\s+(?:default\s+)?)?(?:function|const|class)\s+([A-Z][a-zA-Z0-9_]*)/);
+  if (reactComponentMatch && (lang === 'jsx' || lang === 'tsx' || lang === 'react')) {
+    return reactComponentMatch[1];
+  }
+  
+  // React Hooks
+  const hookMatch = code.match(/(?:export\s+(?:default\s+)?)?(?:function|const)\s+(use[A-Z][a-zA-Z0-9_]*)/);
+  if (hookMatch && (lang === 'jsx' || lang === 'tsx' || lang === 'javascript' || lang === 'typescript')) {
+    return hookMatch[1];
+  }
+  
+  // Regular functions/classes
+  const functionMatch = code.match(/(?:export\s+(?:default\s+)?)?(?:function|class)\s+([a-zA-Z][a-zA-Z0-9_]*)/);
+  if (functionMatch) {
+    return functionMatch[1];
+  }
+  
+  // Const/let exports
+  const exportMatch = code.match(/export\s+(?:default\s+)?(?:const|let)\s+([a-zA-Z][a-zA-Z0-9_]*)/);
+  if (exportMatch) {
+    return exportMatch[1];
+  }
+  
+  // Interface/Type definitions
+  const typeMatch = code.match(/(?:export\s+)?(?:interface|type)\s+([A-Z][a-zA-Z0-9_]*)/);
+  if (typeMatch && (lang === 'typescript' || lang === 'ts' || lang === 'tsx')) {
+    return typeMatch[1];
+  }
+  
+  // Python classes/functions
+  const pythonMatch = code.match(/(?:class|def)\s+([a-zA-Z][a-zA-Z0-9_]*)/);
+  if (pythonMatch && (lang === 'python' || lang === 'py')) {
+    return pythonMatch[1];
+  }
+  
+  return null;
+}
+
 function determineFilePath(language: string, code: string): { folderPath: string; fileName: string } {
   const lang = language.toLowerCase();
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  
+  // Try to get smart name from code content
+  const smartName = extractSmartFileName(code, lang);
   
   // Detect if it's a component or specific file type from code content
   const isComponent = /(?:class|function|const|export)\s+\w+.*(?:extends\s+(?:React\.)?Component|:\s*React\.FC)/i.test(code);
-  const isHook = /^use[A-Z]/.test(code.split('\n')[0]) || code.includes('useState') || code.includes('useEffect');
+  const isHook = /^use[A-Z]/.test(code.split('\n').find(l => l.trim().startsWith('function') || l.trim().startsWith('const')) || '') || code.includes('useState') || code.includes('useEffect');
   const hasExport = code.includes('export');
   
   // Determine folder path based on file type
   let folderPath = '';
-  let filePrefix = 'file';
+  let fileName = '';
   
   switch (lang) {
     case 'jsx':
     case 'tsx':
     case 'react':
-      if (isComponent) {
+      if (isComponent && smartName) {
         folderPath = 'src/components';
-        filePrefix = 'Component';
-      } else if (isHook) {
+        fileName = `${smartName}.${lang === 'tsx' ? 'tsx' : 'jsx'}`;
+      } else if (isHook && smartName) {
         folderPath = 'src/hooks';
-        filePrefix = 'use';
+        fileName = `${smartName}.${lang === 'tsx' ? 'ts' : 'js'}`;
+      } else if (smartName) {
+        folderPath = 'src';
+        fileName = `${smartName}.${lang === 'tsx' ? 'tsx' : 'jsx'}`;
       } else {
         folderPath = 'src';
-        filePrefix = 'module';
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        fileName = `module_${timestamp}.${lang === 'tsx' ? 'tsx' : 'jsx'}`;
       }
       break;
       
     case 'javascript':
     case 'js':
-      if (hasExport) {
-        folderPath = 'src/utils';
-        filePrefix = 'util';
+      if (smartName) {
+        folderPath = hasExport ? 'src/utils' : 'src/scripts';
+        fileName = `${smartName}.js`;
       } else {
-        folderPath = 'src/scripts';
-        filePrefix = 'script';
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        folderPath = hasExport ? 'src/utils' : 'src/scripts';
+        fileName = `${hasExport ? 'util' : 'script'}_${timestamp}.js`;
       }
       break;
       
@@ -439,10 +490,13 @@ function determineFilePath(language: string, code: string): { folderPath: string
     case 'ts':
       if (code.includes('interface') || code.includes('type ')) {
         folderPath = 'src/types';
-        filePrefix = 'types';
+        fileName = smartName ? `${smartName}.ts` : `types_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.ts`;
+      } else if (smartName) {
+        folderPath = 'src';
+        fileName = `${smartName}.ts`;
       } else {
         folderPath = 'src';
-        filePrefix = 'module';
+        fileName = `module_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.ts`;
       }
       break;
       
@@ -451,12 +505,12 @@ function determineFilePath(language: string, code: string): { folderPath: string
     case 'sass':
     case 'less':
       folderPath = 'src/styles';
-      filePrefix = 'styles';
+      fileName = smartName ? `${smartName}.${lang}` : `styles_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.${lang}`;
       break;
       
     case 'html':
       folderPath = 'public';
-      filePrefix = 'page';
+      fileName = smartName ? `${smartName}.html` : `page_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.html`;
       break;
       
     case 'json':
@@ -465,33 +519,31 @@ function determineFilePath(language: string, code: string): { folderPath: string
         return { folderPath: '', fileName: 'package.json' };
       }
       folderPath = 'config';
-      filePrefix = 'config';
+      fileName = smartName ? `${smartName}.json` : `config_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
       break;
       
     case 'python':
     case 'py':
       folderPath = 'src';
-      filePrefix = 'module';
+      fileName = smartName ? `${smartName}.py` : `module_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.py`;
       break;
       
     case 'markdown':
     case 'md':
       folderPath = 'docs';
-      filePrefix = 'doc';
+      fileName = smartName ? `${smartName}.md` : `doc_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.md`;
       break;
       
     case 'sql':
       folderPath = 'database';
-      filePrefix = 'query';
+      fileName = smartName ? `${smartName}.sql` : `query_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.sql`;
       break;
       
     default:
       folderPath = 'misc';
-      filePrefix = 'file';
+      const ext = getFileExtension(lang);
+      fileName = smartName ? `${smartName}${ext}` : `file_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}${ext}`;
   }
-  
-  const extension = getFileExtension(lang);
-  const fileName = `${filePrefix}_${timestamp}${extension}`;
   
   return { folderPath, fileName };
 }
