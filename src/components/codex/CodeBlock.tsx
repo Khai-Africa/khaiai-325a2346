@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronUp, Download, Maximize2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CodeBlockProps {
   code: string;
@@ -31,54 +37,126 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
     }
   };
 
+  const handleDownload = () => {
+    const extension = language === 'javascript' || language === 'js' ? 'js' 
+      : language === 'typescript' || language === 'ts' ? 'ts'
+      : language === 'jsx' ? 'jsx'
+      : language === 'tsx' ? 'tsx'
+      : language === 'html' ? 'html'
+      : language === 'css' ? 'css'
+      : language === 'python' ? 'py'
+      : 'txt';
+    
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `code.${extension}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Code downloaded");
+  };
+
+  const handleFullscreen = () => {
+    // Create a modal-like view for fullscreen code viewing
+    const fullscreenDiv = document.createElement('div');
+    fullscreenDiv.className = 'fixed inset-0 z-50 bg-background flex flex-col';
+    fullscreenDiv.innerHTML = `
+      <div class="flex items-center justify-between p-4 border-b border-border">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium uppercase">${language || 'code'}</span>
+          <span class="text-xs text-muted-foreground">${lineCount} lines</span>
+        </div>
+        <button id="close-fullscreen" class="text-sm hover:text-foreground text-muted-foreground">
+          Close
+        </button>
+      </div>
+      <div class="flex-1 overflow-auto p-4">
+        <pre class="text-sm"><code>${code}</code></pre>
+      </div>
+    `;
+    document.body.appendChild(fullscreenDiv);
+    
+    document.getElementById('close-fullscreen')?.addEventListener('click', () => {
+      document.body.removeChild(fullscreenDiv);
+    });
+  };
+
   if (!shouldCollapse) {
     // Show full code for short snippets
     return (
       <div className="rounded-lg overflow-hidden border border-border bg-secondary/30 my-2 sm:my-3">
         <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-secondary/50 border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase truncate">
               {language || "code"}
             </span>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs flex-shrink-0">
               {lineCount} {lineCount === 1 ? 'line' : 'lines'}
             </Badge>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="h-7 sm:h-8 gap-1 sm:gap-2 text-xs flex-shrink-0"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Copy</span>
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className="h-7 sm:h-8 gap-1 text-xs"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 sm:h-8 w-7 sm:w-8 p-0"
+                >
+                  <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 bg-popover z-50">
+                <DropdownMenuItem onClick={handleDownload} className="cursor-pointer">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleFullscreen} className="cursor-pointer">
+                  <Maximize2 className="h-4 w-4 mr-2" />
+                  Fullscreen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[400px] sm:max-h-[500px] overflow-y-auto">
           <SyntaxHighlighter
             language={language || 'text'}
             style={oneDark}
             customStyle={{
               margin: 0,
               padding: '0.75rem 1rem',
-              fontSize: '0.875rem',
+              fontSize: '0.75rem',
               lineHeight: '1.5',
               background: 'hsl(var(--secondary) / 0.2)',
             }}
             codeTagProps={{
               style: {
-                fontSize: '0.875rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.875rem)',
               }
             }}
+            showLineNumbers
+            wrapLines
           >
             {code}
           </SyntaxHighlighter>
@@ -91,20 +169,20 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-lg overflow-hidden border border-border bg-secondary/30 my-2 sm:my-3">
       <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-secondary/50 border-b border-border">
-        <div className="flex items-center gap-2">
-          <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase truncate">
             {language || "code"}
           </span>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs flex-shrink-0">
             {lineCount} lines
           </Badge>
         </div>
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 sm:h-8 gap-1 sm:gap-2 text-xs"
+              className="h-7 sm:h-8 gap-1 text-xs"
             >
               {isOpen ? (
                 <>
@@ -123,7 +201,7 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="h-7 sm:h-8 gap-1 sm:gap-2 text-xs flex-shrink-0"
+            className="h-7 sm:h-8 gap-1 text-xs"
           >
             {copied ? (
               <>
@@ -137,6 +215,27 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
               </>
             )}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 sm:h-8 w-7 sm:w-8 p-0"
+              >
+                <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 bg-popover z-50">
+              <DropdownMenuItem onClick={handleDownload} className="cursor-pointer">
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleFullscreen} className="cursor-pointer">
+                <Maximize2 className="h-4 w-4 mr-2" />
+                Fullscreen
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -148,15 +247,16 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
             customStyle={{
               margin: 0,
               padding: '0.75rem 1rem',
-              fontSize: '0.875rem',
+              fontSize: '0.75rem',
               lineHeight: '1.5',
               background: 'hsl(var(--secondary) / 0.2)',
             }}
             codeTagProps={{
               style: {
-                fontSize: '0.875rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.875rem)',
               }
             }}
+            showLineNumbers
           >
             {previewLines}
           </SyntaxHighlighter>
@@ -165,22 +265,24 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
       )}
       
       <CollapsibleContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[500px] sm:max-h-[600px] overflow-y-auto">
           <SyntaxHighlighter
             language={language || 'text'}
             style={oneDark}
             customStyle={{
               margin: 0,
               padding: '0.75rem 1rem',
-              fontSize: '0.875rem',
+              fontSize: '0.75rem',
               lineHeight: '1.5',
               background: 'hsl(var(--secondary) / 0.2)',
             }}
             codeTagProps={{
               style: {
-                fontSize: '0.875rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.875rem)',
               }
             }}
+            showLineNumbers
+            wrapLines
           >
             {code}
           </SyntaxHighlighter>
