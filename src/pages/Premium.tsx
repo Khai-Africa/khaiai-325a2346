@@ -58,14 +58,19 @@ const Premium = () => {
     const ref = searchParams.get("ref");
     const canceled = searchParams.get("canceled");
     
+    // Clear URL parameters immediately to prevent re-verification on refresh
+    if (success || payment || ref || canceled) {
+      window.history.replaceState({}, "", "/premium");
+    }
+    
     // Check for cancellation first to avoid verification attempts
     if (canceled || payment === "canceled") {
       toast.info("Payment canceled. No charges were made.");
       setSelectedPlan(null);
-      window.history.replaceState({}, "", "/premium");
       return;
     }
     
+    // Handle successful payment
     if (success || payment === "success") {
       if (ref) {
         // Verify Flutterwave payment
@@ -74,16 +79,16 @@ const Premium = () => {
         toast.success("Subscription activated! Welcome to Premium!");
         refetch();
       }
-      window.history.replaceState({}, "", "/premium");
     }
   }, [searchParams, refetch]);
 
   const verifyFlutterwavePayment = async (reference: string) => {
+    let loadingToast: string | number | undefined;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      toast.loading("Verifying payment...");
+      loadingToast = toast.loading("Verifying payment...");
 
       const { data, error } = await supabase.functions.invoke("flutterwave-verify", {
         body: { reference },
@@ -92,21 +97,29 @@ const Premium = () => {
         },
       });
 
+      // Dismiss loading toast before showing result
+      if (loadingToast) toast.dismiss(loadingToast);
+
       if (error) throw error;
 
       if (data?.success) {
         toast.success("Payment verified! Welcome to Premium!");
         refetch();
+      } else if (data?.alreadyFailed) {
+        toast.error(data.message || "This payment was not completed. Please try again.");
       } else {
         toast.error("Payment verification failed. Please contact support if you completed the payment.");
       }
     } catch (error: any) {
+      // Dismiss loading toast if still active
+      if (loadingToast) toast.dismiss(loadingToast);
+      
       console.error("Verification error:", error);
       const errorMessage = error.message || "Failed to verify payment";
       
-      // Show user-friendly error messages
+      // Show single, specific error message
       if (errorMessage.includes("not completed")) {
-        toast.error("Payment was not completed. Please try again and complete the payment.");
+        toast.error("Payment was not completed. Please try again.");
       } else if (errorMessage.includes("not found")) {
         toast.error("Transaction not found. Please try upgrading again.");
       } else {

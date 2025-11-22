@@ -57,7 +57,11 @@ serve(async (req) => {
       throw new Error("Transaction not found. Please try upgrading again.");
     }
 
-    logStep("Local transaction found", { status: localTx.status });
+    logStep("Local transaction found", { 
+      status: localTx.status,
+      reference: localTx.reference,
+      created_at: localTx.created_at 
+    });
 
     // If already completed, return success
     if (localTx.status === "completed") {
@@ -70,6 +74,24 @@ serve(async (req) => {
           currency: localTx.currency,
           reference: localTx.reference,
           alreadyCompleted: true
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // If already failed, return failure without calling Flutterwave
+    if (localTx.status === "failed") {
+      logStep("Transaction already marked as failed");
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          status: "failed",
+          message: "This payment was not completed. Please try upgrading again with a new payment.",
+          reference: localTx.reference,
+          alreadyFailed: true
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
