@@ -126,10 +126,38 @@ serve(async (req) => {
           .eq("reference", reference || transactionId)
           .eq("user_id", user.id);
         
-        throw new Error("Payment was not completed. Please try again and complete the payment on the Flutterwave page.");
+        logStep("Transaction marked as failed - payment not completed");
+        
+        // Return proper response instead of throwing error
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            status: "failed",
+            message: "Payment was not completed. Please try again and complete the payment on the Flutterwave page.",
+            reference: reference || transactionId,
+            alreadyFailed: true
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
       }
       
-      throw new Error(verifyData.message || "Payment verification failed");
+      // Return proper response for other verification failures
+      logStep("Verification failed with other error", { message: verifyData.message });
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          status: "failed",
+          message: verifyData.message || "Payment verification failed",
+          reference: reference || transactionId
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
     const { status, amount, currency, tx_ref } = verifyData.data;
@@ -169,11 +197,17 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    
+    // Return proper error response without 500 status
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        success: false,
+        status: "error",
+        message: errorMessage
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: 200,
       }
     );
   }
