@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
@@ -20,6 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "./LanguageSwitch";
 import imageCompression from 'browser-image-compression';
+import { useRetry } from "@/hooks/useRetry";
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -66,6 +67,11 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const { refetch: refetchUsage } = useUsage();
   const anonymousUsage = useAnonymousUsage();
   const isAnonymous = !user;
+  const { isRetrying, retryCount, executeWithRetry, cancelRetry } = useRetry({
+    maxRetries: 3,
+    initialDelay: 1000,
+    maxDelay: 8000,
+  });
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -551,23 +557,31 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setIsLoading(true);
 
     try {
-      // Create or update conversation (only for authenticated users)
+      // Create or update conversation
       let currentConvId = conversationId;
       
-      if (!isAnonymous && !currentConvId) {
-        const { data: session } = await supabase.auth.getSession();
-        
-        if (session.session) {
-          const title = currentInput.slice(0, 50) + (currentInput.length > 50 ? "..." : "");
-          const { data: newConv, error: convError } = await supabase
-            .from("conversations")
-            .insert({ user_id: session.session.user.id, title })
-            .select()
-            .single();
+      if (!currentConvId) {
+        if (!isAnonymous) {
+          // Authenticated user: create conversation in database
+          const { data: session } = await supabase.auth.getSession();
+          
+          if (session.session) {
+            const title = currentInput.slice(0, 50) + (currentInput.length > 50 ? "..." : "");
+            const { data: newConv, error: convError } = await supabase
+              .from("conversations")
+              .insert({ user_id: session.session.user.id, title })
+              .select()
+              .single();
 
-          if (convError) throw convError;
-          currentConvId = newConv.id;
+            if (convError) throw convError;
+            currentConvId = newConv.id;
+            setConversationId(currentConvId);
+          }
+        } else {
+          // Anonymous user: generate local conversationId for session tracking
+          currentConvId = crypto.randomUUID();
           setConversationId(currentConvId);
+          console.log('Created anonymous conversation:', currentConvId);
         }
       }
 
@@ -607,7 +621,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         }
       }
 
-      // Call the chat edge function
+      // Call the chat edge function with retry
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token;
 
@@ -620,51 +634,57 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          messages: messages.concat(userMessage).map(msg => ({
-            role: msg.role,
-            content: msg.content // Can be string or MessagePart[]
-          })),
-          conversationId: currentConvId,
-          mode: selectedMode,
-        }),
-      });
+      const data = await executeWithRetry(async (signal) => {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+          method: 'POST',
+          headers,
+          signal,
+          body: JSON.stringify({
+            messages: messages.concat(userMessage).map(msg => ({
+              role: msg.role,
+              content: msg.content // Can be string or MessagePart[]
+            })),
+            conversationId: currentConvId,
+            mode: selectedMode,
+          }),
+        });
 
-      const data = await response.json();
+        const responseData = await response.json();
 
-      // Handle specific error codes
-      if (!response.ok) {
-        if (data.errorCode === 'RATE_LIMIT') {
-          toast.error(t('chat.rateLimitExceeded'));
-          throw new Error('Rate limit exceeded');
-        } else if (data.errorCode === 'PAYMENT_REQUIRED') {
-          if (isAnonymous) {
-            toast.error(t('chat.freeTrialLimit'), {
-              duration: 6000,
-              action: {
-                label: t('chat.signUp'),
-                onClick: () => navigate('/auth')
-              }
-            });
+        // Handle specific error codes (non-retriable)
+        if (!response.ok) {
+          if (responseData.errorCode === 'RATE_LIMIT') {
+            toast.error(t('chat.rateLimitExceeded'));
+            throw new Error('Rate limit exceeded');
+          } else if (responseData.errorCode === 'PAYMENT_REQUIRED') {
+            if (isAnonymous) {
+              toast.error(t('chat.freeTrialLimit'), {
+                duration: 6000,
+                action: {
+                  label: t('chat.signUp'),
+                  onClick: () => navigate('/auth')
+                }
+              });
+            } else {
+              toast.error(t('chat.messageLimitReached'), {
+                action: {
+                  label: t('chat.upgrade'),
+                  onClick: () => navigate('/premium')
+                }
+              });
+            }
+            throw new Error('Payment required');
+          } else if (response.status === 401) {
+            toast.error(t('chat.authError'));
+            throw new Error('Authentication required');
           } else {
-            toast.error(t('chat.messageLimitReached'), {
-              action: {
-                label: t('chat.upgrade'),
-                onClick: () => navigate('/premium')
-              }
-            });
+            // Retriable error
+            throw new Error(responseData.error || 'Failed to get AI response');
           }
-          throw new Error('Payment required');
-        } else if (response.status === 401) {
-          toast.error(t('chat.authError'));
-          throw new Error('Authentication required');
-        } else {
-          throw new Error(data.error || 'Failed to get AI response');
         }
-      }
+
+        return responseData;
+      });
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -709,7 +729,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       const errorString = error instanceof Error ? error.message : String(error);
       if (!errorString.includes('Rate limit') && 
           !errorString.includes('Payment required') && 
-          !errorString.includes('Authentication')) {
+          !errorString.includes('Authentication') &&
+          !errorString.includes('Operation cancelled')) {
         toast.error(t('chat.sendFailed'));
       }
       
@@ -719,6 +740,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       setSelectedFiles(currentFiles); // Restore files
     } finally {
       setIsLoading(false);
+      cancelRetry(); // Clean up any pending retries
     }
   };
 
@@ -829,10 +851,18 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                   <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
                     <img src={logo} alt="AI" className="w-5 h-5" />
                   </div>
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200"></div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200"></div>
+                    </div>
+                    {isRetrying && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <RotateCcw className="w-3 h-3 animate-spin" />
+                        <span>Retrying... (attempt {retryCount}/3)</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
