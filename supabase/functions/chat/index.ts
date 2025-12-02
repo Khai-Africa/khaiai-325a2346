@@ -245,7 +245,7 @@ serve(async (req) => {
     const chatSchema = z.object({
       messages: z.array(messageSchema).min(1).max(100),
       mode: z.string().max(50).optional(),
-      conversationId: z.string().uuid().optional(),
+      conversationId: z.string().uuid().nullable().optional(),
     });
 
     const validated = chatSchema.parse({ messages, mode, conversationId });
