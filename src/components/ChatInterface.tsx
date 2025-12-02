@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw } from "lucide-react";
@@ -21,6 +21,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "./LanguageSwitch";
 import imageCompression from 'browser-image-compression';
 import { useRetry } from "@/hooks/useRetry";
+import { useAnonymousConversations } from "@/hooks/useAnonymousConversations";
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -59,6 +60,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [failedMessage, setFailedMessage] = useState<{ message: Message; input: string; files: File[] } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -72,6 +74,39 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     initialDelay: 1000,
     maxDelay: 8000,
   });
+  const { saveConversation, loadConversation: loadStoredConversation } = useAnonymousConversations();
+
+  // Load anonymous conversation from localStorage on mount
+  useEffect(() => {
+    if (isAnonymous && initialConversationId) {
+      const stored = loadStoredConversation(initialConversationId);
+      if (stored) {
+        const loadedMessages: Message[] = stored.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+        setMessages(loadedMessages);
+        console.log('Loaded anonymous conversation from localStorage:', initialConversationId);
+      }
+    }
+  }, [isAnonymous, initialConversationId, loadStoredConversation]);
+
+  // Save anonymous conversation to localStorage when messages change
+  useEffect(() => {
+    if (isAnonymous && conversationId && messages.length > 0) {
+      const storedMessages = messages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+      }));
+      const firstUserMsg = messages.find(m => m.role === 'user');
+      const title = typeof firstUserMsg?.content === 'string' 
+        ? firstUserMsg.content.slice(0, 50) 
+        : 'New conversation';
+      saveConversation(conversationId, storedMessages, title);
+    }
+  }, [isAnonymous, conversationId, messages, saveConversation]);
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -727,11 +762,14 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       
       // Don't show generic error if we already showed a specific one
       const errorString = error instanceof Error ? error.message : String(error);
-      if (!errorString.includes('Rate limit') && 
-          !errorString.includes('Payment required') && 
-          !errorString.includes('Authentication') &&
-          !errorString.includes('Operation cancelled')) {
+      const isNonRetriableError = errorString.includes('Rate limit') || 
+                                   errorString.includes('Payment required') || 
+                                   errorString.includes('Authentication');
+      
+      if (!isNonRetriableError && !errorString.includes('Operation cancelled')) {
         toast.error(t('chat.sendFailed'));
+        // Save failed message for manual retry (only for retriable errors)
+        setFailedMessage({ message: userMessage, input: currentInput, files: currentFiles });
       }
       
       // Remove the user message if there was an error
@@ -743,6 +781,25 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       cancelRetry(); // Clean up any pending retries
     }
   };
+
+  // Manual retry function
+  const handleManualRetry = useCallback(() => {
+    if (failedMessage) {
+      setFailedMessage(null);
+      // Re-send the failed message
+      setInput(failedMessage.input);
+      setSelectedFiles(failedMessage.files);
+      // Trigger send after state updates
+      setTimeout(() => {
+        const sendBtn = document.querySelector('[data-send-btn]') as HTMLButtonElement;
+        sendBtn?.click();
+      }, 100);
+    }
+  }, [failedMessage]);
+
+  const dismissRetry = useCallback(() => {
+    setFailedMessage(null);
+  }, []);
 
   return (
     <div className="flex h-screen bg-background">
@@ -866,6 +923,35 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                   </div>
                 </div>
               )}
+              {/* Manual retry button for failed messages */}
+              {failedMessage && !isLoading && (
+                <div className="flex gap-3 md:gap-4 animate-fade-in">
+                  <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <X className="w-4 h-4 text-destructive" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-muted-foreground">Message failed to send after multiple attempts.</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManualRetry}
+                        className="gap-2"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Retry
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={dismissRetry}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -945,8 +1031,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                     )}
                     <Button
                       onClick={handleSend}
-                      disabled={!input.trim() || isLoading}
+                      disabled={(!input.trim() && selectedFiles.length === 0) || isLoading}
                       size="icon"
+                      data-send-btn
                       className="rounded-full h-10 w-10 bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ArrowUp className="w-5 h-5" />
