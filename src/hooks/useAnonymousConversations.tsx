@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -59,9 +60,17 @@ export const useAnonymousConversations = () => {
   ) => {
     setConversations(prev => {
       const existingIndex = prev.findIndex(c => c.id === conversationId);
+      const firstUserMsg = messages.find(m => m.role === 'user');
+      const msgContent = firstUserMsg?.content;
+      const titleFromContent = typeof msgContent === 'string' 
+        ? msgContent.slice(0, 50) 
+        : Array.isArray(msgContent) 
+          ? msgContent.find(p => p.type === 'text')?.text?.slice(0, 50) || 'New conversation'
+          : 'New conversation';
+      
       const newConv: StoredConversation = {
         id: conversationId,
-        title: title || messages[0]?.content?.toString().slice(0, 50) || 'New conversation',
+        title: title || titleFromContent,
         messages,
         updatedAt: new Date().toISOString(),
       };
@@ -101,11 +110,66 @@ export const useAnonymousConversations = () => {
     setConversations([]);
   }, []);
 
+  // Export conversations as JSON file
+  const exportConversations = useCallback(() => {
+    try {
+      const dataStr = JSON.stringify(conversations, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `khai-conversations-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Conversations exported successfully');
+    } catch (error) {
+      console.error('Failed to export conversations:', error);
+      toast.error('Failed to export conversations');
+    }
+  }, [conversations]);
+
+  // Import conversations from JSON file
+  const importConversations = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const imported = JSON.parse(content) as StoredConversation[];
+        
+        // Validate structure
+        if (!Array.isArray(imported)) {
+          throw new Error('Invalid file format');
+        }
+        
+        // Merge with existing (avoid duplicates by ID)
+        setConversations(prev => {
+          const existingIds = new Set(prev.map(c => c.id));
+          const newConvs = imported.filter(c => !existingIds.has(c.id));
+          const merged = [...newConvs, ...prev].slice(0, MAX_CONVERSATIONS);
+          saveToStorage(merged);
+          return merged;
+        });
+        
+        toast.success(`Imported ${imported.length} conversations`);
+      } catch (error) {
+        console.error('Failed to import conversations:', error);
+        toast.error('Failed to import conversations. Invalid file format.');
+      }
+    };
+    reader.readAsText(file);
+  }, [saveToStorage]);
+
   return {
     conversations,
     saveConversation,
     loadConversation,
     deleteConversation,
     clearAll,
+    exportConversations,
+    importConversations,
   };
 };
+
+export type { StoredConversation, StoredMessage };

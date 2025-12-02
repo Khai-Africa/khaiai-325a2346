@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2 } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2, Download, Upload } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { SubscriptionBadge } from "./SubscriptionBadge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
 import { ConversationThumbnail } from "./ConversationThumbnail";
+import { useAnonymousConversations, StoredConversation } from "@/hooks/useAnonymousConversations";
 
 interface UploadedFile {
   id: string;
@@ -46,6 +47,15 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAnonymous = !user;
+  
+  const { 
+    conversations: anonymousConversations, 
+    deleteConversation: deleteAnonymousConversation,
+    exportConversations,
+    importConversations,
+  } = useAnonymousConversations();
 
   const handleSignOut = async () => {
     await signOut();
@@ -53,29 +63,54 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     navigate("/auth");
   };
 
-  useEffect(() => {
-    loadConversations();
-    
-    // Subscribe to conversation changes
-    const channel = supabase
-      .channel('conversations-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations'
-        },
-        () => {
-          loadConversations();
-        }
-      )
-      .subscribe();
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      importConversations(file);
+      e.target.value = ''; // Reset input
+    }
+  };
+
+  const handleDeleteAnonymous = (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteAnonymousConversation(conversationId);
+    toast.success(t('chat.conversationDeleted'));
+    if (currentConversationId === conversationId) {
+      onNewChat();
+    }
+  };
+
+  useEffect(() => {
+    if (!isAnonymous) {
+      loadConversations();
+      
+      // Subscribe to conversation changes
+      const channel = supabase
+        .channel('conversations-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversations'
+          },
+          () => {
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setLoading(false);
+    }
+  }, [isAnonymous]);
 
   const loadConversations = async () => {
     try {
@@ -159,7 +194,36 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     return groups;
   };
 
+  const groupAnonymousConversations = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const groups: Record<string, StoredConversation[]> = {
+      TODAY: [],
+      YESTERDAY: [],
+      OLDER: [],
+    };
+
+    anonymousConversations.forEach((conv) => {
+      const convDate = new Date(conv.updatedAt);
+      const convDay = new Date(convDate.getFullYear(), convDate.getMonth(), convDate.getDate());
+
+      if (convDay.getTime() === today.getTime()) {
+        groups.TODAY.push(conv);
+      } else if (convDay.getTime() === yesterday.getTime()) {
+        groups.YESTERDAY.push(conv);
+      } else {
+        groups.OLDER.push(conv);
+      }
+    });
+
+    return groups;
+  };
+
   const conversationGroups = groupConversations();
+  const anonymousGroups = groupAnonymousConversations();
 
   return (
     <>
@@ -218,6 +282,49 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
               <div key={i} className="h-10 bg-muted rounded animate-pulse" />
             ))}
           </div>
+        ) : isAnonymous ? (
+          // Anonymous user conversations from localStorage
+          anonymousConversations.length === 0 ? (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              {t('sidebar.noConversations')}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(anonymousGroups).map(([group, convs]) => {
+                if (convs.length === 0) return null;
+                
+                return (
+                  <div key={group} className="space-y-2">
+                    <div className="text-xs text-muted-foreground px-2 py-1 font-semibold">
+                      {t(`chat.${group.toLowerCase()}`)}
+                    </div>
+                    {convs.map((conv) => (
+                      <Button
+                        key={conv.id}
+                        variant="ghost"
+                        className={`w-full justify-start text-sm hover:bg-secondary group flex-col items-start h-auto py-2 ${
+                          currentConversationId === conv.id ? "bg-secondary" : ""
+                        }`}
+                        onClick={() => {
+                          onSelectConversation(conv.id);
+                          onClose?.();
+                        }}
+                      >
+                        <div className="flex items-center w-full">
+                          <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span className="flex-1 truncate text-left">{conv.title}</span>
+                          <Trash2
+                            className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
+                            onClick={(e) => handleDeleteAnonymous(conv.id, e)}
+                          />
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )
         ) : conversations.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-8">
             {t('sidebar.noConversations')}
@@ -266,7 +373,53 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         )}
       </ScrollArea>
       
+      {/* Hidden file input for import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileImport}
+        accept=".json"
+        className="hidden"
+      />
+      
       <div className="p-4 border-t border-border space-y-3">
+        {/* Export/Import for anonymous users */}
+        {isAnonymous && anonymousConversations.length > 0 && (
+          <div className="flex gap-2">
+            <Button
+              onClick={exportConversations}
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Export
+            </Button>
+            <Button
+              onClick={handleImportClick}
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+            >
+              <Upload className="w-3 h-3 mr-1" />
+              Import
+            </Button>
+          </div>
+        )}
+        
+        {/* Import only button when no conversations */}
+        {isAnonymous && anonymousConversations.length === 0 && (
+          <Button
+            onClick={handleImportClick}
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+          >
+            <Upload className="w-3 h-3 mr-2" />
+            Import Conversations
+          </Button>
+        )}
+        
         {/* User Info */}
         {user && (
           <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg">
@@ -356,16 +509,27 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Logout Button */}
-        <Button
-          onClick={handleSignOut}
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
-          size="sm"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          {t('sidebar.signOut')}
-        </Button>
+        {/* Logout/Login Button */}
+        {user ? (
+          <Button
+            onClick={handleSignOut}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            size="sm"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            {t('sidebar.signOut')}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => navigate("/auth")}
+            className="w-full bg-gradient-primary hover:opacity-90 text-white"
+            size="sm"
+          >
+            <User className="w-4 h-4 mr-2" />
+            Sign In / Sign Up
+          </Button>
+        )}
       </div>
     </div>
     </>
