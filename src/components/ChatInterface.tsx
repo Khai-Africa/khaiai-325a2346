@@ -142,18 +142,41 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   }, [input]);
 
-  // Handle scroll position tracking
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
+  const getScrollViewport = useCallback(() => {
+    const root = scrollAreaRef.current;
+    if (!root) return null;
+    return root.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
   }, []);
+
+  const updateScrollButtonVisibility = useCallback(() => {
+    const viewport = getScrollViewport();
+    if (!viewport) return;
+    const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 80;
+    setShowScrollButton(!isNearBottom);
+  }, [getScrollViewport]);
+
+  useEffect(() => {
+    const viewport = getScrollViewport();
+    if (!viewport) return;
+
+    updateScrollButtonVisibility();
+    viewport.addEventListener("scroll", updateScrollButtonVisibility, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("scroll", updateScrollButtonVisibility);
+    };
+  }, [getScrollViewport, updateScrollButtonVisibility, messages.length]);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+    const viewport = getScrollViewport();
+    if (viewport) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+      return;
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [getScrollViewport]);
 
-  // Auto-scroll when new messages arrive
+  // Auto-scroll when new messages arrive (only if user is already near bottom)
   useEffect(() => {
     if (messages.length > 0 && !showScrollButton) {
       scrollToBottom();
@@ -869,7 +892,6 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           <ScrollArea 
             className="h-full p-4 md:p-6" 
             ref={scrollAreaRef}
-            onScrollCapture={handleScroll}
           >
           {isLoadingConversation ? (
             <ChatSkeleton />
