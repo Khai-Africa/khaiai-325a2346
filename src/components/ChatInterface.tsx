@@ -65,6 +65,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [failedMessage, setFailedMessage] = useState<{ message: Message; input: string; files: File[] } | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const lastSeenMessageCountRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -222,12 +224,34 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [getScrollViewport]);
 
+  // Track new messages when scrolled up
+  useEffect(() => {
+    if (messages.length > lastSeenMessageCountRef.current) {
+      if (showScrollButton) {
+        // User is scrolled up - count new messages
+        const newCount = messages.length - lastSeenMessageCountRef.current;
+        setNewMessagesCount(prev => prev + newCount);
+      } else {
+        // User is at bottom - reset counter and update seen count
+        setNewMessagesCount(0);
+      }
+    }
+    lastSeenMessageCountRef.current = messages.length;
+  }, [messages.length, showScrollButton]);
+
   // Auto-scroll when new messages arrive (only if user is already near bottom)
   useEffect(() => {
     if (messages.length > 0 && !showScrollButton) {
       scrollToBottom();
     }
   }, [messages, showScrollButton, scrollToBottom]);
+
+  // Reset new messages counter when scrolling to bottom
+  const handleScrollToBottom = useCallback(() => {
+    scrollToBottom();
+    setNewMessagesCount(0);
+    lastSeenMessageCountRef.current = messages.length;
+  }, [scrollToBottom, messages.length]);
 
   const loadConversation = async (convId: string) => {
     // Save current conversation's scroll position before switching
@@ -1039,14 +1063,21 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           )}
           </ScrollArea>
 
-          {/* Scroll to bottom button */}
+          {/* Scroll to bottom button with new messages badge */}
           {showScrollButton && messages.length > 0 && (
             <Button
-              onClick={scrollToBottom}
-              size="icon"
-              className="absolute bottom-4 right-6 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground animate-in fade-in slide-in-from-bottom-2 duration-200 z-10"
-              aria-label="Scroll to bottom"
+              onClick={handleScrollToBottom}
+              className="absolute bottom-4 right-6 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground animate-in fade-in slide-in-from-bottom-2 duration-200 z-10 gap-2 px-3"
+              aria-label={newMessagesCount > 0 ? `${newMessagesCount} new messages - scroll to bottom` : "Scroll to bottom"}
             >
+              {newMessagesCount > 0 && (
+                <span className="flex items-center gap-1.5 text-xs font-medium">
+                  <span className="bg-primary-foreground/20 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                    {newMessagesCount}
+                  </span>
+                  <span className="hidden sm:inline">new</span>
+                </span>
+              )}
               <ArrowDown className="w-4 h-4" />
             </Button>
           )}
