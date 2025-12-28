@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2, Download, Upload, Search, X } from "lucide-react";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2, Download, Upload, Search, X, Pencil, Check } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -52,7 +52,10 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const [searchQuery, setSearchQuery] = useState("");
   const [showMigrationDialog, setShowMigrationDialog] = useState(false);
   const [pendingMigration, setPendingMigration] = useState<StoredConversation[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const isAnonymous = !user;
   
   const { 
@@ -61,7 +64,17 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     exportConversations,
     importConversations,
     clearAll: clearAnonymousConversations,
+    saveConversation: saveAnonymousConversation,
+    loadConversation: loadAnonymousConversation,
   } = useAnonymousConversations();
+
+  // Focus edit input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
 
   // Check for pending anonymous conversations when user logs in
   useEffect(() => {
@@ -187,6 +200,62 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     } catch (error) {
       console.error("Error deleting conversation:", error);
       toast.error(t('chat.deleteConversationFailed'));
+    }
+  };
+
+  const handleRename = async (conversationId: string) => {
+    if (!editingTitle.trim()) {
+      setEditingId(null);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ title: editingTitle.trim() })
+        .eq("id", conversationId);
+
+      if (error) throw error;
+      toast.success("Conversation renamed");
+      loadConversations();
+    } catch (error) {
+      console.error("Error renaming conversation:", error);
+      toast.error("Failed to rename conversation");
+    } finally {
+      setEditingId(null);
+    }
+  };
+
+  const handleRenameAnonymous = (conversationId: string) => {
+    if (!editingTitle.trim()) {
+      setEditingId(null);
+      return;
+    }
+
+    const conv = loadAnonymousConversation(conversationId);
+    if (conv) {
+      saveAnonymousConversation(conversationId, conv.messages, editingTitle.trim());
+      toast.success("Conversation renamed");
+    }
+    setEditingId(null);
+  };
+
+  const startEditing = (id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(id);
+    setEditingTitle(title);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, conversationId: string, isAnon: boolean) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isAnon) {
+        handleRenameAnonymous(conversationId);
+      } else {
+        handleRename(conversationId);
+      }
+    } else if (e.key === 'Escape') {
+      setEditingId(null);
     }
   };
 
@@ -374,26 +443,44 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
                       {t(`chat.${group.toLowerCase()}`)}
                     </div>
                     {convs.map((conv) => (
-                      <Button
+                      <div
                         key={conv.id}
-                        variant="ghost"
-                        className={`w-full justify-start text-sm hover:bg-secondary group flex-col items-start h-auto py-2 ${
+                        className={`w-full text-sm hover:bg-secondary group flex items-center h-auto py-2 px-3 rounded-md cursor-pointer ${
                           currentConversationId === conv.id ? "bg-secondary" : ""
                         }`}
                         onClick={() => {
-                          onSelectConversation(conv.id);
-                          onClose?.();
+                          if (editingId !== conv.id) {
+                            onSelectConversation(conv.id);
+                            onClose?.();
+                          }
                         }}
                       >
-                        <div className="flex items-center w-full">
-                          <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span className="flex-1 truncate text-left">{conv.title}</span>
-                          <Trash2
-                            className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
-                            onClick={(e) => handleDeleteAnonymous(conv.id, e)}
-                          />
-                        </div>
-                      </Button>
+                        <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                        {editingId === conv.id ? (
+                          <div className="flex-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Input
+                              ref={editInputRef}
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, conv.id, true)}
+                              onBlur={() => handleRenameAnonymous(conv.id)}
+                              className="h-6 text-sm py-0 px-1"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <span className="flex-1 truncate text-left">{conv.title}</span>
+                            <Pencil
+                              className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0 mr-1"
+                              onClick={(e) => startEditing(conv.id, conv.title, e)}
+                            />
+                            <Trash2
+                              className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
+                              onClick={(e) => handleDeleteAnonymous(conv.id, e)}
+                            />
+                          </>
+                        )}
+                      </div>
                     ))}
                   </div>
                 );
@@ -415,31 +502,51 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
                     {t(`chat.${group.toLowerCase()}`)}
                   </div>
                   {convs.map((conv) => (
-                    <Button
+                    <div
                       key={conv.id}
-                      variant="ghost"
-                      className={`w-full justify-start text-sm hover:bg-secondary group flex-col items-start h-auto py-2 ${
+                      className={`w-full text-sm hover:bg-secondary group flex flex-col h-auto py-2 px-3 rounded-md cursor-pointer ${
                         currentConversationId === conv.id ? "bg-secondary" : ""
                       }`}
                       onClick={() => {
-                        onSelectConversation(conv.id);
-                        onClose?.();
+                        if (editingId !== conv.id) {
+                          onSelectConversation(conv.id);
+                          onClose?.();
+                        }
                       }}
                     >
                       <div className="flex items-center w-full">
                         <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="flex-1 truncate text-left">{conv.title}</span>
-                        <Trash2
-                          className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
-                          onClick={(e) => handleDelete(conv.id, e)}
-                        />
+                        {editingId === conv.id ? (
+                          <div className="flex-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Input
+                              ref={editInputRef}
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, conv.id, false)}
+                              onBlur={() => handleRename(conv.id)}
+                              className="h-6 text-sm py-0 px-1"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <span className="flex-1 truncate text-left">{conv.title}</span>
+                            <Pencil
+                              className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0 mr-1"
+                              onClick={(e) => startEditing(conv.id, conv.title, e)}
+                            />
+                            <Trash2
+                              className="w-3 h-3 opacity-0 group-hover:opacity-50 hover:opacity-100 flex-shrink-0"
+                              onClick={(e) => handleDelete(conv.id, e)}
+                            />
+                          </>
+                        )}
                       </div>
                       {conv.uploaded_files && conv.uploaded_files.length > 0 && (
                         <div className="ml-6 mt-1">
                           <ConversationThumbnail files={conv.uploaded_files} maxDisplay={2} compact />
                         </div>
                       )}
-                    </Button>
+                    </div>
                   ))}
                 </div>
               );
