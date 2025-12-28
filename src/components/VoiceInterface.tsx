@@ -1,14 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Mic, Volume2, VolumeX } from 'lucide-react';
+import { X, Mic, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface VoiceInterfaceProps {
   onClose: () => void;
   conversationId?: string;
 }
+
+// African voice options
+const VOICE_OPTIONS = [
+  { id: 'nigerian-female', label: '🇳🇬 Nigerian Female', flag: '🇳🇬' },
+  { id: 'nigerian-male', label: '🇳🇬 Nigerian Male', flag: '🇳🇬' },
+  { id: 'south-african-female', label: '🇿🇦 South African Female', flag: '🇿🇦' },
+  { id: 'south-african-male', label: '🇿🇦 South African Male', flag: '🇿🇦' },
+  { id: 'african-female-1', label: '🌍 African Female 1', flag: '🌍' },
+  { id: 'african-female-2', label: '🌍 African Female 2', flag: '🌍' },
+  { id: 'african-male-1', label: '🌍 African Male 1', flag: '🌍' },
+  { id: 'african-male-2', label: '🌍 African Male 2', flag: '🌍' },
+  { id: 'pan-african', label: '🌍 Pan-African (Neutral)', flag: '🌍' },
+];
 
 export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps) => {
   const { user } = useAuth();
@@ -20,6 +39,9 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const [transcript, setTranscript] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(conversationId);
+  const [selectedVoice, setSelectedVoice] = useState(() => {
+    return localStorage.getItem('preferred-voice') || 'nigerian-female';
+  });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -42,6 +64,11 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       }
     };
   }, []);
+
+  // Save voice preference when changed
+  useEffect(() => {
+    localStorage.setItem('preferred-voice', selectedVoice);
+  }, [selectedVoice]);
 
   const initializeSession = async () => {
     if (!user) return;
@@ -124,31 +151,30 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsListening(false);
-      setIsProcessing(true); // Show processing state immediately
+      setIsProcessing(true);
     }
   };
 
   const processAudio = async (audioBlob: Blob) => {
     try {
-      // Convert blob to base64
       const reader = new FileReader();
       reader.readAsDataURL(audioBlob);
       
       reader.onloadend = async () => {
         const base64Audio = (reader.result as string).split(',')[1];
 
-        // Call voice-chat edge function
-        const { data, error } = await supabase.functions.invoke('voice-chat', {
+        // Call ElevenLabs-powered voice-chat edge function
+        const { data, error } = await supabase.functions.invoke('elevenlabs-voice-chat', {
           body: {
             audioData: base64Audio,
             conversationId: currentConversationId,
             sessionId,
-            voice: 'alloy',
+            voice: selectedVoice,
             mode: 'chat',
           },
         });
 
-        setIsProcessing(false); // Done processing
+        setIsProcessing(false);
 
         if (error) {
           console.error('Voice chat error:', error);
@@ -159,12 +185,10 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         setTranscript(data.transcription);
         setAiResponse(data.aiResponse);
         
-        // Update conversation ID if it's a new conversation
         if (data.conversationId && !currentConversationId) {
           setCurrentConversationId(data.conversationId);
         }
 
-        // Play AI response audio
         if (audioEnabled && data.audioContent) {
           playAudio(data.audioContent);
         }
@@ -179,8 +203,8 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const playAudio = (base64Audio: string) => {
     setIsSpeaking(true);
 
-    const audioBlob = base64ToBlob(base64Audio, 'audio/mpeg');
-    const audioUrl = URL.createObjectURL(audioBlob);
+    // Use data URI for proper base64 audio playback
+    const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
 
     if (audioElementRef.current) {
       audioElementRef.current.pause();
@@ -191,26 +215,12 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
 
     audioElementRef.current.onended = () => {
       setIsSpeaking(false);
-      URL.revokeObjectURL(audioUrl);
     };
 
     audioElementRef.current.onerror = () => {
       setIsSpeaking(false);
       toast.error('Failed to play audio');
-      URL.revokeObjectURL(audioUrl);
     };
-  };
-
-  const base64ToBlob = (base64: string, type: string): Blob => {
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type });
   };
 
   const toggleAudio = () => {
@@ -221,11 +231,36 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     }
   };
 
+  const selectedVoiceLabel = VOICE_OPTIONS.find(v => v.id === selectedVoice)?.label || 'Select Voice';
+
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-primary/5 to-background z-50 flex flex-col items-center justify-center">
+      {/* Voice Selection Dropdown */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2 bg-background/50 backdrop-blur-sm">
+              <span>{selectedVoiceLabel}</span>
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-56">
+            {VOICE_OPTIONS.map((voice) => (
+              <DropdownMenuItem
+                key={voice.id}
+                onClick={() => setSelectedVoice(voice.id)}
+                className={selectedVoice === voice.id ? 'bg-accent' : ''}
+              >
+                {voice.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Animated Orb - Multi-layered */}
       <div className="relative w-80 h-80 flex items-center justify-center">
-        {/* Outer glow ring - expands on activity */}
+        {/* Outer glow ring */}
         <div 
           className={`absolute w-80 h-80 rounded-full transition-all duration-700 ease-in-out
             ${isListening ? 'scale-125 opacity-40 bg-gradient-to-br from-red-500/30 via-red-400/20 to-transparent blur-3xl animate-pulse' : ''} 
@@ -303,6 +338,23 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         />
       </div>
 
+      {/* Transcript Display */}
+      {(transcript || aiResponse) && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
+          <div className="bg-background/80 backdrop-blur-sm rounded-lg p-4 space-y-2">
+            {transcript && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium">You:</span> {transcript}
+              </p>
+            )}
+            {aiResponse && (
+              <p className="text-sm">
+                <span className="font-medium text-primary">Khai:</span> {aiResponse}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Controls */}
       <div className="absolute bottom-8 w-full px-6 flex items-center justify-between max-w-md mx-auto">
@@ -320,6 +372,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         <Button
           size="icon"
           onClick={isListening ? stopListening : startListening}
+          disabled={isProcessing}
           className={`w-16 h-16 rounded-full ${
             isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'
           } transition-all duration-300 shadow-lg`}
@@ -349,7 +402,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         {isProcessing && (
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/20 backdrop-blur-sm animate-fade-in">
             <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-            <span className="text-sm font-medium">Processing...</span>
+            <span className="text-sm font-medium">Processing with ElevenLabs...</span>
           </div>
         )}
         {isSpeaking && (
