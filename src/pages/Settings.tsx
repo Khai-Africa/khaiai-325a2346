@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleIntegrations } from "@/components/GoogleIntegrations";
+import { VoiceSettingsCard } from "@/components/VoiceSettingsCard";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -294,6 +295,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         )}
+
+        <VoiceSettingsCard />
 
         <GoogleIntegrations />
 

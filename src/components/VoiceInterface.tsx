@@ -4,6 +4,7 @@ import { X, Mic, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { VoiceWaveform } from '@/components/VoiceWaveform';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const [selectedVoice, setSelectedVoice] = useState(() => {
     return localStorage.getItem('preferred-voice') || 'nigerian-female';
   });
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -121,6 +123,8 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         },
       });
 
+      setMediaStream(stream);
+
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: 'audio/webm',
       });
@@ -134,6 +138,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         audioChunksRef.current = [];
+        setMediaStream(null);
         await processAudio(audioBlob);
       };
 
@@ -335,6 +340,16 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           style={{ 
             animation: isListening || isSpeaking ? 'pulse 1s ease-in-out infinite' : 'pulse 2s ease-in-out infinite'
           }}
+        />
+      </div>
+
+      {/* Voice Waveform Visualization */}
+      <div className="mt-6 w-full max-w-xs">
+        <VoiceWaveform
+          isActive={isListening || isSpeaking}
+          type={isListening ? 'recording' : isSpeaking ? 'playback' : 'idle'}
+          audioContext={audioContextRef.current}
+          audioSource={isListening ? mediaStream : audioElementRef.current}
         />
       </div>
 
