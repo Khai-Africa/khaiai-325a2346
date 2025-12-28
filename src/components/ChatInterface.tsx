@@ -23,6 +23,7 @@ import imageCompression from 'browser-image-compression';
 import { useRetry } from "@/hooks/useRetry";
 import { useAnonymousConversations } from "@/hooks/useAnonymousConversations";
 import { ChatSkeleton } from "./ChatSkeleton";
+import { TypingIndicator } from "./TypingIndicator";
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -911,24 +912,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-3 md:gap-4 animate-fade-in">
-                  <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                    <img src={logo} alt="AI" className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200"></div>
-                    </div>
-                    {isRetrying && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <RotateCcw className="w-3 h-3 animate-spin" />
-                        <span>Retrying... (attempt {retryCount}/3)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <TypingIndicator isRetrying={isRetrying} retryCount={retryCount} />
               )}
               {/* Manual retry button for failed messages */}
               {failedMessage && !isLoading && (
