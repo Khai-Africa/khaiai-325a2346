@@ -754,6 +754,7 @@ export type Database = {
           id: string
           mobile_number: string | null
           secret_word: string | null
+          secret_word_hash: string | null
           updated_at: string | null
           username: string
         }
@@ -762,6 +763,7 @@ export type Database = {
           id: string
           mobile_number?: string | null
           secret_word?: string | null
+          secret_word_hash?: string | null
           updated_at?: string | null
           username: string
         }
@@ -770,6 +772,7 @@ export type Database = {
           id?: string
           mobile_number?: string | null
           secret_word?: string | null
+          secret_word_hash?: string | null
           updated_at?: string | null
           username?: string
         }
@@ -1153,6 +1156,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      verify_secret_word: {
+        Args: { provided_secret: string; user_id: string }
         Returns: boolean
       }
     }
