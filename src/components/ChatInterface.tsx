@@ -83,9 +83,19 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   });
   const { saveConversation, loadConversation: loadStoredConversation } = useAnonymousConversations();
 
-  // Load anonymous conversation from localStorage on mount
+  const SCROLL_STORAGE_KEY = "kai-scroll-positions";
+
+  const getScrollViewport = useCallback(() => {
+    const root = scrollAreaRef.current;
+    if (!root) return null;
+    return root.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
+  }, []);
+
+  // Load anonymous conversation from localStorage on mount - use ref to prevent re-runs
+  const hasLoadedConversationRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (isAnonymous && initialConversationId) {
+    if (isAnonymous && initialConversationId && hasLoadedConversationRef.current !== initialConversationId) {
       const stored = loadStoredConversation(initialConversationId);
       if (stored) {
         const loadedMessages: Message[] = stored.messages.map(msg => ({
@@ -93,10 +103,19 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           timestamp: new Date(msg.timestamp),
         }));
         setMessages(loadedMessages);
+        hasLoadedConversationRef.current = initialConversationId;
         console.log('Loaded anonymous conversation from localStorage:', initialConversationId);
+        
+        // Scroll to bottom after loading
+        setTimeout(() => {
+          const viewport = getScrollViewport();
+          if (viewport) {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+          }
+        }, 50);
       }
     }
-  }, [isAnonymous, initialConversationId, loadStoredConversation]);
+  }, [isAnonymous, initialConversationId, loadStoredConversation, getScrollViewport]);
 
   // Save anonymous conversation to localStorage when messages change
   useEffect(() => {
@@ -143,14 +162,6 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [input]);
-
-  const SCROLL_STORAGE_KEY = "kai-scroll-positions";
-
-  const getScrollViewport = useCallback(() => {
-    const root = scrollAreaRef.current;
-    if (!root) return null;
-    return root.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
-  }, []);
 
   // Load stored scroll positions from localStorage
   const getStoredScrollPositions = useCallback((): Record<string, number> => {

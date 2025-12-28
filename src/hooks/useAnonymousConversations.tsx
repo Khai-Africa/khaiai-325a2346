@@ -90,10 +90,19 @@ export const useAnonymousConversations = () => {
     });
   }, [saveToStorage]);
 
-  // Load a specific conversation
+  // Load a specific conversation - reads directly from localStorage to avoid dependency issues
   const loadConversation = useCallback((conversationId: string): StoredConversation | null => {
-    return conversations.find(c => c.id === conversationId) || null;
-  }, [conversations]);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as StoredConversation[];
+        return parsed.find(c => c.id === conversationId) || null;
+      }
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
+    return null;
+  }, []);
 
   // Delete a conversation
   const deleteConversation = useCallback((conversationId: string) => {
