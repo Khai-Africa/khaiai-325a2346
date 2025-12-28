@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2, Download, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, MessageSquare, Trash2, ArrowLeft, LogOut, User, Crown, Image, Settings, HelpCircle, BarChart3, BookOpen, Shield, FileText, ChevronDown, Code2, Download, Upload, Search, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
 import { ConversationThumbnail } from "./ConversationThumbnail";
 import { useAnonymousConversations, StoredConversation } from "@/hooks/useAnonymousConversations";
+import { MigrationDialog } from "./MigrationDialog";
 
 interface UploadedFile {
   id: string;
@@ -47,6 +49,9 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showMigrationDialog, setShowMigrationDialog] = useState(false);
+  const [pendingMigration, setPendingMigration] = useState<StoredConversation[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isAnonymous = !user;
   
@@ -55,7 +60,26 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     deleteConversation: deleteAnonymousConversation,
     exportConversations,
     importConversations,
+    clearAll: clearAnonymousConversations,
   } = useAnonymousConversations();
+
+  // Check for pending anonymous conversations when user logs in
+  useEffect(() => {
+    if (user) {
+      const stored = localStorage.getItem('khai_anonymous_conversations');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as StoredConversation[];
+          if (parsed.length > 0) {
+            setPendingMigration(parsed);
+            setShowMigrationDialog(true);
+          }
+        } catch (error) {
+          console.error('Failed to parse anonymous conversations:', error);
+        }
+      }
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -166,6 +190,27 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
     }
   };
 
+  // Filter conversations by search query
+  const filterConversations = (convs: Conversation[]) => {
+    if (!searchQuery.trim()) return convs;
+    const query = searchQuery.toLowerCase();
+    return convs.filter(conv => conv.title.toLowerCase().includes(query));
+  };
+
+  const filterAnonymousConversations = (convs: StoredConversation[]) => {
+    if (!searchQuery.trim()) return convs;
+    const query = searchQuery.toLowerCase();
+    return convs.filter(conv => 
+      conv.title.toLowerCase().includes(query) ||
+      conv.messages.some(msg => {
+        const content = typeof msg.content === 'string' 
+          ? msg.content 
+          : msg.content.find(p => p.type === 'text')?.text || '';
+        return content.toLowerCase().includes(query);
+      })
+    );
+  };
+
   const groupConversations = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -178,7 +223,8 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
       OLDER: [],
     };
 
-    conversations.forEach((conv) => {
+    const filtered = filterConversations(conversations);
+    filtered.forEach((conv) => {
       const convDate = new Date(conv.updated_at);
       const convDay = new Date(convDate.getFullYear(), convDate.getMonth(), convDate.getDate());
 
@@ -206,7 +252,8 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
       OLDER: [],
     };
 
-    anonymousConversations.forEach((conv) => {
+    const filtered = filterAnonymousConversations(anonymousConversations);
+    filtered.forEach((conv) => {
       const convDate = new Date(conv.updatedAt);
       const convDay = new Date(convDate.getFullYear(), convDate.getMonth(), convDate.getDate());
 
@@ -224,6 +271,11 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
 
   const conversationGroups = groupConversations();
   const anonymousGroups = groupAnonymousConversations();
+
+  const handleMigrationComplete = () => {
+    setPendingMigration([]);
+    loadConversations();
+  };
 
   return (
     <>
@@ -275,6 +327,29 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           Coda House
         </Button>
       </div>
+      {/* Search Input */}
+      <div className="px-4 pt-2">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 pr-8 h-8 text-sm"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-8 w-8 p-0"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+
       <ScrollArea className="flex-1 p-4">
         {loading ? (
           <div className="space-y-2">
@@ -532,6 +607,17 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
         )}
       </div>
     </div>
+
+    {/* Migration Dialog */}
+    {user && (
+      <MigrationDialog
+        open={showMigrationDialog}
+        onOpenChange={setShowMigrationDialog}
+        conversations={pendingMigration}
+        onMigrationComplete={handleMigrationComplete}
+        userId={user.id}
+      />
+    )}
     </>
   );
 };
