@@ -96,29 +96,62 @@ export const CodeBlock = ({ code, language = "text" }: CodeBlockProps) => {
     toast.success("Code downloaded");
   };
 
+  // HTML escape function to prevent XSS
+  const escapeHtml = (text: string): string => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   const handleFullscreen = () => {
-    // Create a modal-like view for fullscreen code viewing
+    // Create fullscreen container
     const fullscreenDiv = document.createElement('div');
     fullscreenDiv.className = 'fixed inset-0 z-50 bg-background flex flex-col';
-    fullscreenDiv.innerHTML = `
-      <div class="flex items-center justify-between p-4 border-b border-border">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium uppercase">${language || 'code'}</span>
-          <span class="text-xs text-muted-foreground">${lineCount} lines</span>
-        </div>
-        <button id="close-fullscreen" class="text-sm hover:text-foreground text-muted-foreground">
-          Close
-        </button>
-      </div>
-      <div class="flex-1 overflow-auto p-4">
-        <pre class="text-sm"><code>${formattedCode}</code></pre>
-      </div>
-    `;
-    document.body.appendChild(fullscreenDiv);
     
-    document.getElementById('close-fullscreen')?.addEventListener('click', () => {
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between p-4 border-b border-border';
+    
+    const leftSection = document.createElement('div');
+    leftSection.className = 'flex items-center gap-2';
+    
+    const langSpan = document.createElement('span');
+    langSpan.className = 'text-sm font-medium uppercase';
+    langSpan.textContent = language || 'code';
+    
+    const linesSpan = document.createElement('span');
+    linesSpan.className = 'text-xs text-muted-foreground';
+    linesSpan.textContent = `${lineCount} lines`;
+    
+    leftSection.appendChild(langSpan);
+    leftSection.appendChild(linesSpan);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'text-sm hover:text-foreground text-muted-foreground';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', () => {
       document.body.removeChild(fullscreenDiv);
     });
+    
+    header.appendChild(leftSection);
+    header.appendChild(closeBtn);
+    
+    // Create content area
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'flex-1 overflow-auto p-4';
+    
+    const pre = document.createElement('pre');
+    pre.className = 'text-sm';
+    
+    const codeEl = document.createElement('code');
+    codeEl.textContent = formattedCode; // Safe: textContent doesn't execute HTML
+    
+    pre.appendChild(codeEl);
+    contentDiv.appendChild(pre);
+    
+    fullscreenDiv.appendChild(header);
+    fullscreenDiv.appendChild(contentDiv);
+    document.body.appendChild(fullscreenDiv);
   };
 
   if (!shouldCollapse) {
