@@ -270,6 +270,32 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     
     setIsLoadingConversation(true);
     try {
+      // For anonymous users, load from localStorage instead of Supabase
+      if (isAnonymous) {
+        const stored = loadStoredConversation(convId);
+        if (stored) {
+          const loadedMessages: Message[] = stored.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setMessages(loadedMessages);
+          hasLoadedConversationRef.current = convId;
+          
+          // Scroll to bottom after loading
+          setTimeout(() => {
+            const viewport = getScrollViewport();
+            if (viewport) {
+              viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+            }
+          }, 50);
+        } else {
+          setMessages([]);
+        }
+        setIsLoadingConversation(false);
+        return;
+      }
+
+      // For authenticated users, load from Supabase
       const { data, error } = await supabase
         .from("messages")
         .select("*")
