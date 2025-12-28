@@ -142,11 +142,51 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     }
   }, [input]);
 
+  const SCROLL_STORAGE_KEY = "kai-scroll-positions";
+
   const getScrollViewport = useCallback(() => {
     const root = scrollAreaRef.current;
     if (!root) return null;
     return root.querySelector<HTMLDivElement>("[data-radix-scroll-area-viewport]");
   }, []);
+
+  // Load stored scroll positions from localStorage
+  const getStoredScrollPositions = useCallback((): Record<string, number> => {
+    try {
+      const stored = localStorage.getItem(SCROLL_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  // Save scroll position for current conversation
+  const saveScrollPosition = useCallback(() => {
+    if (!conversationId) return;
+    const viewport = getScrollViewport();
+    if (!viewport) return;
+
+    const positions = getStoredScrollPositions();
+    positions[conversationId] = viewport.scrollTop;
+    localStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
+  }, [conversationId, getScrollViewport, getStoredScrollPositions]);
+
+  // Restore scroll position for a conversation
+  const restoreScrollPosition = useCallback((convId: string) => {
+    const viewport = getScrollViewport();
+    if (!viewport) return false;
+
+    const positions = getStoredScrollPositions();
+    const savedPosition = positions[convId];
+    if (savedPosition !== undefined && savedPosition > 0) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        viewport.scrollTo({ top: savedPosition, behavior: "instant" });
+      });
+      return true;
+    }
+    return false;
+  }, [getScrollViewport, getStoredScrollPositions]);
 
   const updateScrollButtonVisibility = useCallback(() => {
     const viewport = getScrollViewport();
@@ -155,17 +195,23 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setShowScrollButton(!isNearBottom);
   }, [getScrollViewport]);
 
+  // Save scroll position when scrolling & update button visibility
   useEffect(() => {
     const viewport = getScrollViewport();
     if (!viewport) return;
 
+    const handleScroll = () => {
+      updateScrollButtonVisibility();
+      saveScrollPosition();
+    };
+
     updateScrollButtonVisibility();
-    viewport.addEventListener("scroll", updateScrollButtonVisibility, { passive: true });
+    viewport.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      viewport.removeEventListener("scroll", updateScrollButtonVisibility);
+      viewport.removeEventListener("scroll", handleScroll);
     };
-  }, [getScrollViewport, updateScrollButtonVisibility, messages.length]);
+  }, [getScrollViewport, updateScrollButtonVisibility, saveScrollPosition, messages.length]);
 
   const scrollToBottom = useCallback(() => {
     const viewport = getScrollViewport();
@@ -184,6 +230,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   }, [messages, showScrollButton, scrollToBottom]);
 
   const loadConversation = async (convId: string) => {
+    // Save current conversation's scroll position before switching
+    saveScrollPosition();
+    
     setIsLoadingConversation(true);
     try {
       const { data, error } = await supabase
@@ -202,6 +251,11 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       }));
 
       setMessages(loadedMessages);
+      
+      // Restore scroll position after messages are loaded
+      setTimeout(() => {
+        restoreScrollPosition(convId);
+      }, 100);
     } catch (error) {
       console.error("Error loading conversation:", error);
       toast.error(t('chat.loadConversationFailed'));
