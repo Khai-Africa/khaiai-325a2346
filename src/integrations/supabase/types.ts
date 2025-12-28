@@ -661,6 +661,7 @@ export type Database = {
           expires_at: string
           id: string
           token: string
+          token_hash: string | null
           used: boolean | null
           user_id: string
         }
@@ -669,6 +670,7 @@ export type Database = {
           expires_at: string
           id?: string
           token: string
+          token_hash?: string | null
           used?: boolean | null
           user_id: string
         }
@@ -677,6 +679,7 @@ export type Database = {
           expires_at?: string
           id?: string
           token?: string
+          token_hash?: string | null
           used?: boolean | null
           user_id?: string
         }
@@ -1157,6 +1160,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      verify_reset_token: {
+        Args: { provided_token: string }
+        Returns: {
+          is_valid: boolean
+          user_id: string
+        }[]
       }
       verify_secret_word: {
         Args: { provided_secret: string; user_id: string }
