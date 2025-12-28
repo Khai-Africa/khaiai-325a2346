@@ -63,20 +63,19 @@ serve(async (req) => {
       return await returnAuthError();
     }
 
-    // Verify secret word
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('secret_word')
-      .eq('id', user.id)
-      .single();
+    // Verify secret word using secure database function (compares against hashed value)
+    const { data: verifyResult, error: verifyError } = await supabaseAdmin
+      .rpc('verify_secret_word', {
+        user_id: user.id,
+        provided_secret: secretWord
+      });
 
-    if (profileError || !profile) {
-      console.error("Error fetching profile:", profileError);
+    if (verifyError) {
+      console.error("Error verifying secret word:", verifyError);
       return await returnAuthError();
     }
 
-    // Compare secret words (case-insensitive)
-    if (profile.secret_word?.toLowerCase() !== secretWord.toLowerCase()) {
+    if (!verifyResult) {
       return await returnAuthError();
     }
 
