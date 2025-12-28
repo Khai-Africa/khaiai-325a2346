@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw, ArrowDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
@@ -64,11 +64,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [failedMessage, setFailedMessage] = useState<{ message: Message; input: string; files: File[] } | null>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { refetch: refetchUsage } = useUsage();
   const anonymousUsage = useAnonymousUsage();
   const isAnonymous = !user;
@@ -110,16 +112,6 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       saveConversation(conversationId, storedMessages, title);
     }
   }, [isAnonymous, conversationId, messages, saveConversation]);
-
-  // Auto-scroll to bottom when messages change
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-
   // Auto-hide sidebar on mobile
   useEffect(() => {
     if (isMobile) {
@@ -149,6 +141,24 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [input]);
+
+  // Handle scroll position tracking
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0 && !showScrollButton) {
+      scrollToBottom();
+    }
+  }, [messages, showScrollButton, scrollToBottom]);
 
   const loadConversation = async (convId: string) => {
     setIsLoadingConversation(true);
@@ -855,7 +865,12 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4 md:p-6">
+        <div className="relative flex-1">
+          <ScrollArea 
+            className="h-full p-4 md:p-6" 
+            ref={scrollAreaRef}
+            onScrollCapture={handleScroll}
+          >
           {isLoadingConversation ? (
             <ChatSkeleton />
           ) : messages.length === 0 ? (
@@ -946,7 +961,20 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               <div ref={messagesEndRef} />
             </div>
           )}
-        </ScrollArea>
+          </ScrollArea>
+
+          {/* Scroll to bottom button */}
+          {showScrollButton && messages.length > 0 && (
+            <Button
+              onClick={scrollToBottom}
+              size="icon"
+              className="absolute bottom-4 right-6 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground animate-in fade-in slide-in-from-bottom-2 duration-200 z-10"
+              aria-label="Scroll to bottom"
+            >
+              <ArrowDown className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
 
         {/* Input */}
         <div className="p-4">
