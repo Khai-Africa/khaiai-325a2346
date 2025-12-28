@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface MessageActionsProps {
   content: string;
@@ -22,6 +23,8 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [dislikeAnimating, setDislikeAnimating] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -38,6 +41,10 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       return;
     }
 
+    // Trigger animation
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 600);
+
     try {
       await supabase.from("message_feedback").insert({
         user_id: user.id,
@@ -47,7 +54,9 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       });
       setLiked(true);
       setDisliked(false);
-      toast.success("Thanks for your feedback!");
+      toast.success("Thanks for your feedback!", {
+        icon: "👍",
+      });
     } catch (error) {
       console.error("Error saving feedback:", error);
     }
@@ -59,6 +68,10 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       return;
     }
 
+    // Trigger animation
+    setDislikeAnimating(true);
+    setTimeout(() => setDislikeAnimating(false), 600);
+
     try {
       await supabase.from("message_feedback").insert({
         user_id: user.id,
@@ -68,7 +81,9 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       });
       setDisliked(true);
       setLiked(false);
-      toast.success("Thanks for your feedback!");
+      toast.success("Thanks for your feedback!", {
+        icon: "👎",
+      });
     } catch (error) {
       console.error("Error saving feedback:", error);
     }
@@ -95,7 +110,7 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+        className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
         onClick={handleCopy}
       >
         <Copy className="h-4 w-4" />
@@ -104,7 +119,7 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => onSpeak(content)}
         >
           <Volume2 className="h-4 w-4" />
@@ -113,23 +128,47 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
       <Button
         variant="ghost"
         size="icon"
-        className={`h-7 w-7 ${liked ? "text-primary" : "text-muted-foreground"} hover:text-foreground`}
+        className={cn(
+          "h-7 w-7 transition-all duration-200",
+          liked 
+            ? "text-primary bg-primary/10" 
+            : "text-muted-foreground hover:text-primary hover:bg-primary/5",
+          likeAnimating && "scale-125"
+        )}
         onClick={handleLike}
       >
-        <ThumbsUp className="h-4 w-4" />
+        <ThumbsUp 
+          className={cn(
+            "h-4 w-4 transition-all duration-300",
+            liked && "fill-primary",
+            likeAnimating && "animate-bounce"
+          )} 
+        />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className={`h-7 w-7 ${disliked ? "text-destructive" : "text-muted-foreground"} hover:text-foreground`}
+        className={cn(
+          "h-7 w-7 transition-all duration-200",
+          disliked 
+            ? "text-destructive bg-destructive/10" 
+            : "text-muted-foreground hover:text-destructive hover:bg-destructive/5",
+          dislikeAnimating && "scale-125"
+        )}
         onClick={handleDislike}
       >
-        <ThumbsDown className="h-4 w-4" />
+        <ThumbsDown 
+          className={cn(
+            "h-4 w-4 transition-all duration-300",
+            disliked && "fill-destructive",
+            dislikeAnimating && "animate-bounce"
+          )} 
+        />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+        className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
         onClick={handleShare}
       >
         <Share2 className="h-4 w-4" />
@@ -138,7 +177,7 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
           onClick={onRegenerate}
         >
           <RotateCw className="h-4 w-4" />
@@ -149,7 +188,7 @@ const MessageActions = ({ content, conversationId, onRegenerate, onSpeak }: Mess
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
