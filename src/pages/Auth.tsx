@@ -36,6 +36,59 @@ const loginSchema = z.object({
   password: z.string().min(1, { message: "Password required" }),
 });
 
+// Helper function to get user-friendly error messages
+const getAuthErrorMessage = (error: string | undefined, defaultMessage: string): { title: string; description: string } => {
+  const errorLower = (error || '').toLowerCase();
+  
+  if (errorLower.includes('invalid credentials') || errorLower.includes('invalid login')) {
+    return {
+      title: "Login Failed",
+      description: "The username/mobile or password you entered is incorrect. Please check your credentials and try again."
+    };
+  }
+  if (errorLower.includes('user already registered') || errorLower.includes('user_already_exists')) {
+    return {
+      title: "Account Already Exists",
+      description: "An account with this email already exists. Please sign in instead or use a different email."
+    };
+  }
+  if (errorLower.includes('weak_password') || errorLower.includes('weak password') || errorLower.includes('pwned')) {
+    return {
+      title: "Password Too Weak",
+      description: "This password is too common or has been compromised. Please choose a stronger, unique password."
+    };
+  }
+  if (errorLower.includes('rate limit') || errorLower.includes('too many requests')) {
+    return {
+      title: "Too Many Attempts",
+      description: "You've made too many attempts. Please wait a few minutes before trying again."
+    };
+  }
+  if (errorLower.includes('network') || errorLower.includes('fetch')) {
+    return {
+      title: "Connection Error",
+      description: "Unable to connect to the server. Please check your internet connection and try again."
+    };
+  }
+  if (errorLower.includes('email') && errorLower.includes('invalid')) {
+    return {
+      title: "Invalid Email",
+      description: "Please enter a valid email address."
+    };
+  }
+  if (errorLower.includes('unauthorized') || errorLower.includes('401')) {
+    return {
+      title: "Authentication Failed",
+      description: "Your credentials could not be verified. Please check your details and try again."
+    };
+  }
+  
+  return {
+    title: "Error",
+    description: defaultMessage
+  };
+};
+
 const Auth = () => {
   const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
@@ -113,9 +166,13 @@ const Auth = () => {
       });
 
       if (error || data?.error) {
+        const errorMsg = getAuthErrorMessage(
+          data?.error || error?.message,
+          "Invalid username/mobile or password. Please try again."
+        );
         toast({
-          title: "Login Failed",
-          description: data?.error || "Invalid username/mobile or password.",
+          title: errorMsg.title,
+          description: errorMsg.description,
           variant: "destructive",
         });
       } else if (data?.session) {
@@ -198,9 +255,13 @@ const Auth = () => {
       });
 
       if (signUpError) {
+        const errorMsg = getAuthErrorMessage(
+          signUpError.message,
+          "Unable to create account. Please try again."
+        );
         toast({
-          title: "Error",
-          description: signUpError.message,
+          title: errorMsg.title,
+          description: errorMsg.description,
           variant: "destructive",
         });
         setLoading(false);
@@ -219,9 +280,13 @@ const Auth = () => {
           });
 
         if (profileError) {
+          const errorMsg = getAuthErrorMessage(
+            profileError.message,
+            "Failed to create profile. Please try again."
+          );
           toast({
-            title: "Error",
-            description: "Failed to create profile. Please try again.",
+            title: errorMsg.title,
+            description: errorMsg.description,
             variant: "destructive",
           });
           setLoading(false);
