@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Mic, Volume2, VolumeX, ChevronDown, RotateCcw, Square, Gauge, MessageSquare } from 'lucide-react';
+import { X, Mic, Volume2, VolumeX, ChevronDown, RotateCcw, Square, Gauge, MessageSquare, Download, Trash2, MoreVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,7 +11,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VoiceInterfaceProps {
   onClose: () => void;
@@ -26,11 +37,11 @@ interface ConversationExchange {
 }
 
 // Voice commands for playback control
-const VOICE_COMMANDS = {
-  stop: ['stop', 'pause', 'quiet', 'silence', 'shut up', 'be quiet'],
-  repeat: ['repeat', 'again', 'say again', 'what did you say', 'pardon'],
-  slower: ['slower', 'slow down', 'speak slower', 'more slowly'],
-  faster: ['faster', 'speed up', 'speak faster', 'quicker'],
+const VOICE_COMMANDS: Record<string, { phrases: string[]; icon: string; color: string }> = {
+  stop: { phrases: ['stop', 'pause', 'quiet', 'silence', 'shut up', 'be quiet'], icon: '⏹️', color: 'bg-red-500' },
+  repeat: { phrases: ['repeat', 'again', 'say again', 'what did you say', 'pardon'], icon: '🔄', color: 'bg-blue-500' },
+  slower: { phrases: ['slower', 'slow down', 'speak slower', 'more slowly'], icon: '🐢', color: 'bg-yellow-500' },
+  faster: { phrases: ['faster', 'speed up', 'speak faster', 'quicker'], icon: '🐇', color: 'bg-green-500' },
 };
 
 // African voice options
@@ -64,11 +75,14 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const [showHistory, setShowHistory] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<ConversationExchange[]>([]);
   const [lastAudioContent, setLastAudioContent] = useState<string | null>(null);
+  const [recognizedCommand, setRecognizedCommand] = useState<{ command: string; matchedPhrase: string } | null>(null);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const commandTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize session on mount
   useEffect(() => {
@@ -83,6 +97,9 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       endSession();
       if (audioContextRef.current) {
         audioContextRef.current.close();
+      }
+      if (commandTimeoutRef.current) {
+        clearTimeout(commandTimeoutRef.current);
       }
     };
   }, []);
@@ -133,21 +150,37 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   };
 
   // Check for voice commands in transcript
-  const detectVoiceCommand = (text: string): { command: string | null; handled: boolean } => {
+  const detectVoiceCommand = (text: string): { command: string | null; matchedPhrase: string | null; handled: boolean } => {
     const lowerText = text.toLowerCase().trim();
     
-    for (const [command, phrases] of Object.entries(VOICE_COMMANDS)) {
-      for (const phrase of phrases) {
+    for (const [command, config] of Object.entries(VOICE_COMMANDS)) {
+      for (const phrase of config.phrases) {
         if (lowerText.includes(phrase)) {
-          return { command, handled: true };
+          return { command, matchedPhrase: phrase, handled: true };
         }
       }
     }
     
-    return { command: null, handled: false };
+    return { command: null, matchedPhrase: null, handled: false };
   };
 
-  const handleVoiceCommand = (command: string) => {
+  const showCommandFeedback = (command: string, matchedPhrase: string) => {
+    setRecognizedCommand({ command, matchedPhrase });
+    
+    // Clear any existing timeout
+    if (commandTimeoutRef.current) {
+      clearTimeout(commandTimeoutRef.current);
+    }
+    
+    // Hide the feedback after 2 seconds
+    commandTimeoutRef.current = setTimeout(() => {
+      setRecognizedCommand(null);
+    }, 2000);
+  };
+
+  const handleVoiceCommand = (command: string, matchedPhrase: string) => {
+    showCommandFeedback(command, matchedPhrase);
+    
     switch (command) {
       case 'stop':
         stopPlayback();
@@ -190,6 +223,65 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     if (audioElementRef.current) {
       audioElementRef.current.playbackRate = newSpeed;
     }
+  };
+
+  const exportHistory = () => {
+    if (conversationHistory.length === 0) {
+      toast.error('No conversation to export');
+      return;
+    }
+
+    const exportData = conversationHistory.map(exchange => ({
+      timestamp: exchange.timestamp.toISOString(),
+      you: exchange.userMessage,
+      khai: exchange.aiResponse,
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voice-conversation-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Conversation exported');
+  };
+
+  const exportHistoryAsText = () => {
+    if (conversationHistory.length === 0) {
+      toast.error('No conversation to export');
+      return;
+    }
+
+    let textContent = `Voice Conversation - ${new Date().toLocaleDateString()}\n`;
+    textContent += '='.repeat(50) + '\n\n';
+
+    conversationHistory.forEach((exchange) => {
+      textContent += `[${exchange.timestamp.toLocaleTimeString()}]\n`;
+      textContent += `You: ${exchange.userMessage}\n`;
+      textContent += `Khai: ${exchange.aiResponse}\n\n`;
+    });
+
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voice-conversation-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Conversation exported as text');
+  };
+
+  const clearHistory = () => {
+    setConversationHistory([]);
+    setShowClearDialog(false);
+    toast.success('Conversation history cleared');
   };
 
   const startListening = async () => {
@@ -271,9 +363,9 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         setTranscript(transcribedText);
         
         // Check for voice commands first
-        const { command, handled } = detectVoiceCommand(transcribedText);
-        if (handled && command) {
-          handleVoiceCommand(command);
+        const { command, matchedPhrase, handled } = detectVoiceCommand(transcribedText);
+        if (handled && command && matchedPhrase) {
+          handleVoiceCommand(command, matchedPhrase);
           return; // Don't process as regular chat
         }
 
@@ -340,6 +432,19 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-primary/5 to-background z-50 flex flex-col items-center justify-center">
+      {/* Voice Command Recognition Feedback */}
+      {recognizedCommand && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-60 pointer-events-none animate-scale-in">
+          <div className={`${VOICE_COMMANDS[recognizedCommand.command]?.color || 'bg-primary'} text-white px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3`}>
+            <span className="text-4xl">{VOICE_COMMANDS[recognizedCommand.command]?.icon}</span>
+            <div className="text-center">
+              <p className="text-lg font-bold capitalize">{recognizedCommand.command}</p>
+              <p className="text-sm opacity-80">"{recognizedCommand.matchedPhrase}"</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Controls Bar */}
       <div className="absolute top-6 w-full px-6 flex items-center justify-between max-w-lg mx-auto">
         {/* Voice Selection Dropdown */}
@@ -363,22 +468,71 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* History Toggle */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowHistory(!showHistory)}
-          className={`gap-2 bg-background/50 backdrop-blur-sm ${showHistory ? 'bg-primary/20' : ''}`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span className="hidden sm:inline">History</span>
+        {/* History Toggle with Options */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className={`gap-2 bg-background/50 backdrop-blur-sm ${showHistory ? 'bg-primary/20' : ''}`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span className="hidden sm:inline">History</span>
+            {conversationHistory.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5">
+                {conversationHistory.length}
+              </span>
+            )}
+          </Button>
+
+          {/* History Actions Dropdown */}
           {conversationHistory.length > 0 && (
-            <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5">
-              {conversationHistory.length}
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="w-8 h-8 bg-background/50 backdrop-blur-sm">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportHistoryAsText}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as Text
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportHistory}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as JSON
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setShowClearDialog(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear History
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        </Button>
+        </div>
       </div>
+
+      {/* Clear History Confirmation Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear conversation history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all {conversationHistory.length} exchanges from this session. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={clearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Conversation History Panel */}
       {showHistory && (
