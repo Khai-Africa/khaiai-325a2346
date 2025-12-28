@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Mic, Volume2, VolumeX, ChevronDown } from 'lucide-react';
+import { X, Mic, Volume2, VolumeX, ChevronDown, RotateCcw, Square, Gauge, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { VoiceWaveform } from '@/components/VoiceWaveform';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,21 @@ interface VoiceInterfaceProps {
   onClose: () => void;
   conversationId?: string;
 }
+
+interface ConversationExchange {
+  id: string;
+  userMessage: string;
+  aiResponse: string;
+  timestamp: Date;
+}
+
+// Voice commands for playback control
+const VOICE_COMMANDS = {
+  stop: ['stop', 'pause', 'quiet', 'silence', 'shut up', 'be quiet'],
+  repeat: ['repeat', 'again', 'say again', 'what did you say', 'pardon'],
+  slower: ['slower', 'slow down', 'speak slower', 'more slowly'],
+  faster: ['faster', 'speed up', 'speak faster', 'quicker'],
+};
 
 // African voice options
 const VOICE_OPTIONS = [
@@ -44,6 +60,10 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     return localStorage.getItem('preferred-voice') || 'nigerian-female';
   });
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [showHistory, setShowHistory] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationExchange[]>([]);
+  const [lastAudioContent, setLastAudioContent] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -109,6 +129,66 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
       console.log('Voice session ended');
     } catch (error) {
       console.error('Failed to end session:', error);
+    }
+  };
+
+  // Check for voice commands in transcript
+  const detectVoiceCommand = (text: string): { command: string | null; handled: boolean } => {
+    const lowerText = text.toLowerCase().trim();
+    
+    for (const [command, phrases] of Object.entries(VOICE_COMMANDS)) {
+      for (const phrase of phrases) {
+        if (lowerText.includes(phrase)) {
+          return { command, handled: true };
+        }
+      }
+    }
+    
+    return { command: null, handled: false };
+  };
+
+  const handleVoiceCommand = (command: string) => {
+    switch (command) {
+      case 'stop':
+        stopPlayback();
+        toast.success('Playback stopped');
+        break;
+      case 'repeat':
+        repeatLastResponse();
+        toast.success('Repeating last response');
+        break;
+      case 'slower':
+        adjustPlaybackSpeed(-0.25);
+        toast.success(`Speed: ${Math.max(0.5, playbackSpeed - 0.25).toFixed(2)}x`);
+        break;
+      case 'faster':
+        adjustPlaybackSpeed(0.25);
+        toast.success(`Speed: ${Math.min(2, playbackSpeed + 0.25).toFixed(2)}x`);
+        break;
+    }
+  };
+
+  const stopPlayback = () => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.currentTime = 0;
+      setIsSpeaking(false);
+    }
+  };
+
+  const repeatLastResponse = () => {
+    if (lastAudioContent && audioEnabled) {
+      playAudio(lastAudioContent);
+    } else if (!lastAudioContent) {
+      toast.error('No response to repeat');
+    }
+  };
+
+  const adjustPlaybackSpeed = (delta: number) => {
+    const newSpeed = Math.max(0.5, Math.min(2, playbackSpeed + delta));
+    setPlaybackSpeed(newSpeed);
+    if (audioElementRef.current) {
+      audioElementRef.current.playbackRate = newSpeed;
     }
   };
 
@@ -187,14 +267,33 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           return;
         }
 
-        setTranscript(data.transcription);
+        const transcribedText = data.transcription;
+        setTranscript(transcribedText);
+        
+        // Check for voice commands first
+        const { command, handled } = detectVoiceCommand(transcribedText);
+        if (handled && command) {
+          handleVoiceCommand(command);
+          return; // Don't process as regular chat
+        }
+
         setAiResponse(data.aiResponse);
+        
+        // Add to conversation history
+        const newExchange: ConversationExchange = {
+          id: crypto.randomUUID(),
+          userMessage: transcribedText,
+          aiResponse: data.aiResponse,
+          timestamp: new Date(),
+        };
+        setConversationHistory(prev => [...prev, newExchange]);
         
         if (data.conversationId && !currentConversationId) {
           setCurrentConversationId(data.conversationId);
         }
 
         if (audioEnabled && data.audioContent) {
+          setLastAudioContent(data.audioContent);
           playAudio(data.audioContent);
         }
       };
@@ -216,6 +315,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     }
 
     audioElementRef.current = new Audio(audioUrl);
+    audioElementRef.current.playbackRate = playbackSpeed;
     audioElementRef.current.play();
 
     audioElementRef.current.onended = () => {
@@ -240,16 +340,17 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-primary/5 to-background z-50 flex flex-col items-center justify-center">
-      {/* Voice Selection Dropdown */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2">
+      {/* Top Controls Bar */}
+      <div className="absolute top-6 w-full px-6 flex items-center justify-between max-w-lg mx-auto">
+        {/* Voice Selection Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2 bg-background/50 backdrop-blur-sm">
-              <span>{selectedVoiceLabel}</span>
+              <span className="text-sm">{selectedVoiceLabel}</span>
               <ChevronDown className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-56">
+          <DropdownMenuContent align="start" className="w-56">
             {VOICE_OPTIONS.map((voice) => (
               <DropdownMenuItem
                 key={voice.id}
@@ -261,7 +362,58 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* History Toggle */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowHistory(!showHistory)}
+          className={`gap-2 bg-background/50 backdrop-blur-sm ${showHistory ? 'bg-primary/20' : ''}`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span className="hidden sm:inline">History</span>
+          {conversationHistory.length > 0 && (
+            <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5">
+              {conversationHistory.length}
+            </span>
+          )}
+        </Button>
       </div>
+
+      {/* Conversation History Panel */}
+      {showHistory && (
+        <div className="absolute top-20 left-4 right-4 max-w-lg mx-auto bg-background/90 backdrop-blur-md rounded-lg border shadow-lg max-h-64 animate-fade-in">
+          <div className="p-3 border-b flex items-center justify-between">
+            <h3 className="text-sm font-medium">Conversation History</h3>
+            <span className="text-xs text-muted-foreground">{conversationHistory.length} exchanges</span>
+          </div>
+          <ScrollArea className="h-52">
+            <div className="p-3 space-y-3">
+              {conversationHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No conversation yet. Start speaking!
+                </p>
+              ) : (
+                conversationHistory.map((exchange) => (
+                  <div key={exchange.id} className="space-y-1 pb-3 border-b last:border-0">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-medium text-blue-500">You:</span>
+                      <p className="text-xs text-muted-foreground flex-1">{exchange.userMessage}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-medium text-primary">Khai:</span>
+                      <p className="text-xs flex-1">{exchange.aiResponse}</p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {exchange.timestamp.toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Animated Orb - Multi-layered */}
       <div className="relative w-80 h-80 flex items-center justify-center">
@@ -353,8 +505,8 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         />
       </div>
 
-      {/* Transcript Display */}
-      {(transcript || aiResponse) && (
+      {/* Current Transcript Display */}
+      {(transcript || aiResponse) && !showHistory && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 max-w-md w-full px-4">
           <div className="bg-background/80 backdrop-blur-sm rounded-lg p-4 space-y-2">
             {transcript && (
@@ -371,6 +523,13 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         </div>
       )}
 
+      {/* Voice Commands Help */}
+      <div className="absolute bottom-44 text-center px-4">
+        <p className="text-xs text-muted-foreground">
+          Voice commands: <span className="text-primary">"stop"</span>, <span className="text-primary">"repeat"</span>, <span className="text-primary">"slower"</span>, <span className="text-primary">"faster"</span>
+        </p>
+      </div>
+
       {/* Bottom Controls */}
       <div className="absolute bottom-8 w-full px-6 flex items-center justify-between max-w-md mx-auto">
         {/* Close Button */}
@@ -383,6 +542,31 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
           <X className="w-6 h-6" />
         </Button>
 
+        {/* Playback Control Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={stopPlayback}
+            disabled={!isSpeaking}
+            className="w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm"
+            title="Stop playback"
+          >
+            <Square className="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={repeatLastResponse}
+            disabled={!lastAudioContent || isSpeaking}
+            className="w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm"
+            title="Repeat last response"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+        </div>
+
         {/* Microphone Button */}
         <Button
           size="icon"
@@ -394,6 +578,12 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
         >
           <Mic className={`w-8 h-8 ${isListening ? 'animate-pulse' : ''}`} />
         </Button>
+
+        {/* Speed Indicator */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-background/50 backdrop-blur-sm px-2 py-1 rounded-full">
+          <Gauge className="w-3 h-3" />
+          <span>{playbackSpeed.toFixed(1)}x</span>
+        </div>
 
         {/* Audio Toggle */}
         <Button
