@@ -1071,8 +1071,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               aria-label={newMessagesCount > 0 ? `${newMessagesCount} new messages - scroll to bottom` : "Scroll to bottom"}
             >
               {newMessagesCount > 0 && (
-                <span className="flex items-center gap-1.5 text-xs font-medium">
-                  <span className="bg-primary-foreground/20 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                <span className="flex items-center gap-1.5 text-xs font-medium animate-pulse">
+                  <span className="bg-primary-foreground/20 rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-[0_0_8px_rgba(255,255,255,0.4)]">
                     {newMessagesCount}
                   </span>
                   <span className="hidden sm:inline">new</span>
