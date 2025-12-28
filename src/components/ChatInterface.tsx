@@ -865,7 +865,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
         </div>
 
         {/* Messages */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-h-0 overflow-hidden">
           <ScrollArea 
             className="h-full p-4 md:p-6" 
             ref={scrollAreaRef}
