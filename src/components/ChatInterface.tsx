@@ -22,6 +22,7 @@ import { LanguageSwitch } from "./LanguageSwitch";
 import imageCompression from 'browser-image-compression';
 import { useRetry } from "@/hooks/useRetry";
 import { useAnonymousConversations } from "@/hooks/useAnonymousConversations";
+import { ChatSkeleton } from "./ChatSkeleton";
 
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -54,6 +55,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null);
   const [selectedMode, setSelectedMode] = useState<string>("chat");
   const [isRecording, setIsRecording] = useState(false);
@@ -148,6 +150,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   }, [input]);
 
   const loadConversation = async (convId: string) => {
+    setIsLoadingConversation(true);
     try {
       const { data, error } = await supabase
         .from("messages")
@@ -168,6 +171,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     } catch (error) {
       console.error("Error loading conversation:", error);
       toast.error(t('chat.loadConversationFailed'));
+    } finally {
+      setIsLoadingConversation(false);
     }
   };
 
@@ -850,7 +855,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4 md:p-6">
-          {messages.length === 0 ? (
+          {isLoadingConversation ? (
+            <ChatSkeleton />
+          ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium">
                 {t('chat.whatCanIHelp')}
