@@ -208,6 +208,62 @@ serve(async (req) => {
         break;
       }
 
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        logStep("Invoice payment failed", {
+          invoiceId: invoice.id,
+          customerId: invoice.customer,
+          amountDue: invoice.amount_due,
+        });
+
+        if (invoice.customer) {
+          const customer = await stripe.customers.retrieve(invoice.customer as string);
+          if ('email' in customer && customer.email) {
+            const amount = (invoice.amount_due / 100).toFixed(2);
+            const currency = (invoice.currency || 'usd').toUpperCase();
+
+            // Send payment-failure email
+            try {
+              await supabase.functions.invoke('send-email', {
+                body: {
+                  templateKey: 'payment_failed',
+                  recipientEmail: customer.email,
+                  variables: {
+                    amount,
+                    currency,
+                    hosted_invoice_url: invoice.hosted_invoice_url || '',
+                  },
+                },
+              });
+              logStep("Failure email sent");
+            } catch (emailError) {
+              logStep("Email error", emailError);
+            }
+
+            // In-app notification
+            const { data: userData } = await supabase.auth.admin.listUsers();
+            const user = userData.users.find(u => u.email === customer.email);
+            if (user) {
+              try {
+                await supabase.functions.invoke('send-in-app-notification', {
+                  body: {
+                    userId: user.id,
+                    title: 'Payment Failed',
+                    message: `We could not charge ${amount} ${currency} for your subscription. Please update your payment method to keep premium access.`,
+                    type: 'error',
+                    actionUrl: '/premium',
+                  },
+                });
+                logStep("Failure notification sent");
+              } catch (notifError) {
+                logStep("Notification error", notifError);
+              }
+            }
+          }
+        }
+        break;
+      }
+
       default:
         logStep("Unhandled event type", { type: event.type });
     }

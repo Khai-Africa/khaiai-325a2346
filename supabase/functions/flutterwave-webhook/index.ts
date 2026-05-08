@@ -184,6 +184,55 @@ serve(async (req) => {
         amount, 
         currency 
       });
+    } else if (
+      payload.event === "charge.completed" &&
+      payload.data?.status &&
+      payload.data.status !== "successful"
+    ) {
+      // Handle failed/cancelled charges
+      const { tx_ref, amount, currency, status } = payload.data;
+      logStep("Payment failed", { tx_ref, status });
+
+      const sanitizedMetadata = sanitizePaymentMetadata(payload.data);
+      const encryptedMetadata = await encryptMetadata(sanitizedMetadata);
+
+      const { data: transaction, error: txError } = await supabaseClient
+        .from("payment_transactions")
+        .update({
+          status: "failed",
+          metadata: JSON.parse(encryptedMetadata),
+        })
+        .eq("reference", tx_ref)
+        .select()
+        .maybeSingle();
+
+      if (txError) {
+        logStep("Failed-transaction update error", txError);
+        throw new Error(`Failed to update transaction: ${txError.message}`);
+      }
+
+      if (transaction?.user_id) {
+        const { data: userData } = await supabaseClient.auth.admin.getUserById(
+          transaction.user_id
+        );
+
+        if (userData?.user?.email) {
+          try {
+            await supabaseClient.functions.invoke('send-in-app-notification', {
+              body: {
+                userId: transaction.user_id,
+                title: 'Payment Failed',
+                message: `Your payment of ${amount} ${currency} could not be processed (${status}). Please try again or use a different payment method.`,
+                type: 'error',
+                actionUrl: '/premium',
+              },
+            });
+            logStep("Failure notification sent");
+          } catch (notifError) {
+            logStep("Notification error", notifError);
+          }
+        }
+      }
     }
 
     return new Response(
