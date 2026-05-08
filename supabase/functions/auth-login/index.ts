@@ -23,27 +23,42 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Look up user by username or mobile number - use safe query builder to prevent SQL injection
-    let profile = null;
-    
-    // Try username first
-    const { data: usernameProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("username", identifier)
-      .maybeSingle();
-    
-    if (usernameProfile) {
-      profile = usernameProfile;
+    // Look up user by email, username, or mobile number
+    let profile: { id: string } | null = null;
+    let resolvedEmail: string | null = null;
+
+    const looksLikeEmail = typeof identifier === "string" && identifier.includes("@");
+
+    if (looksLikeEmail) {
+      // Resolve directly from auth.users by email (case-insensitive)
+      const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+      if (!listErr) {
+        const match = list?.users?.find(
+          (u) => u.email?.toLowerCase() === identifier.toLowerCase()
+        );
+        if (match) {
+          profile = { id: match.id };
+          resolvedEmail = match.email ?? null;
+        }
+      }
     } else {
-      // Try mobile number
-      const { data: mobileProfile } = await supabaseAdmin
+      // Try username first, then mobile number
+      const { data: usernameProfile } = await supabaseAdmin
         .from("profiles")
         .select("id")
-        .eq("mobile_number", identifier)
+        .eq("username", identifier)
         .maybeSingle();
-      
-      profile = mobileProfile;
+
+      if (usernameProfile) {
+        profile = usernameProfile;
+      } else {
+        const { data: mobileProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("mobile_number", identifier)
+          .maybeSingle();
+        profile = mobileProfile;
+      }
     }
 
     // Generic error function to normalize timing and prevent user enumeration
@@ -65,16 +80,18 @@ serve(async (req) => {
       return await returnAuthError();
     }
 
-    // Get the user's email from auth.users
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
-    
-    if (userError || !userData.user?.email) {
-      return await returnAuthError();
+    // Resolve email if not already known
+    if (!resolvedEmail) {
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      if (userError || !userData.user?.email) {
+        return await returnAuthError();
+      }
+      resolvedEmail = userData.user.email;
     }
 
     // Verify password by attempting to sign in
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
-      email: userData.user.email,
+      email: resolvedEmail,
       password: password,
     });
 
