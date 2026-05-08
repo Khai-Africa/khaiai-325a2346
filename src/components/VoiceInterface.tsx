@@ -82,7 +82,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const commandTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const commandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize session on mount
   useEffect(() => {
