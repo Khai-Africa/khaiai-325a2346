@@ -16,6 +16,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PRIMARY_GEMINI_MODEL = 'gemini-2.5-flash';
+const OPENAI_CHAT_MODEL = 'gpt-5-mini';
+const OPENAI_MAX_RETRIES = 3;
+const RETRYABLE_OPENAI_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function trimError(errorText: string) {
+  return errorText.length > 800 ? `${errorText.slice(0, 800)}...` : errorText;
+}
+
 // Interfaces for type checking
 interface MessagePart {
   type: 'text' | 'image_url';
@@ -266,16 +277,16 @@ serve(async (req) => {
       systemPrompt += ' Help users with visual and creative tasks. Provide detailed descriptions for visual concepts, assist with design thinking, and guide creative processes.';
     }
 
-    // Try Gemini 3.0 first
+    // Try Gemini first
     let aiMessage = '';
     let provider = 'gemini';
     
     try {
-      console.log('Attempting Gemini 3.0 API call...');
+      console.log(`Attempting Gemini API call with ${PRIMARY_GEMINI_MODEL}...`);
       const geminiContents = convertToGeminiFormat(validated.messages, systemPrompt);
       
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${PRIMARY_GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -296,10 +307,10 @@ serve(async (req) => {
         aiMessage = geminiData.candidates?.[0]?.content?.parts?.[0]?.text 
           || 'I apologize, but I was unable to generate a response.';
         
-        console.log('✓ Gemini 3.0 response generated successfully');
+        console.log('✓ Gemini response generated successfully');
       } else {
         const errorText = await geminiResponse.text();
-        console.warn(`Gemini API failed (${geminiResponse.status}), falling back to OpenAI:`, errorText);
+        console.warn(`Gemini API failed (${geminiResponse.status}), falling back to OpenAI:`, trimError(errorText));
         throw new Error('Gemini failed, fallback to OpenAI');
       }
     } catch (geminiError) {
@@ -310,32 +321,49 @@ serve(async (req) => {
         console.log('Using OpenAI fallback...');
         provider = 'openai';
         
-        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-5-mini',
-            messages: [
-              {
-                role: 'system',
-                content: systemPrompt
-              },
-              ...validated.messages.map(msg => ({
-                role: msg.role,
-                content: msg.content // Supports both string and MessagePart[] for vision
-              }))
-            ],
-            // GPT-5 models only support default temperature and use max_completion_tokens
-            max_completion_tokens: 2000,
-          }),
-        });
+        let aiResponse: Response | null = null;
+        let lastOpenAIError = '';
+
+        for (let attempt = 1; attempt <= OPENAI_MAX_RETRIES; attempt++) {
+          aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: OPENAI_CHAT_MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: systemPrompt
+                },
+                ...validated.messages.map(msg => ({
+                  role: msg.role,
+                  content: msg.content // Supports both string and MessagePart[] for vision
+                }))
+              ],
+              // GPT-5 models only support default temperature and use max_completion_tokens
+              max_completion_tokens: 2000,
+            }),
+          });
+
+          if (aiResponse.ok || !RETRYABLE_OPENAI_STATUSES.has(aiResponse.status) || attempt === OPENAI_MAX_RETRIES) {
+            break;
+          }
+
+          lastOpenAIError = trimError(await aiResponse.text());
+          console.warn(`OpenAI transient error ${aiResponse.status} on attempt ${attempt}/${OPENAI_MAX_RETRIES}:`, lastOpenAIError);
+          await wait(500 * attempt);
+        }
+
+        if (!aiResponse) {
+          throw new Error('OpenAI request was not attempted');
+        }
 
         if (!aiResponse.ok) {
           const errorText = await aiResponse.text();
-          console.error('OpenAI API error:', aiResponse.status, errorText);
+          console.error('OpenAI API error:', aiResponse.status, trimError(errorText || lastOpenAIError));
           
           // Handle specific error codes
           if (aiResponse.status === 429) {
