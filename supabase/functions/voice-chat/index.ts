@@ -100,7 +100,7 @@ serve(async (req) => {
           messages: [...messages, { role: 'user', content: transcribedText }],
           conversationId,
           mode: mode || 'chat',
-          model: 'gpt-4o-mini' // Faster model for voice conversations
+          model: 'gpt-5-mini' // Latest mini model for voice conversations
         }),
       }
     );
