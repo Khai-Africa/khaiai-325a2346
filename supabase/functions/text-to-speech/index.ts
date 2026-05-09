@@ -83,8 +83,8 @@ serve(async (req) => {
     const textChunks = chunkText(text);
     console.log(`Split into ${textChunks.length} chunks`);
 
-    // Use the faster tts-1 model by default, or custom model if specified
-    const ttsModel = model || 'tts-1';
+    // Use gpt-4o-mini-tts (latest mini TTS) by default, or custom model if specified
+    const ttsModel = model || 'gpt-4o-mini-tts';
 
     // Generate audio for each chunk
     const audioChunks: ArrayBuffer[] = [];
