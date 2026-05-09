@@ -321,32 +321,49 @@ serve(async (req) => {
         console.log('Using OpenAI fallback...');
         provider = 'openai';
         
-        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-5-mini',
-            messages: [
-              {
-                role: 'system',
-                content: systemPrompt
-              },
-              ...validated.messages.map(msg => ({
-                role: msg.role,
-                content: msg.content // Supports both string and MessagePart[] for vision
-              }))
-            ],
-            // GPT-5 models only support default temperature and use max_completion_tokens
-            max_completion_tokens: 2000,
-          }),
-        });
+        let aiResponse: Response | null = null;
+        let lastOpenAIError = '';
+
+        for (let attempt = 1; attempt <= OPENAI_MAX_RETRIES; attempt++) {
+          aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: OPENAI_CHAT_MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: systemPrompt
+                },
+                ...validated.messages.map(msg => ({
+                  role: msg.role,
+                  content: msg.content // Supports both string and MessagePart[] for vision
+                }))
+              ],
+              // GPT-5 models only support default temperature and use max_completion_tokens
+              max_completion_tokens: 2000,
+            }),
+          });
+
+          if (aiResponse.ok || !RETRYABLE_OPENAI_STATUSES.has(aiResponse.status) || attempt === OPENAI_MAX_RETRIES) {
+            break;
+          }
+
+          lastOpenAIError = trimError(await aiResponse.text());
+          console.warn(`OpenAI transient error ${aiResponse.status} on attempt ${attempt}/${OPENAI_MAX_RETRIES}:`, lastOpenAIError);
+          await wait(500 * attempt);
+        }
+
+        if (!aiResponse) {
+          throw new Error('OpenAI request was not attempted');
+        }
 
         if (!aiResponse.ok) {
           const errorText = await aiResponse.text();
-          console.error('OpenAI API error:', aiResponse.status, errorText);
+          console.error('OpenAI API error:', aiResponse.status, trimError(errorText || lastOpenAIError));
           
           // Handle specific error codes
           if (aiResponse.status === 429) {
