@@ -275,7 +275,7 @@ serve(async (req) => {
       const geminiContents = convertToGeminiFormat(validated.messages, systemPrompt);
       
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -328,8 +328,8 @@ serve(async (req) => {
                 content: msg.content // Supports both string and MessagePart[] for vision
               }))
             ],
-            temperature: 0.7,
-            max_tokens: 2000,
+            // GPT-5 models only support default temperature and use max_completion_tokens
+            max_completion_tokens: 2000,
           }),
         });
 
