@@ -277,16 +277,16 @@ serve(async (req) => {
       systemPrompt += ' Help users with visual and creative tasks. Provide detailed descriptions for visual concepts, assist with design thinking, and guide creative processes.';
     }
 
-    // Try Gemini 3.0 first
+    // Try Gemini first
     let aiMessage = '';
     let provider = 'gemini';
     
     try {
-      console.log('Attempting Gemini 3.0 API call...');
+      console.log(`Attempting Gemini API call with ${PRIMARY_GEMINI_MODEL}...`);
       const geminiContents = convertToGeminiFormat(validated.messages, systemPrompt);
       
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${PRIMARY_GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -307,10 +307,10 @@ serve(async (req) => {
         aiMessage = geminiData.candidates?.[0]?.content?.parts?.[0]?.text 
           || 'I apologize, but I was unable to generate a response.';
         
-        console.log('✓ Gemini 3.0 response generated successfully');
+        console.log('✓ Gemini response generated successfully');
       } else {
         const errorText = await geminiResponse.text();
-        console.warn(`Gemini API failed (${geminiResponse.status}), falling back to OpenAI:`, errorText);
+        console.warn(`Gemini API failed (${geminiResponse.status}), falling back to OpenAI:`, trimError(errorText));
         throw new Error('Gemini failed, fallback to OpenAI');
       }
     } catch (geminiError) {
