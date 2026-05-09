@@ -16,7 +16,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PRIMARY_GEMINI_MODEL = 'gemini-2.5-flash';
+const PRIMARY_GEMINI_MODEL = 'gemini-2.5-pro';
 const OPENAI_CHAT_MODEL = 'gpt-5-mini';
 const OPENAI_MAX_RETRIES = 3;
 const RETRYABLE_OPENAI_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
