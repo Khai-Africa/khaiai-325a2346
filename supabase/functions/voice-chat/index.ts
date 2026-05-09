@@ -126,7 +126,7 @@ serve(async (req) => {
         body: JSON.stringify({ 
           text: aiResponse,
           voice: voice || 'alloy',
-          model: 'tts-1' // Faster TTS model
+          model: 'gpt-4o-mini-tts' // Latest mini TTS model
         }),
       }
     );
