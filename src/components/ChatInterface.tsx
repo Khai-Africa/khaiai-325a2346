@@ -1069,23 +1069,67 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               {messages.map((message, index) => (
                 <div key={message.id} className="animate-fade-in">
                   {message.role === "user" ? (
-                    <div className="flex justify-end mb-8">
-                      <div className="bg-card border border-border rounded-3xl px-5 py-3 max-w-[85%]">
-                        {/* Display attachments */}
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {message.attachments.map((attachment, idx) => (
-                              <div key={idx} className="text-xs bg-muted rounded-full px-3 py-1">
-                                {attachment.type === 'image' ? '🖼️' : '📄'} {attachment.name}
+                    <div className="flex justify-end mb-8 group">
+                      <div className="flex flex-col items-end max-w-[85%] gap-1">
+                        <div className="bg-card border border-border rounded-3xl px-5 py-3 w-full">
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {message.attachments.map((attachment, idx) => (
+                                <div key={idx} className="text-xs bg-muted rounded-full px-3 py-1">
+                                  {attachment.type === 'image' ? '🖼️' : '📄'} {attachment.name}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {editingMessageId === message.id ? (
+                            <div className="flex flex-col gap-2">
+                              <Textarea
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                className="min-h-[80px] bg-background"
+                                autoFocus
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="ghost" onClick={cancelEditMessage}>
+                                  Cancel
+                                </Button>
+                                <Button size="sm" onClick={() => saveEditAndResend(message, index)}>
+                                  Update
+                                </Button>
                               </div>
-                            ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                              {getMessageText(message)}
+                            </p>
+                          )}
+                        </div>
+                        {editingMessageId !== message.id && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleCopyUserMessage(message)}
+                              aria-label="Copy message"
+                            >
+                              {copiedMessageId === message.id ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => startEditMessage(message)}
+                              aria-label="Edit message"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           </div>
                         )}
-                        <p className="text-sm md:text-base leading-relaxed">
-                          {typeof message.content === 'string' 
-                            ? message.content 
-                            : message.content.find(p => p.type === 'text')?.text || ''}
-                        </p>
                       </div>
                     </div>
                   ) : (
@@ -1094,9 +1138,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         <img src={logo} alt="AI" className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                          {typeof message.content === 'string' ? message.content : ''}
-                        </p>
+                        <MarkdownMessage
+                          content={typeof message.content === 'string' ? message.content : ''}
+                        />
                         <MessageActions 
                           content={typeof message.content === 'string' ? message.content : ''}
                           conversationId={conversationId}
