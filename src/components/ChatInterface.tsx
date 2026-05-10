@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw, ArrowDown } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw, ArrowDown, Pencil, Copy, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
 import ChatInputMenu from "./ChatInputMenu";
 import PlusMenu from "./PlusMenu";
 import MessageActions from "./MessageActions";
+import MarkdownMessage from "./MarkdownMessage";
 import { UsageIndicator } from "./UsageIndicator";
 import { TypewriterPlaceholder } from "./TypewriterPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [failedMessage, setFailedMessage] = useState<{ message: Message; input: string; files: File[] } | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const lastSeenMessageCountRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -955,6 +959,50 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
     setFailedMessage(null);
   }, []);
 
+  const getMessageText = (msg: Message): string => {
+    if (typeof msg.content === "string") return msg.content;
+    return msg.content.find((p) => p.type === "text")?.text || "";
+  };
+
+  const handleCopyUserMessage = async (msg: Message) => {
+    try {
+      await navigator.clipboard.writeText(getMessageText(msg));
+      setCopiedMessageId(msg.id);
+      toast.success("Copied");
+      setTimeout(() => setCopiedMessageId((id) => (id === msg.id ? null : id)), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const startEditMessage = (msg: Message) => {
+    setEditingMessageId(msg.id);
+    setEditingValue(getMessageText(msg));
+  };
+
+  const cancelEditMessage = () => {
+    setEditingMessageId(null);
+    setEditingValue("");
+  };
+
+  const saveEditAndResend = (msg: Message, index: number) => {
+    const newText = editingValue.trim();
+    if (!newText) {
+      toast.error("Message cannot be empty");
+      return;
+    }
+    // Truncate conversation to before this user message
+    setMessages((prev) => prev.slice(0, index));
+    setEditingMessageId(null);
+    setEditingValue("");
+    setInput(newText);
+    setSelectedFiles([]);
+    setTimeout(() => {
+      const sendBtn = document.querySelector("[data-send-btn]") as HTMLButtonElement | null;
+      sendBtn?.click();
+    }, 50);
+  };
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
@@ -1021,23 +1069,67 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               {messages.map((message, index) => (
                 <div key={message.id} className="animate-fade-in">
                   {message.role === "user" ? (
-                    <div className="flex justify-end mb-8">
-                      <div className="bg-card border border-border rounded-3xl px-5 py-3 max-w-[85%]">
-                        {/* Display attachments */}
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {message.attachments.map((attachment, idx) => (
-                              <div key={idx} className="text-xs bg-muted rounded-full px-3 py-1">
-                                {attachment.type === 'image' ? '🖼️' : '📄'} {attachment.name}
+                    <div className="flex justify-end mb-8 group">
+                      <div className="flex flex-col items-end max-w-[85%] gap-1">
+                        <div className="bg-card border border-border rounded-3xl px-5 py-3 w-full">
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {message.attachments.map((attachment, idx) => (
+                                <div key={idx} className="text-xs bg-muted rounded-full px-3 py-1">
+                                  {attachment.type === 'image' ? '🖼️' : '📄'} {attachment.name}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {editingMessageId === message.id ? (
+                            <div className="flex flex-col gap-2">
+                              <Textarea
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                className="min-h-[80px] bg-background"
+                                autoFocus
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="ghost" onClick={cancelEditMessage}>
+                                  Cancel
+                                </Button>
+                                <Button size="sm" onClick={() => saveEditAndResend(message, index)}>
+                                  Update
+                                </Button>
                               </div>
-                            ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                              {getMessageText(message)}
+                            </p>
+                          )}
+                        </div>
+                        {editingMessageId !== message.id && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleCopyUserMessage(message)}
+                              aria-label="Copy message"
+                            >
+                              {copiedMessageId === message.id ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => startEditMessage(message)}
+                              aria-label="Edit message"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           </div>
                         )}
-                        <p className="text-sm md:text-base leading-relaxed">
-                          {typeof message.content === 'string' 
-                            ? message.content 
-                            : message.content.find(p => p.type === 'text')?.text || ''}
-                        </p>
                       </div>
                     </div>
                   ) : (
@@ -1046,9 +1138,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
                         <img src={logo} alt="AI" className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                          {typeof message.content === 'string' ? message.content : ''}
-                        </p>
+                        <MarkdownMessage
+                          content={typeof message.content === 'string' ? message.content : ''}
+                        />
                         <MessageActions 
                           content={typeof message.content === 'string' ? message.content : ''}
                           conversationId={conversationId}
