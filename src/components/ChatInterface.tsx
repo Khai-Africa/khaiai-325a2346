@@ -67,6 +67,9 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const [failedMessage, setFailedMessage] = useState<{ message: Message; input: string; files: File[] } | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const lastSeenMessageCountRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -955,6 +958,50 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
   const dismissRetry = useCallback(() => {
     setFailedMessage(null);
   }, []);
+
+  const getMessageText = (msg: Message): string => {
+    if (typeof msg.content === "string") return msg.content;
+    return msg.content.find((p) => p.type === "text")?.text || "";
+  };
+
+  const handleCopyUserMessage = async (msg: Message) => {
+    try {
+      await navigator.clipboard.writeText(getMessageText(msg));
+      setCopiedMessageId(msg.id);
+      toast.success("Copied");
+      setTimeout(() => setCopiedMessageId((id) => (id === msg.id ? null : id)), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const startEditMessage = (msg: Message) => {
+    setEditingMessageId(msg.id);
+    setEditingValue(getMessageText(msg));
+  };
+
+  const cancelEditMessage = () => {
+    setEditingMessageId(null);
+    setEditingValue("");
+  };
+
+  const saveEditAndResend = (msg: Message, index: number) => {
+    const newText = editingValue.trim();
+    if (!newText) {
+      toast.error("Message cannot be empty");
+      return;
+    }
+    // Truncate conversation to before this user message
+    setMessages((prev) => prev.slice(0, index));
+    setEditingMessageId(null);
+    setEditingValue("");
+    setInput(newText);
+    setSelectedFiles([]);
+    setTimeout(() => {
+      const sendBtn = document.querySelector("[data-send-btn]") as HTMLButtonElement | null;
+      sendBtn?.click();
+    }, 50);
+  };
 
   return (
     <div className="flex h-screen bg-background">
