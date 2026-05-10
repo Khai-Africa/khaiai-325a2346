@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw, ArrowDown } from "lucide-react";
+import { Mic, ArrowUp, Menu, X, Volume2, Square, Phone, RotateCcw, ArrowDown, Pencil, Copy, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logo from "@/assets/kai-ai-logo.png";
 import Sidebar from "./Sidebar";
 import ChatInputMenu from "./ChatInputMenu";
 import PlusMenu from "./PlusMenu";
 import MessageActions from "./MessageActions";
+import MarkdownMessage from "./MarkdownMessage";
 import { UsageIndicator } from "./UsageIndicator";
 import { TypewriterPlaceholder } from "./TypewriterPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
