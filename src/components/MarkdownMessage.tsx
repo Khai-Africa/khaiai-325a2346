@@ -32,8 +32,10 @@ export const MarkdownMessage = ({ content, className }: MarkdownMessageProps) =>
     <div
       className={cn(
         "prose prose-sm md:prose-base dark:prose-invert max-w-none",
+        "text-foreground",
+        "prose-p:text-foreground prose-li:text-foreground prose-ul:text-foreground prose-ol:text-foreground",
         "prose-p:leading-relaxed prose-p:my-2",
-        "prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2",
+        "prose-headings:text-foreground prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2",
         "prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg",
         "prose-ul:my-2 prose-ol:my-2 prose-li:my-1",
         "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none",
