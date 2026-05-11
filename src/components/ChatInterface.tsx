@@ -9,6 +9,7 @@ import ChatInputMenu from "./ChatInputMenu";
 import PlusMenu from "./PlusMenu";
 import MessageActions from "./MessageActions";
 import MarkdownMessage from "./MarkdownMessage";
+import RelatedLinksPanel from "./RelatedLinksPanel";
 import { UsageIndicator } from "./UsageIndicator";
 import { TypewriterPlaceholder } from "./TypewriterPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
@@ -1316,6 +1317,13 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
           </div>
         </div>
       </div>
+
+      {/* Related quick links side panel (desktop only) */}
+      <RelatedLinksPanel
+        messages={messages}
+        isLoading={isLoading}
+        className="hidden xl:block"
+      />
     </div>
   );
 };

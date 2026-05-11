@@ -30,6 +30,9 @@ verify_jwt = false
 [functions.chat]
 verify_jwt = false
 
+[functions.related-links]
+verify_jwt = false
+
 [functions.check-subscription]
 verify_jwt = true
 
