@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "pwa-icon.png"],
       manifest: {
-        name: "Khai AI",
-        short_name: "Khai AI",
+        name: "Kmer AI",
+        short_name: "Kmer AI",
         description: "Your AI assistant powered by advanced language models",
         theme_color: "#8b5cf6",
         background_color: "#0a0a0f",

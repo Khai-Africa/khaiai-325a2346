@@ -34,6 +34,8 @@ const SKIP_FILES = new Set([
   "scripts/check-legacy-strings.ts",
   "src/integrations/supabase/types.ts",
   "src/integrations/supabase/client.ts",
+  // Intentionally references the legacy domain to detect stale webhooks.
+  "supabase/functions/webhook-config-check/index.ts",
 ]);
 const TEXT_EXTS = new Set([
   ".ts", ".tsx", ".js", ".jsx", ".json", ".html", ".css", ".scss",
