@@ -98,7 +98,7 @@ export const InstallPrompt = () => {
           )}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold mb-1">Install Khai AI</h3>
+          <h3 className="font-semibold mb-1">Install Kmer AI</h3>
           <p className="text-sm text-muted-foreground mb-3">
             {isMobile 
               ? "Add to your home screen for quick access and offline use"

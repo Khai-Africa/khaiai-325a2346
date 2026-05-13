@@ -20,7 +20,7 @@ const VOICE_OPTIONS = [
   { id: 'pan-african', label: 'Pan-African (Neutral)', flag: '🌍', description: 'Professional neutral voice' },
 ];
 
-const PREVIEW_TEXT = "Hello! I'm Khai, your AI assistant. How can I help you today?";
+const PREVIEW_TEXT = "Hello! I'm Kmer, your AI assistant. How can I help you today?";
 
 interface VoiceSettingsCardProps {
   onVoiceChange?: (voice: string) => void;

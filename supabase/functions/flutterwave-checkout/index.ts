@@ -84,7 +84,7 @@ serve(async (req) => {
           name: user.user_metadata?.full_name || user.email.split("@")[0],
         },
         customizations: {
-          title: "Khai AI Premium",
+          title: "Kmer AI Premium",
           description: `${planName || "Premium"} Subscription`,
           logo: `${origin}/kai-ai-logo.png`,
         },

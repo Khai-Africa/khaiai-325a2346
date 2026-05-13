@@ -315,7 +315,7 @@ const Premium = () => {
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 px-2">
           Unlock the Full Power of{" "}
           <span className="bg-gradient-primary bg-clip-text text-transparent">
-            Khai AI
+            Kmer AI
           </span>
         </h1>
         <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
@@ -441,7 +441,7 @@ const Premium = () => {
               <span className="text-sm font-medium">Premium Exclusive</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Unlock <span className="bg-gradient-primary bg-clip-text text-transparent">Coda House</span>
+              Unlock <span className="bg-gradient-primary bg-clip-text text-transparent">Vibe Coding</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Your AI-powered coding companion with intelligent code generation, live preview, and seamless project management
@@ -545,7 +545,7 @@ const Premium = () => {
                 <Crown className="w-16 h-16 text-primary mx-auto mb-4" />
                 <h3 className="text-2xl font-bold mb-3">Ready to Start Coding?</h3>
                 <p className="text-muted-foreground mb-6">
-                  Upgrade to Premium and unlock Coda House with unlimited code generation, downloads, and GitHub integration
+                  Upgrade to Premium and unlock Vibe Coding with unlimited code generation, downloads, and GitHub integration
                 </p>
                 <Button 
                   size="lg" 

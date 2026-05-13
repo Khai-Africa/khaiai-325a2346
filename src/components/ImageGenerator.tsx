@@ -136,7 +136,7 @@ export const ImageGenerator = ({ conversationId }: ImageGeneratorProps) => {
 
     const link = document.createElement('a');
     link.href = generatedImage;
-    link.download = `khai-ai-${Date.now()}.png`;
+    link.download = `kmer-ai-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

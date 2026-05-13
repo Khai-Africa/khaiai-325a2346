@@ -114,7 +114,7 @@ export const RelatedLinksPanel = ({ messages, isLoading, className }: RelatedLin
 
         {showEmpty ? (
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Ask Khai a question and curated quick links will appear here based on your conversation.
+            Ask Kmer a question and curated quick links will appear here based on your conversation.
           </p>
         ) : (
           <ul className="space-y-3">

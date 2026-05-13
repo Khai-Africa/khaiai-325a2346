@@ -6,7 +6,7 @@ interface AnonymousUsageData {
   lastResetDate: string;
 }
 
-const STORAGE_KEY = "khai_anonymous_usage";
+const STORAGE_KEY = "kmer_anonymous_usage";
 const MESSAGE_LIMIT = 5; // Anonymous users get 5 messages
 const IMAGE_LIMIT = 2; // Anonymous users get 2 images
 

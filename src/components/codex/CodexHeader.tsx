@@ -16,12 +16,12 @@ export const CodexHeader = () => {
             <ArrowLeft className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
             <span className="text-xs md:text-sm">Back</span>
           </Button>
-          <h1 className="text-base md:text-xl font-semibold">Coda House</h1>
+          <h1 className="text-base md:text-xl font-semibold">Vibe Coding</h1>
         </div>
         
         <div className="flex items-center gap-1 md:gap-3">
           <Button variant="ghost" size="sm" asChild className="px-2 md:px-3">
-            <Link to="/help#coda-house">
+            <Link to="/help#vibe-coding">
               <Book className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
               <span className="hidden md:inline text-xs md:text-sm">Docs</span>
             </Link>

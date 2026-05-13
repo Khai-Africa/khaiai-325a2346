@@ -58,7 +58,7 @@ function convertToGeminiFormat(messages: Message[], systemPrompt: string) {
   });
   geminiContents.push({
     role: 'model',
-    parts: [{ text: 'I understand. I am Khai, ready to assist you.' }]
+    parts: [{ text: 'I understand. I am Kmer, ready to assist you.' }]
   });
   
   // Convert messages with potential multimodal content
@@ -263,7 +263,7 @@ serve(async (req) => {
     console.log(`Validated ${validated.messages.length} messages in ${validated.mode} mode`);
 
     // Build system prompt based on mode
-    let systemPrompt = 'You are Khai, an intelligent AI assistant designed for Africa. You are helpful, knowledgeable, and culturally aware. You can assist with coding, learning, creative tasks, translations, and general questions. Be friendly, concise, and provide accurate information tailored to African contexts when relevant.';
+    let systemPrompt = 'You are Kmer, an intelligent AI assistant designed for Africa. You are helpful, knowledgeable, and culturally aware. You can assist with coding, learning, creative tasks, translations, and general questions. Be friendly, concise, and provide accurate information tailored to African contexts when relevant.';
     
     if (mode === 'study') {
       systemPrompt += ' Focus on educational content, explanations, and helping users learn. Break down complex topics into understandable parts and provide examples.';

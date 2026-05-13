@@ -79,7 +79,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
   // Check for pending anonymous conversations when user logs in
   useEffect(() => {
     if (user) {
-      const stored = localStorage.getItem('khai_anonymous_conversations');
+      const stored = localStorage.getItem('kmer_anonymous_conversations');
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as StoredConversation[];
@@ -393,7 +393,7 @@ const Sidebar = ({ onNewChat, onBack, onSelectConversation, currentConversationI
           size="sm"
         >
           <Code2 className="w-4 h-4 mr-2" />
-          Coda House
+          Vibe Coding
         </Button>
       </div>
       {/* Search Input */}

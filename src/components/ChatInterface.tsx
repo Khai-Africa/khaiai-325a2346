@@ -1034,8 +1034,8 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
               onClick={() => navigate("/")}
               className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <img src={logo} alt="Khai AI" className="w-8 h-8" />
-              <span className="text-lg font-semibold">Khai AI</span>
+              <img src={logo} alt="Kmer AI" className="w-8 h-8" />
+              <span className="text-lg font-semibold">Kmer AI</span>
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -1311,7 +1311,7 @@ const ChatInterface = ({ onBack, initialMessage, conversationId: initialConversa
             <div className="mt-3 space-y-2">
               <UsageIndicator />
               <p className="text-xs text-center text-muted-foreground">
-                Khai AI can make mistakes. Check important info.
+                Kmer AI can make mistakes. Check important info.
               </p>
             </div>
           </div>
