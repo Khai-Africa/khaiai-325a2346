@@ -17,12 +17,12 @@ const SuggestionCards = ({ onSelect }: SuggestionCardsProps) => {
     },
     {
       icon: Search,
-      title: t('suggestions.searchKhai'),
+      title: t('suggestions.searchKmer'),
       color: "text-green-400",
     },
     {
       icon: MessageSquare,
-      title: t('suggestions.talkKhai'),
+      title: t('suggestions.talkKmer'),
       color: "text-purple-400",
     },
     {

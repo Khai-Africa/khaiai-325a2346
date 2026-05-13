@@ -9,7 +9,7 @@ export const TypewriterPlaceholder = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const prompts = [
-    t('typewriter.askKhai'),
+    t('typewriter.askKmer'),
     t('typewriter.writeCode'),
     t('typewriter.farmGuide'),
     t('typewriter.createImage'),
