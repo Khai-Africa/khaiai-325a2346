@@ -54,11 +54,11 @@ const Install = () => {
           onClick={() => navigate("/")}
           className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <img src={logo} alt="Khai AI" className="w-24 h-24" />
+          <img src={logo} alt="Kmer AI" className="w-24 h-24" />
         </button>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Install Khai AI</h1>
+          <h1 className="text-3xl font-bold">Install Kmer AI</h1>
           <p className="text-muted-foreground">
             Get the full app experience with offline access and quick launch from your home screen
           </p>
@@ -70,7 +70,7 @@ const Install = () => {
               <Check className="w-12 h-12 text-green-500 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">App Installed!</h2>
               <p className="text-muted-foreground text-sm">
-                Khai AI has been installed on your device. You can now access it from your home screen.
+                Kmer AI has been installed on your device. You can now access it from your home screen.
               </p>
             </div>
             <Button onClick={() => navigate("/")} className="w-full" size="lg">

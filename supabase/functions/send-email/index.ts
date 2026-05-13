@@ -58,7 +58,7 @@ serve(async (req) => {
     let subject = template.subject;
 
     // Add default variables
-    const appUrl = Deno.env.get('APP_URL') || 'https://khai.africa';
+    const appUrl = Deno.env.get('APP_URL') || 'https://kmercoders.com';
     const allVariables = {
       username: recipientName || 'User',
       app_url: appUrl,
@@ -77,7 +77,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'Khai AI <noreply@khai.africa>',
+      from: 'Kmer AI <noreply@kmercoders.com>',
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,

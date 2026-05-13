@@ -80,7 +80,7 @@ const Help = () => {
     }
     
     const phoneNumber = "447306827526";
-    const message = encodeURIComponent("Welcome to Khai AI. How can I help you today?");
+    const message = encodeURIComponent("Welcome to Kmer AI. How can I help you today?");
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     
     window.open(whatsappUrl, '_blank');
@@ -120,8 +120,8 @@ const Help = () => {
       answer: "Click the '+' button in the chat and select from Thinking Mode (complex reasoning), Deep Research (in-depth analysis), Web Search (real-time info), or Canvas Mode (collaborative editing)."
     },
     {
-      question: "Can I use Khai AI on mobile?",
-      answer: "Yes! Khai AI is a Progressive Web App (PWA). You can install it on your mobile device for an app-like experience by clicking 'Add to Home Screen' in your browser menu."
+      question: "Can I use Kmer AI on mobile?",
+      answer: "Yes! Kmer AI is a Progressive Web App (PWA). You can install it on your mobile device for an app-like experience by clicking 'Add to Home Screen' in your browser menu."
     },
     {
       question: "What currencies do you support?",
@@ -184,13 +184,13 @@ const Help = () => {
           </Card>
         </div>
 
-        {/* Coda House Section */}
-        <section id="coda-house" className="mb-8 sm:mb-12 scroll-mt-20">
+        {/* Vibe Coding Section */}
+        <section id="vibe-coding" className="mb-8 sm:mb-12 scroll-mt-20">
           <Card className="border-2 border-primary/20">
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Code2 className="w-8 h-8 text-primary" />
-                <CardTitle className="text-2xl">Coda House - AI-Powered Code Generation</CardTitle>
+                <CardTitle className="text-2xl">Vibe Coding - AI-Powered Code Generation</CardTitle>
               </div>
               <CardDescription className="text-base">
                 Your intelligent coding companion that transforms ideas into production-ready code
@@ -200,13 +200,13 @@ const Help = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <Zap className="w-5 h-5 text-primary" />
-                  What is Coda House?
+                  What is Vibe Coding?
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Coda House is an advanced AI code generation and analysis platform integrated into Khai AI. 
+                  Vibe Coding is an advanced AI code generation and analysis platform integrated into Kmer AI. 
                   It helps developers, students, and coding enthusiasts generate, analyze, and manage code projects 
                   with the power of artificial intelligence. Whether you're building a new feature, debugging existing code, 
-                  or learning programming concepts, Coda House accelerates your development workflow.
+                  or learning programming concepts, Vibe Coding accelerates your development workflow.
                 </p>
               </div>
 
@@ -219,7 +219,7 @@ const Help = () => {
                       <h4 className="font-medium mb-1">Intelligent Code Generation</h4>
                       <p className="text-sm text-muted-foreground">
                         Generate complete code files from natural language descriptions. Simply describe what you want to build, 
-                        and Coda House creates production-ready code in your preferred programming language with proper structure, 
+                        and Vibe Coding creates production-ready code in your preferred programming language with proper structure, 
                         comments, and best practices.
                       </p>
                     </div>
@@ -252,7 +252,7 @@ const Help = () => {
                     <div>
                       <h4 className="font-medium mb-1">GitHub Integration</h4>
                       <p className="text-sm text-muted-foreground">
-                        Connect your GitHub account to sync your Coda House projects with GitHub repositories. Push changes, 
+                        Connect your GitHub account to sync your Vibe Coding projects with GitHub repositories. Push changes, 
                         pull updates, and maintain version control seamlessly. Perfect for collaboration and backup.
                       </p>
                     </div>
@@ -284,10 +284,10 @@ const Help = () => {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">How to Use Coda House</h3>
+                <h3 className="text-lg font-semibold mb-3">How to Use Vibe Coding</h3>
                 <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
                   <li className="leading-relaxed">
-                    <strong>Access Coda House:</strong> Click the "Coda House" button in the sidebar or navigate to /codex
+                    <strong>Access Vibe Coding:</strong> Click the "Vibe Coding" button in the sidebar or navigate to /codex
                   </li>
                   <li className="leading-relaxed">
                     <strong>Create Your First Project:</strong> On first visit, you'll see a prompt input. Describe what you want to code, 
@@ -339,7 +339,7 @@ const Help = () => {
               <div className="pt-4 border-t">
                 <Button onClick={() => navigate("/codex")} size="lg" className="w-full">
                   <Code2 className="w-5 h-5 mr-2" />
-                  Start Coding with Coda House
+                  Start Coding with Vibe Coding
                 </Button>
               </div>
             </CardContent>
@@ -372,7 +372,7 @@ const Help = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="w-6 h-6" />
-                Khai Help Centre - WhatsApp Support
+                Kmer Help Centre - WhatsApp Support
               </CardTitle>
               <CardDescription className="text-white/90">
                 Premium members get direct WhatsApp support
@@ -454,7 +454,7 @@ const Help = () => {
           <CardContent className="pt-6">
             <h3 className="text-lg font-semibold mb-2">Other Resources</h3>
             <p className="text-muted-foreground mb-4">
-              Contact our support team at support@khai.africa or check our documentation for more detailed guides.
+              Contact our support team at support@kmercoders.com or check our documentation for more detailed guides.
             </p>
             <div className="flex gap-2">
               <Button onClick={() => navigate("/terms")}>Terms of Service</Button>

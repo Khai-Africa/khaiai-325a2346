@@ -126,7 +126,7 @@ const Privacy = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
-              If you have questions about this Privacy Policy, please contact us at privacy@khai.africa
+              If you have questions about this Privacy Policy, please contact us at privacy@kmercoders.com
             </p>
           </section>
 

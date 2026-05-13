@@ -90,7 +90,7 @@ export const MigrationDialog = ({
       }
 
       // Clear local storage after successful migration
-      localStorage.removeItem('khai_anonymous_conversations');
+      localStorage.removeItem('kmer_anonymous_conversations');
       
       toast.success(`Successfully migrated ${successCount} conversation${successCount !== 1 ? 's' : ''}`);
       onMigrationComplete();
@@ -105,7 +105,7 @@ export const MigrationDialog = ({
 
   const handleSkip = () => {
     // Clear local storage without migrating
-    localStorage.removeItem('khai_anonymous_conversations');
+    localStorage.removeItem('kmer_anonymous_conversations');
     onMigrationComplete();
     onOpenChange(false);
   };

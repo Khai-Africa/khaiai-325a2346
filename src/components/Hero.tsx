@@ -72,14 +72,14 @@ const Hero = ({ onStartChat, onSuggestionSelect }: HeroProps) => {
         >
           <img 
             src={logo} 
-            alt="Khai AI Logo" 
+            alt="Kmer AI Logo" 
             className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
           />
         </button>
 
         {/* Main heading */}
         <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white leading-tight px-2">
-          Khai <AITypewriter />
+          Kmer <AITypewriter />
         </h1>
         
         <p className="text-base sm:text-xl md:text-2xl text-white max-w-2xl mx-auto px-4">

@@ -214,7 +214,7 @@ ORDER BY last_sent DESC;
 For issues or questions:
 - Check edge function logs in Supabase dashboard
 - Review email_logs table for email delivery issues
-- Contact support@khai.africa
+- Contact support@kmercoders.com
 
 ## Next Steps
 

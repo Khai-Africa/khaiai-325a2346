@@ -21,7 +21,7 @@ interface StoredConversation {
   updatedAt: string;
 }
 
-const STORAGE_KEY = 'khai_anonymous_conversations';
+const STORAGE_KEY = 'kmer_anonymous_conversations';
 const MAX_CONVERSATIONS = 10;
 
 export const useAnonymousConversations = () => {
@@ -127,7 +127,7 @@ export const useAnonymousConversations = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `khai-conversations-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `kmer-conversations-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

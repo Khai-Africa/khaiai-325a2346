@@ -19,12 +19,12 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('khai-language');
+    const saved = localStorage.getItem('kmer-language');
     return (saved === 'en' || saved === 'fr') ? saved : 'en';
   });
 
   useEffect(() => {
-    localStorage.setItem('khai-language', language);
+    localStorage.setItem('kmer-language', language);
     document.documentElement.lang = language;
   }, [language]);
 

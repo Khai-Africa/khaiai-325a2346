@@ -112,7 +112,7 @@ const Settings = () => {
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `khai-ai-data-${new Date().toISOString().split("T")[0]}.json`;
+      link.download = `kmer-ai-data-${new Date().toISOString().split("T")[0]}.json`;
       link.click();
       
       toast.success("Data exported successfully!");
@@ -168,7 +168,7 @@ const Settings = () => {
         }
       }
 
-      toast.info("Please contact support@khai.africa to delete your account");
+      toast.info("Please contact support@kmercoders.com to delete your account");
       await signOut();
       navigate("/");
     } catch (error) {
@@ -285,12 +285,12 @@ const Settings = () => {
                 <Smartphone className="w-5 h-5" />
                 <CardTitle>Install App</CardTitle>
               </div>
-              <CardDescription>Install Khai AI for quick access and offline use</CardDescription>
+              <CardDescription>Install Kmer AI for quick access and offline use</CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={handleInstallApp} variant="outline" className="w-full">
                 <Smartphone className="w-4 h-4 mr-2" />
-                Install Khai AI
+                Install Kmer AI
               </Button>
             </CardContent>
           </Card>

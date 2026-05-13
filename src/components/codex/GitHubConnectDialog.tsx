@@ -202,7 +202,7 @@ export const GitHubConnectDialog = ({
             Connect to GitHub
           </DialogTitle>
           <DialogDescription>
-            Sync your Coda House projects with a GitHub repository for version control and collaboration
+            Sync your Vibe Coding projects with a GitHub repository for version control and collaboration
           </DialogDescription>
         </DialogHeader>
 

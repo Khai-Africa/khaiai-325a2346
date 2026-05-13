@@ -50,13 +50,13 @@ const LearnMore = () => {
     {
       icon: Users,
       title: "Start a Conversation",
-      description: "Simply click 'Start Chatting' or select a suggestion to begin your conversation with Khai AI.",
+      description: "Simply click 'Start Chatting' or select a suggestion to begin your conversation with Kmer AI.",
       step: "01",
     },
     {
       icon: MessageSquare,
       title: "Ask Anything",
-      description: "Type your question, request, or topic. Khai AI understands context and can help with a wide range of tasks.",
+      description: "Type your question, request, or topic. Kmer AI understands context and can help with a wide range of tasks.",
       step: "02",
     },
     {
@@ -113,7 +113,7 @@ const LearnMore = () => {
               onClick={() => navigate("/")}
               className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
             >
-              <img src={logo} alt="Khai AI" className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
+              <img src={logo} alt="Kmer AI" className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
             </button>
           </div>
         </div>
@@ -126,7 +126,7 @@ const LearnMore = () => {
             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary animate-pulse" />
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent px-2">
-            How Khai AI Works
+            How Kmer AI Works
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             Your intelligent AI assistant designed to help you learn, create, and solve problems with the power of advanced artificial intelligence.
@@ -168,7 +168,7 @@ const LearnMore = () => {
             Powerful Features
           </h2>
           <p className="text-muted-foreground text-center mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base px-4">
-            Khai AI is packed with features to help you accomplish more, faster and smarter.
+            Kmer AI is packed with features to help you accomplish more, faster and smarter.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature, index) => {
@@ -195,7 +195,7 @@ const LearnMore = () => {
             What You Can Do
           </h2>
           <p className="text-muted-foreground text-center mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base px-4">
-            Khai AI adapts to your needs, whether you're a student, developer, entrepreneur, or creative professional.
+            Kmer AI adapts to your needs, whether you're a student, developer, entrepreneur, or creative professional.
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {useCases.map((useCase, index) => {
@@ -223,7 +223,7 @@ const LearnMore = () => {
       <section className="container mx-auto px-4 py-12 sm:py-16 bg-gradient-to-b from-transparent via-accent/5 to-transparent">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12">
-            Why Choose Khai AI?
+            Why Choose Kmer AI?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center space-y-3">
@@ -280,7 +280,7 @@ const LearnMore = () => {
       {/* Footer */}
       <footer className="border-t border-border/50 mt-16">
         <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p>&copy; 2025 Khai AI. Designed for Africa.</p>
+          <p>&copy; 2025 Kmer AI. Designed for Africa.</p>
         </div>
       </footer>
     </div>

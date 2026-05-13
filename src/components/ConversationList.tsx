@@ -169,7 +169,7 @@ export const ConversationList = () => {
 
       const conversation = conversations.find(c => c.id === id);
       const conversationText = data
-        ?.map((msg) => `${msg.role === "user" ? "You" : "Khai AI"}: ${msg.content}`)
+        ?.map((msg) => `${msg.role === "user" ? "You" : "Kmer AI"}: ${msg.content}`)
         .join("\n\n");
 
       setShareData({

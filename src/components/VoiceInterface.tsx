@@ -234,7 +234,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     const exportData = conversationHistory.map(exchange => ({
       timestamp: exchange.timestamp.toISOString(),
       you: exchange.userMessage,
-      khai: exchange.aiResponse,
+      kmer: exchange.aiResponse,
     }));
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -262,7 +262,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
     conversationHistory.forEach((exchange) => {
       textContent += `[${exchange.timestamp.toLocaleTimeString()}]\n`;
       textContent += `You: ${exchange.userMessage}\n`;
-      textContent += `Khai: ${exchange.aiResponse}\n\n`;
+      textContent += `Kmer: ${exchange.aiResponse}\n\n`;
     });
 
     const blob = new Blob([textContent], { type: 'text/plain' });
@@ -555,7 +555,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
                       <p className="text-xs text-muted-foreground flex-1">{exchange.userMessage}</p>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="text-xs font-medium text-primary">Khai:</span>
+                      <span className="text-xs font-medium text-primary">Kmer:</span>
                       <p className="text-xs flex-1">{exchange.aiResponse}</p>
                     </div>
                     <span className="text-[10px] text-muted-foreground">
@@ -670,7 +670,7 @@ export const VoiceInterface = ({ onClose, conversationId }: VoiceInterfaceProps)
             )}
             {aiResponse && (
               <p className="text-sm">
-                <span className="font-medium text-primary">Khai:</span> {aiResponse}
+                <span className="font-medium text-primary">Kmer:</span> {aiResponse}
               </p>
             )}
           </div>

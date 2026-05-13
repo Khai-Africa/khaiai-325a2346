@@ -19,7 +19,7 @@ export const translations = {
     
     // Hero
     hero: {
-      title: 'Khai AI',
+      title: 'Kmer AI',
       subtitle: 'Knowledge Hub for African Ideas',
       startChatting: 'Start Chatting',
       generateImages: 'Generate Images',
@@ -32,7 +32,7 @@ export const translations = {
     
     // Auth
     auth: {
-      welcomeTitle: 'Welcome to Khai AI',
+      welcomeTitle: 'Welcome to Kmer AI',
       signInSubtitle: 'Sign in to continue',
       signUpSubtitle: 'Create your account',
       username: 'Username',
@@ -84,7 +84,7 @@ export const translations = {
       usernameTaken: 'Username Taken',
       usernameInUse: 'This username is already in use. Please choose another.',
       accountCreated: 'Account Created!',
-      signupSuccess: "You've successfully signed up. Welcome to Khai AI!",
+      signupSuccess: "You've successfully signed up. Welcome to Kmer AI!",
       resetFailed: 'Reset Failed',
       userNotFound: 'User not found.',
       invalidSecretWord: 'Invalid secret word.',
@@ -96,7 +96,7 @@ export const translations = {
     // Chat
     chat: {
       whatCanIHelp: 'What can I help with?',
-      typingPlaceholder: 'Ask Khai...',
+      typingPlaceholder: 'Ask Kmer...',
       newChat: 'New Chat',
       noConversations: 'No conversations yet',
       today: 'TODAY',
@@ -166,7 +166,7 @@ export const translations = {
       deleteAccount: 'Delete Account',
       deleting: 'Deleting...',
       deleteConfirm: 'Are you sure you want to delete your account? This action cannot be undone.',
-      deleteInstructions: 'Please contact support@khai.africa to delete your account',
+      deleteInstructions: 'Please contact support@kmercoders.com to delete your account',
       signOutFailed: 'Failed to sign out',
     },
     
@@ -233,14 +233,14 @@ export const translations = {
     // Help
     help: {
       title: 'Help & Support',
-      subtitle: 'Get help with Khai AI',
+      subtitle: 'Get help with Kmer AI',
       faq: 'Frequently Asked Questions',
       contactSupport: 'Contact Support',
     },
     
     // Learn More
     learnMore: {
-      title: 'About Khai AI',
+      title: 'About Kmer AI',
       subtitle: 'Learn more about our AI assistant',
     },
     
@@ -258,8 +258,8 @@ export const translations = {
     // Suggestions
     suggestions: {
       learnCulture: 'Learn about African culture',
-      searchKhai: 'Search with Khai AI',
-      talkKhai: 'Talk with Khai AI',
+      searchKmer: 'Search with Kmer AI',
+      talkKmer: 'Talk with Kmer AI',
       getIdeas: 'Get creative ideas',
       writeCode: 'Write code',
       translateLanguages: 'Translate languages',
@@ -268,7 +268,7 @@ export const translations = {
     
     // Typewriter prompts
     typewriter: {
-      askKhai: 'Ask Khai...',
+      askKmer: 'Ask Kmer...',
       writeCode: 'Write code...',
       farmGuide: 'Farm guide...',
       createImage: 'Create image...',
@@ -332,7 +332,7 @@ export const translations = {
     
     // Hero
     hero: {
-      title: 'Khai AI',
+      title: 'Kmer AI',
       subtitle: 'Centre de Connaissances pour les Idées Africaines',
       startChatting: 'Commencer à Discuter',
       generateImages: 'Générer des Images',
@@ -345,7 +345,7 @@ export const translations = {
     
     // Auth
     auth: {
-      welcomeTitle: 'Bienvenue sur Khai AI',
+      welcomeTitle: 'Bienvenue sur Kmer AI',
       signInSubtitle: 'Connectez-vous pour continuer',
       signUpSubtitle: 'Créez votre compte',
       username: "Nom d'utilisateur",
@@ -397,7 +397,7 @@ export const translations = {
       usernameTaken: "Nom d'utilisateur Pris",
       usernameInUse: "Ce nom d'utilisateur est déjà utilisé. Veuillez en choisir un autre.",
       accountCreated: 'Compte Créé !',
-      signupSuccess: 'Vous êtes inscrit avec succès. Bienvenue sur Khai AI !',
+      signupSuccess: 'Vous êtes inscrit avec succès. Bienvenue sur Kmer AI !',
       resetFailed: 'Échec de la Réinitialisation',
       userNotFound: 'Utilisateur non trouvé.',
       invalidSecretWord: 'Mot secret invalide.',
@@ -409,7 +409,7 @@ export const translations = {
     // Chat
     chat: {
       whatCanIHelp: 'Comment puis-je vous aider ?',
-      typingPlaceholder: 'Demandez à Khai...',
+      typingPlaceholder: 'Demandez à Kmer...',
       newChat: 'Nouveau Chat',
       noConversations: 'Aucune conversation pour le moment',
       today: "AUJOURD'HUI",
@@ -479,7 +479,7 @@ export const translations = {
       deleteAccount: 'Supprimer le Compte',
       deleting: 'Suppression...',
       deleteConfirm: 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action ne peut pas être annulée.',
-      deleteInstructions: 'Veuillez contacter support@khai.africa pour supprimer votre compte',
+      deleteInstructions: 'Veuillez contacter support@kmercoders.com pour supprimer votre compte',
       signOutFailed: 'Échec de la déconnexion',
     },
     
@@ -546,14 +546,14 @@ export const translations = {
     // Help
     help: {
       title: 'Aide & Support',
-      subtitle: 'Obtenez de l\'aide avec Khai AI',
+      subtitle: 'Obtenez de l\'aide avec Kmer AI',
       faq: 'Questions Fréquemment Posées',
       contactSupport: 'Contacter le Support',
     },
     
     // Learn More
     learnMore: {
-      title: 'À Propos de Khai AI',
+      title: 'À Propos de Kmer AI',
       subtitle: 'En savoir plus sur notre assistant IA',
     },
     
@@ -571,8 +571,8 @@ export const translations = {
     // Suggestions
     suggestions: {
       learnCulture: 'Découvrir la culture africaine',
-      searchKhai: 'Rechercher avec Khai AI',
-      talkKhai: 'Parler avec Khai AI',
+      searchKmer: 'Rechercher avec Kmer AI',
+      talkKmer: 'Parler avec Kmer AI',
       getIdeas: 'Obtenir des idées créatives',
       writeCode: 'Écrire du code',
       translateLanguages: 'Traduire des langues',
@@ -581,7 +581,7 @@ export const translations = {
     
     // Typewriter prompts
     typewriter: {
-      askKhai: 'Demandez à Khai...',
+      askKmer: 'Demandez à Kmer...',
       writeCode: 'Écrire du code...',
       farmGuide: 'Guide agricole...',
       createImage: 'Créer une image...',

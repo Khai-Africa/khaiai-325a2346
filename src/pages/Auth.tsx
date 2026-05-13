@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
-import khaiLogo from "@/assets/khai-ai-logo.png";
+import kmerLogo from "@/assets/kmer-ai-logo.png";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 
@@ -316,7 +316,7 @@ const Auth = () => {
           await supabase.functions.invoke('send-in-app-notification', {
             body: {
               userId: authData.user.id,
-              title: 'Welcome to Khai AI! 🎉',
+              title: 'Welcome to Kmer AI! 🎉',
               message: 'Your AI assistant is ready. Start chatting now!',
               type: 'success',
               actionUrl: '/',
@@ -328,7 +328,7 @@ const Auth = () => {
 
         toast({
           title: "Account Created!",
-          description: "You've successfully signed up. Welcome to Khai AI!",
+          description: "You've successfully signed up. Welcome to Kmer AI!",
         });
         
         // Check if user came from upgrade flow
@@ -460,8 +460,8 @@ const Auth = () => {
             className="inline-block cursor-pointer hover:opacity-80 transition-opacity"
           >
             <img 
-              src={khaiLogo} 
-              alt="Khai AI" 
+              src={kmerLogo} 
+              alt="Kmer AI" 
               className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4"
             />
           </button>

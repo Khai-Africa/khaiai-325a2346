@@ -27,14 +27,14 @@ const Terms = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
-              By accessing and using Khai AI ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these terms, please do not use our service.
+              By accessing and using Kmer AI ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these terms, please do not use our service.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Khai AI provides AI-powered chat services, image generation, and related features. We reserve the right to modify, suspend, or discontinue any part of the service at any time.
+              Kmer AI provides AI-powered chat services, image generation, and related features. We reserve the right to modify, suspend, or discontinue any part of the service at any time.
             </p>
           </section>
 
@@ -82,14 +82,14 @@ const Terms = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property</h2>
             <p className="text-muted-foreground leading-relaxed">
-              All content, features, and functionality of the Service are owned by Khai AI and are protected by international copyright, trademark, and other intellectual property laws.
+              All content, features, and functionality of the Service are owned by Kmer AI and are protected by international copyright, trademark, and other intellectual property laws.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">7. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Khai AI shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use or inability to use the service.
+              Kmer AI shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use or inability to use the service.
             </p>
           </section>
 
@@ -103,7 +103,7 @@ const Terms = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-4">9. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
-              For questions about these Terms of Service, please contact us at support@khai.africa
+              For questions about these Terms of Service, please contact us at support@kmercoders.com
             </p>
           </section>
 
